@@ -16,8 +16,8 @@ export const authSlice = createSlice({
   initialState,
   reducers: {
     /**
-     * Increments the session generation counter to initiate a new session flow.
-     * Any prior asynchronous operation holding an older generation will be dropped.
+     * Bắt đầu luồng phiên mới bằng cách tăng generation và xóa lỗi bootstrap.
+     * Kết quả bất đồng bộ thuộc generation cũ sẽ bị loại bỏ.
      */
     startSession: (state) => {
       state.sessionGeneration += 1
@@ -25,7 +25,7 @@ export const authSlice = createSlice({
     },
 
     /**
-     * Sets authenticated credentials if and only if the generation matches the current session.
+     * Xác nhận user và access token chỉ khi phản hồi còn thuộc phiên hiện tại.
      */
     setCredentials: (
       state,
@@ -46,7 +46,7 @@ export const authSlice = createSlice({
     },
 
     /**
-     * Updates user profile if and only if the generation matches the current session.
+     * Cập nhật profile /me nếu generation không đổi trong lúc request chạy.
      */
     setUserProfile: (
       state,
@@ -61,21 +61,25 @@ export const authSlice = createSlice({
       state.user = action.payload.user
     },
 
+    // Bật/tắt trạng thái chờ khôi phục phiên để route guard chọn UI phù hợp.
     setBootstrapping: (state, action: PayloadAction<boolean>) => {
       state.isBootstrapping = action.payload
     },
 
+    // Ghi lỗi khôi phục và kết thúc trạng thái chờ.
     setBootstrapError: (state, action: PayloadAction<BootstrapError | null>) => {
       state.bootstrapError = action.payload
       state.isBootstrapping = false
     },
 
+    // Xóa thông báo lỗi bootstrap sau khi UI đã xử lý hoặc người dùng thử lại.
     clearBootstrapError: (state) => {
       state.bootstrapError = null
     },
   },
   extraReducers: (builder) => {
     builder
+      // Hủy định danh và access token cục bộ; tăng generation để kết quả cũ bị loại.
       .addCase(clearAuthLocal, (state) => {
         state.sessionGeneration += 1
         state.user = null
@@ -83,6 +87,7 @@ export const authSlice = createSlice({
         state.isAuthenticated = false
         state.isBootstrapping = false
       })
+      // Chỉ nhận access token nếu kết quả thuộc generation đang hoạt động.
       .addCase(updateAccessToken, (state, action) => {
         if (action.payload.generation !== state.sessionGeneration) {
           return

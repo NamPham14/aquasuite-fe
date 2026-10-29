@@ -7,6 +7,7 @@ export interface StorageClearResult {
   status: 'CLEARED' | 'TOMBSTONED' | 'FAILED'
 }
 
+/** Truy cập sessionStorage an toàn; trả null nếu không có browser hoặc bị chặn. */
 function getStorage(): Storage | null {
   if (typeof window === 'undefined') {
     return null
@@ -18,6 +19,7 @@ function getStorage(): Storage | null {
   }
 }
 
+/** Kiểm tra dấu logout để không khôi phục token có thể còn sót trong storage. */
 function hasLogoutTombstone(): boolean {
   if (typeof document === 'undefined') return false
   try {
@@ -29,8 +31,7 @@ function hasLogoutTombstone(): boolean {
 
 export const tokenStorage = {
   /**
-   * Reads the refresh token without removing it (e.g. for checking session presence).
-   * Refuses to return a token if a logout tombstone is present.
+   * Đọc token chưa xóa; nếu đã có dấu logout thì không cho khôi phục.
    */
   getRefreshToken(): string | null {
     if (hasLogoutTombstone()) {
@@ -48,19 +49,15 @@ export const tokenStorage = {
   },
 
   /**
-   * Returns true if a valid refresh token is stored in sessionStorage
-   * and no logout tombstone is active.
+   * Kiểm tra có token chưa rỗng và không bị dấu logout chặn hay không.
    */
   hasRefreshToken(): boolean {
     return !!this.getRefreshToken()
   },
 
   /**
-   * Pops the refresh token from sessionStorage (reads and removes it).
-   * Verifies that removal actually succeeded before returning the token.
-   * If removal fails, returns null (fail-closed).
-   * Ensures that if the subsequent network call or reload fails, the old token
-   * cannot be retried.
+   * Lấy và xóa token trước khi gửi refresh; chỉ trả token khi việc xóa đã được xác minh.
+   * Nếu xóa thất bại trả null; token cũ không được thử lại sau lỗi mạng hoặc tải lại.
    */
   popRefreshToken(): string | null {
     if (hasLogoutTombstone()) {
@@ -75,7 +72,7 @@ export const tokenStorage = {
 
       storage.removeItem(REFRESH_TOKEN_KEY)
       if (storage.getItem(REFRESH_TOKEN_KEY) !== null) {
-        // Removal failed, fail-closed
+        // Xóa thất bại, không trả token để tiếp tục.
         return null
       }
       return token
@@ -85,18 +82,18 @@ export const tokenStorage = {
   },
 
   /**
-   * Saves the new refresh token to sessionStorage and clears any logout tombstone.
-   * Returns true on success, false on failure (fail-closed).
+   * Lưu token mới, thử xóa dấu logout và kiểm tra giá trị đã ghi.
+   * Trả true khi lưu thành công, false khi không thể lưu.
    */
   setRefreshToken(token: string): boolean {
     if (!token || token.trim().length === 0) return false
 
-    // Clear logout tombstone when setting a fresh valid token
+    // Thử xóa dấu logout khi lưu token mới hợp lệ.
     if (typeof document !== 'undefined') {
       try {
         document.cookie = 'aqs_logout_flag=; Max-Age=0; path=/; SameSite=Strict'
       } catch {
-        // ignore
+        // Bỏ qua lỗi xóa cookie; việc lưu token vẫn được kiểm tra bên dưới.
       }
     }
 
@@ -111,11 +108,10 @@ export const tokenStorage = {
   },
 
   /**
-   * Removes the refresh token from sessionStorage and attempts to set a session tombstone cookie.
-   * Explicitly verifies both operations and returns a clear status.
+   * Thử đặt dấu logout và xóa token; trả trạng thái CLEARED, TOMBSTONED hoặc FAILED.
    */
   clearRefreshToken(): StorageClearResult {
-    // 1. Attempt to set session tombstone cookie and verify it was actually written
+    // 1. Thử đặt cookie đánh dấu logout và xác minh đã ghi.
     let tombstoneVerified = false
     if (typeof document !== 'undefined') {
       try {
@@ -126,7 +122,7 @@ export const tokenStorage = {
       }
     }
 
-    // 2. Attempt to remove token from sessionStorage and verify
+    // 2. Thử xóa token khỏi sessionStorage và xác minh kết quả.
     let storageCleared = false
     const storage = getStorage()
     if (storage) {
@@ -136,7 +132,7 @@ export const tokenStorage = {
         if (current === null || current.trim().length === 0) {
           storageCleared = true
         } else {
-          // Fallback: overwrite with empty string
+          // Nếu không xóa được, thử ghi đè bằng chuỗi rỗng.
           try {
             storage.setItem(REFRESH_TOKEN_KEY, '')
             const postVal = storage.getItem(REFRESH_TOKEN_KEY)

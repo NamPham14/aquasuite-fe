@@ -11,7 +11,7 @@ export function NotFoundPage() {
         Trang bạn đang tìm kiếm không tồn tại hoặc bạn không có quyền truy cập.
       </p>
       <Link
-        to="/dashboard"
+        to="/app/dashboard"
         className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-xs text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
       >
         Về bảng điều khiển

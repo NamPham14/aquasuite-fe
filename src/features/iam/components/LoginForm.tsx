@@ -6,6 +6,7 @@ import { normalizeApiError } from '../../../shared/api/apiError'
 import { loginSchema, type LoginFormData } from '../schemas/login.schema'
 import { useAuth } from '../hooks/useAuth'
 
+/** Form đăng nhập: validate bằng loginSchema, gọi useAuth.login và hiển thị lỗi phù hợp. */
 export function LoginForm() {
   const navigate = useNavigate()
   const { login } = useAuth()
@@ -24,6 +25,7 @@ export function LoginForm() {
     },
   })
 
+  // Sau validation, chờ login hoàn tất rồi chuyển dashboard; không điều hướng khi kết quả đã cũ.
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true)
     setErrorMessage(null)
@@ -35,7 +37,7 @@ export function LoginForm() {
       })
 
       if (result) {
-        navigate('/dashboard', { replace: true })
+        navigate('/app/dashboard', { replace: true })
       }
     } catch (err: unknown) {
       const apiError = normalizeApiError(err)

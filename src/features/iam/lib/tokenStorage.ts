@@ -1,5 +1,7 @@
+// Bản storage cũ còn trong repo; luồng auth hiện tại import từ shared/lib/tokenStorage.ts.
 const REFRESH_TOKEN_KEY = 'aqs_refresh_token'
 
+/** Lấy sessionStorage an toàn cho bản storage này; trả null nếu không truy cập được. */
 function getStorage(): Storage | null {
   if (typeof window === 'undefined') {
     return null
@@ -13,7 +15,7 @@ function getStorage(): Storage | null {
 
 export const tokenStorage = {
   /**
-   * Reads the refresh token without removing it (e.g. for checking session presence).
+   * Đọc token mà không xóa; đây là API của bản storage cũ.
    */
   getRefreshToken(): string | null {
     const storage = getStorage()
@@ -26,18 +28,14 @@ export const tokenStorage = {
   },
 
   /**
-   * Returns true if a refresh token is stored in sessionStorage.
+   * Kiểm tra có token trong storage hay không.
    */
   hasRefreshToken(): boolean {
     return !!this.getRefreshToken()
   },
 
   /**
-   * Pops the refresh token from sessionStorage (reads and removes it).
-   * Verifies that removal actually succeeded before returning the token.
-   * If removal fails, returns null (fail-closed).
-   * Ensures that if the subsequent network call or reload fails, the old token
-   * cannot be retried.
+   * Lấy và xóa token, chỉ trả token nếu xác minh xóa thành công.
    */
   popRefreshToken(): string | null {
     const storage = getStorage()
@@ -48,7 +46,7 @@ export const tokenStorage = {
 
       storage.removeItem(REFRESH_TOKEN_KEY)
       if (storage.getItem(REFRESH_TOKEN_KEY) !== null) {
-        // Removal failed, fail-closed
+        // Xóa thất bại nên không trả token để tiếp tục.
         return null
       }
       return token
@@ -58,8 +56,7 @@ export const tokenStorage = {
   },
 
   /**
-   * Saves the new refresh token to sessionStorage.
-   * Returns true on success, false on failure (fail-closed).
+   * Lưu token và xác minh giá trị đã ghi.
    */
   setRefreshToken(token: string): boolean {
     const storage = getStorage()
@@ -73,7 +70,7 @@ export const tokenStorage = {
   },
 
   /**
-   * Safely removes the refresh token from sessionStorage.
+   * Thử xóa token; bản cũ này không trả kết quả hoặc đặt dấu logout.
    */
   clearRefreshToken(): void {
     const storage = getStorage()
@@ -81,7 +78,7 @@ export const tokenStorage = {
     try {
       storage.removeItem(REFRESH_TOKEN_KEY)
     } catch {
-      // ignore
+      // Bỏ qua lỗi xóa; bản này không trả trạng thái cho nơi gọi.
     }
   },
 }

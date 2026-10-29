@@ -9,10 +9,12 @@ export interface ApiError {
   details?: unknown
 }
 
+/** Kiểm tra giá trị có phải object thông thường trước khi đọc trường lỗi. */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+/** Chỉ giữ các lỗi trường có cả field và message dạng chuỗi từ payload không tin cậy. */
 function readFieldErrors(value: unknown): FieldErrorDetail[] | undefined {
   if (!Array.isArray(value)) return undefined
   return value.filter((item): item is FieldErrorDetail =>
@@ -20,7 +22,7 @@ function readFieldErrors(value: unknown): FieldErrorDetail[] | undefined {
   )
 }
 
-/** Normalizes RTK Query errors without assuming the response body is JSON. */
+/** Chuẩn hóa lỗi API/fetch thành thông tin UI có thể hiển thị, kể cả khi body không phải JSON. */
 export function normalizeApiError(error: unknown): ApiError {
   if (isRecord(error) && (typeof error.status === 'number' || typeof error.status === 'string')) {
     const payload = isRecord(error.data) ? error.data : undefined

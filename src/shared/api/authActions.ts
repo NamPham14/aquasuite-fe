@@ -1,13 +1,13 @@
 import { createAction } from '@reduxjs/toolkit'
 
 /**
- * Dispatched to clear local authentication state across the application:
- * increments session generation, clears tokens, user profile, and session state.
+ * Action xóa trạng thái xác thực trong Redux: tăng generation, xóa access token,
+ * hồ sơ và trạng thái đăng nhập. Storage được xử lý riêng bởi nơi gọi.
  */
 export const clearAuthLocal = createAction('auth/clearAuthLocal')
 
 /**
- * Dispatched when a fresh access token is acquired through refresh token rotation.
+ * Action cập nhật access token mới sau khi làm mới; reducer kiểm tra generation.
  */
 export const updateAccessToken = createAction<{
   accessToken: string

@@ -3,6 +3,7 @@
 ## Tài liệu
 
 - [Cấu trúc frontend](FRONTEND_PACKAGE_STRUCTURE.md): kiến trúc đích, trách nhiệm các khu vực và ranh giới feature.
+- [Component UI trang quản lý](MANAGEMENT_UI_COMPONENTS.md): danh mục component dùng chung, cách dùng và giới hạn hiện tại.
 - [Workflow phát triển](workflow/feature-delivery.md): phân loại rủi ro, Delivery Brief và quy trình plan, triển khai, review.
 - [Mẫu feature spec](templates/feature-spec.md): đặc tả cho công việc rủi ro cao hoặc cần thống nhất nghiệp vụ/contract.
 - `specifications/`: đặc tả được chia sẻ khi công việc cần tài liệu bền vững; tạo khi cần.

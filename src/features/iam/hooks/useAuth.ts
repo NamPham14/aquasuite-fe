@@ -16,6 +16,7 @@ interface RootAuthState {
   auth: AuthState
 }
 
+/** Cung cấp trạng thái phiên từ Redux cùng hai thao tác login/logout cho UI. */
 export function useAuth() {
   const dispatch = useDispatch()
   const {
@@ -27,9 +28,11 @@ export function useAuth() {
     bootstrapError,
   } = useSelector((state: RootAuthState) => state.auth)
 
+  // Mở generation mới, login, lưu refresh token, lấy /me rồi mới xác nhận đăng nhập.
+  // Bỏ kết quả async nếu generation đã đổi; lỗi /me chỉ xóa phiên vẫn thuộc generation này.
   const login = useCallback(
     async (credentials: LoginRequest) => {
-      // 1. Advance generation and reset RTK query cache so old session data cannot pollute new session
+      // 1. Tăng generation và xóa cache để dữ liệu phiên cũ không ảnh hưởng phiên mới.
       dispatch(startSession())
       dispatch(baseApi.util.resetApiState())
 
@@ -39,10 +42,10 @@ export function useAuth() {
           getState().auth.sessionGeneration,
       )
 
-      // 2. Direct login call — keeps credentials and refresh tokens out of RTK Query mutation cache
+      // 2. Gọi login trực tiếp để không đưa credential vào cache mutation của RTK Query.
       const loginResponse = await loginApi(credentials)
 
-      // 3. Race condition check: drop response if generation changed while network was in flight
+      // 3. Bỏ phản hồi nếu generation đã đổi trong lúc request đang chạy.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let currentGen = (dispatch as any)(
         (_: unknown, getState: () => RootAuthState) =>
@@ -57,14 +60,14 @@ export function useAuth() {
         throw new Error('Dữ liệu token trả về từ máy chủ không hợp lệ')
       }
 
-      // 4. Save refresh token to sessionStorage; fail-closed if write fails
+      // 4. Lưu refresh token vào sessionStorage; dừng an toàn nếu ghi thất bại.
       const saved = tokenStorage.setRefreshToken(tokenData.refresh_token)
       if (!saved) {
         dispatch(clearAuthLocal())
         throw new Error('Không thể lưu phiên đăng nhập vào trình duyệt. Vui lòng thử lại.')
       }
 
-      // 5. Temporarily register access token in memory to authenticate the subsequent /me request
+      // 5. Tạm lưu access token trong bộ nhớ để xác thực request /me tiếp theo.
       dispatch(
         updateAccessToken({
           accessToken: tokenData.access_token,
@@ -73,7 +76,7 @@ export function useAuth() {
       )
 
       try {
-        // 6. Fetch authoritative current user profile from GET /api/v1/auth/me before opening route
+        // 6. Lấy hồ sơ hiện hành từ GET /api/v1/auth/me trước khi mở route.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const meRes = await (dispatch as any)(
           authApi.endpoints.getMe.initiate(undefined, { forceRefetch: true }),
@@ -92,7 +95,7 @@ export function useAuth() {
           throw new Error('Không nhận được thông tin hồ sơ người dùng từ /me')
         }
 
-        // 7. Commit authenticated credentials and profile
+        // 7. Ghi nhận profile và token để hoàn tất đăng nhập.
         dispatch(
           setCredentials({
             user: meRes.data,
@@ -103,7 +106,7 @@ export function useAuth() {
 
         return tokenData
       } catch (meError) {
-        // CRITICAL FIX: Only clear auth local if the current generation still matches startGen!
+        // Chỉ xóa phiên cục bộ nếu generation vẫn khớp với phiên bắt đầu request.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         currentGen = (dispatch as any)(
           (_: unknown, getState: () => RootAuthState) =>
@@ -120,20 +123,21 @@ export function useAuth() {
     [dispatch],
   )
 
+  // Xóa phiên cục bộ ngay, sau đó mới gọi BE revoke; thông báo phản ánh kết quả từng bước.
   const logout = useCallback(async () => {
-    // 1. Snapshot access token before clearing local state
+    // 1. Lưu tạm access token trước khi xóa trạng thái cục bộ.
     const snapshotToken = accessToken
 
-    // 2. Synchronously clear auth state, storage tombstone, and RTK Query cache before any await
+    // 2. Xóa state, xử lý storage/tombstone và xóa cache trước khi đợi request mạng.
     dispatch(clearAuthLocal())
     const clearResult = tokenStorage.clearRefreshToken()
     dispatch(baseApi.util.resetApiState())
 
-    // 3. Inform backend to revoke server session (if access token was present)
+    // 3. Yêu cầu backend thu hồi phiên nếu có access token.
     if (snapshotToken) {
       try {
         await logoutApi(snapshotToken)
-        // Case A: Server revoke verified
+        // Trường hợp A: máy chủ đã xác nhận thu hồi phiên.
         if (clearResult.status === 'CLEARED') {
           toast.success('Đăng xuất thành công. Đã thu hồi phiên trên máy chủ.')
         } else if (clearResult.status === 'TOMBSTONED') {
@@ -142,7 +146,7 @@ export function useAuth() {
           toast.warning('Đã thu hồi phiên trên máy chủ. Không thể xóa bộ nhớ cục bộ; vui lòng đóng trình duyệt.')
         }
       } catch {
-        // Case B: Server revoke failed
+        // Trường hợp B: không xác nhận được việc thu hồi phiên trên máy chủ.
         if (clearResult.status === 'CLEARED') {
           toast.warning(
             'Đã đăng xuất trên thiết bị. Không thể thu hồi phiên trên máy chủ do sự cố kết nối.',
@@ -158,7 +162,7 @@ export function useAuth() {
         }
       }
     } else {
-      // Case C: Access token was missing -> Backend revoke was NOT CALLED / UNVERIFIED
+      // Trường hợp C: không có access token, chưa gọi và chưa xác nhận thu hồi trên BE.
       if (clearResult.status === 'CLEARED') {
         toast.warning(
           'Đã đăng xuất trên thiết bị. Chưa xác nhận thu hồi phiên trên máy chủ do thiếu token xác thực.',

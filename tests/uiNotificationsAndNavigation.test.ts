@@ -24,6 +24,7 @@ const { useAuth } = await import('../src/features/iam/hooks/useAuth.ts')
 const { ProtectedRoute } = await import('../src/features/iam/components/ProtectedRoute.tsx')
 const { LoginPage } = await import('../src/pages/auth/LoginPage.tsx')
 const { getApiBaseUrl } = await import('../src/shared/api/reauthBaseQuery.ts')
+const { resolveApiBaseUrl } = await import('../src/shared/api/apiBaseUrl.ts')
 
 // In-memory mock storage
 class MockStorage implements Storage {
@@ -685,22 +686,19 @@ test('CORS Integration — getApiBaseUrl returns relative /api/v1 in browser to 
   }
 })
 
-test('CORS Integration — getApiBaseUrl intercepts direct localhost:8080 and normalizes to /api/v1 in browser', () => {
-  const originalWindow = globalThis.window
-  try {
-    // @ts-expect-error Mocking browser window
-    globalThis.window = {
-      location: { origin: 'http://localhost:5173' },
-      sessionStorage: mockStorage,
-    }
+test('API configuration — browser uses the configured value without rewriting hosts', () => {
+  assert.strictEqual(resolveApiBaseUrl('/api/v1', 'browser'), '/api/v1')
+  assert.strictEqual(resolveApiBaseUrl('http://localhost:8080/api/v1', 'browser'), 'http://localhost:8080/api/v1')
+  assert.strictEqual(resolveApiBaseUrl('http://127.0.0.1:8080/api/v1', 'browser'), 'http://127.0.0.1:8080/api/v1')
+  assert.strictEqual(resolveApiBaseUrl('https://example.test/api/v1', 'browser'), 'https://example.test/api/v1')
+  assert.strictEqual(resolveApiBaseUrl(undefined, 'browser'), '/api/v1')
+  assert.strictEqual(resolveApiBaseUrl('', 'browser'), '/api/v1')
+})
 
-    // Even if an env var pointed to http://localhost:8080/api/v1, browser calls must not bypass Vite proxy
-    const baseUrl = getApiBaseUrl()
-    assert.strictEqual(baseUrl.startsWith('http://localhost:8080'), false)
-    assert.strictEqual(baseUrl, '/api/v1')
-  } finally {
-    globalThis.window = originalWindow
-  }
+test('API configuration — Node uses an absolute URL or the test fallback', () => {
+  assert.strictEqual(resolveApiBaseUrl('https://example.test/api/v1', 'node'), 'https://example.test/api/v1')
+  assert.strictEqual(resolveApiBaseUrl('/api/v1', 'node'), 'http://localhost/api/v1')
+  assert.strictEqual(resolveApiBaseUrl(undefined, 'node'), 'http://localhost/api/v1')
 })
 
 test('CORS Integration — getApiBaseUrl returns absolute URL in Node test environment', () => {

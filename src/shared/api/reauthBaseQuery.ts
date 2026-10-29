@@ -7,6 +7,9 @@ import {
 import { tokenStorage } from '../lib/tokenStorage.ts'
 import { clearAuthLocal, updateAccessToken } from './authActions.ts'
 import type { ApiResponse } from './types.ts'
+import { getApiBaseUrl } from './apiBaseUrl.ts'
+
+export { getApiBaseUrl } from './apiBaseUrl.ts'
 
 interface AuthStateSlice {
   accessToken: string | null
@@ -30,34 +33,14 @@ interface ActiveRefreshState {
 
 let activeRefresh: ActiveRefreshState | null = null
 
+/** Xóa tham chiếu refresh đang chạy để cô lập các test; không phải thao tác logout. */
 export function _resetActiveRefreshForTesting(): void {
   activeRefresh = null
 }
 
-export function getApiBaseUrl(): string {
-  // If in browser (window.location is defined)
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    const envUrl =
-      typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_BASE_URL : undefined
-    // Prevent direct cross-origin calls to backend host from browser in dev
-    if (envUrl && !envUrl.startsWith('http://localhost:8080')) {
-      return envUrl
-    }
-    // Default to relative /api/v1 so browser requests go through Vite dev proxy
-    return '/api/v1'
-  }
-
-  // In test / Node.js non-browser environment, fetch requires an absolute URL with scheme
-  const envUrl =
-    typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_BASE_URL : undefined
-  if (envUrl && envUrl.startsWith('http')) {
-    return envUrl
-  }
-  return 'http://localhost/api/v1'
-}
-
 export const rawBaseQuery = fetchBaseQuery({
   baseUrl: getApiBaseUrl(),
+  // Thêm bearer token hiện có trong Redux nếu request chưa đặt Authorization.
   prepareHeaders: (headers, { getState }) => {
     if (!headers.has('authorization')) {
       const token = (getState() as AppState)?.auth?.accessToken
@@ -69,22 +52,22 @@ export const rawBaseQuery = fetchBaseQuery({
   },
 })
 
+/** Gửi request, xử lý 401 bằng refresh single-flight và loại phản hồi thuộc phiên cũ. */
 export const reauthBaseQuery: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  // CRITICAL: Snapshot session generation BEFORE the initial network request
+  // Chụp generation trước request đầu tiên để phát hiện phiên thay đổi.
   const initialAppState = api.getState() as AppState
   const requestGen = initialAppState.auth?.sessionGeneration ?? 0
 
   let result = await rawBaseQuery(args, api, extraOptions)
 
-  // Verify that the session has not changed or ended while this request was in flight
+  // Kiểm tra phiên không đổi hoặc kết thúc trong khi request đang chạy.
   const postRequestGen = (api.getState() as AppState)?.auth?.sessionGeneration ?? 0
   if (postRequestGen !== requestGen) {
-    // Critical: Do NOT return stale result to RTK Query cache!
-    // Returning an error prevents late data from Account A from populating Account B's cache.
+    // Trả lỗi thay vì đưa phản hồi cũ của tài khoản A vào cache của tài khoản B.
     return {
       error: {
         status: 'CUSTOM_ERROR',
@@ -99,7 +82,7 @@ export const reauthBaseQuery: BaseQueryFn<
     requestUrl.includes('/auth/refresh') ||
     requestUrl.includes('/auth/logout')
 
-  // Handle 403 Forbidden: AUTH_008 terminates local session; 403 never triggers refresh
+  // Lỗi 403 không kích hoạt refresh; AUTH_008 kết thúc phiên cục bộ.
   if (result.error?.status === 403) {
     const errorData = result.error.data as { code?: string } | undefined
     if (errorData?.code === 'AUTH_008') {
@@ -109,16 +92,16 @@ export const reauthBaseQuery: BaseQueryFn<
     return result
   }
 
-  // Only handle 401 on non-auth endpoints
+  // Chỉ xử lý refresh cho lỗi 401 từ endpoint không thuộc nhóm auth này.
   if (result.error?.status !== 401 || isAuthEndpoint) {
     return result
   }
 
-  // Single-flight refresh token coordination
+  // Các request cùng generation dùng chung một lần làm mới token.
   if (!activeRefresh || activeRefresh.generation !== requestGen) {
     const refreshPromise = (async (): Promise<RefreshOutcome> => {
       try {
-        // Pop refresh token: fail-closed before any network call
+        // Lấy và xóa refresh token trước khi gọi mạng; dừng nếu không lấy được.
         const refreshToken = tokenStorage.popRefreshToken()
         if (!refreshToken) {
           api.dispatch(clearAuthLocal())
@@ -135,7 +118,7 @@ export const reauthBaseQuery: BaseQueryFn<
           extraOptions,
         )
 
-        // Drop response if session generation changed during the refresh network call
+        // Bỏ phản hồi nếu generation đã đổi trong lúc làm mới.
         const currentGen = (api.getState() as AppState)?.auth?.sessionGeneration ?? 0
         if (currentGen !== requestGen) {
           return { success: false, generation: requestGen }
@@ -151,15 +134,15 @@ export const reauthBaseQuery: BaseQueryFn<
 
           const tokenData = envelope.data
           if (tokenData?.access_token && tokenData?.refresh_token) {
-            // Save new refresh token into sessionStorage
+            // Lưu refresh token mới vào sessionStorage.
             const saved = tokenStorage.setRefreshToken(tokenData.refresh_token)
             if (!saved) {
-              // Storage write failure -> fail-closed per Spec §7
+              // Không lưu được token thì kết thúc phiên cục bộ theo spec §7.
               api.dispatch(clearAuthLocal())
               return { success: false, generation: requestGen }
             }
 
-            // Update in-memory access token
+            // Cập nhật access token trong bộ nhớ.
             api.dispatch(
               updateAccessToken({
                 accessToken: tokenData.access_token,
@@ -175,11 +158,11 @@ export const reauthBaseQuery: BaseQueryFn<
           }
         }
 
-        // Refresh failed (401 invalid/expired/reused or error response)
+        // Refresh thất bại hoặc phản hồi không có cặp token hợp lệ.
         api.dispatch(clearAuthLocal())
         return { success: false, generation: requestGen }
       } catch {
-        // Network or unexpected failure: do NOT retry old refresh token
+        // Lỗi mạng hoặc lỗi bất ngờ: không thử lại refresh token cũ.
         api.dispatch(clearAuthLocal())
         return { success: false, generation: requestGen }
       }
@@ -190,7 +173,7 @@ export const reauthBaseQuery: BaseQueryFn<
       promise: refreshPromise,
     }
 
-    // High: Clean up activeRefresh on settle based on promise identity
+    // Xóa tham chiếu khi promise kết thúc, chỉ nếu nó vẫn là lần refresh hiện tại.
     refreshPromise.finally(() => {
       if (activeRefresh?.promise === refreshPromise) {
         activeRefresh = null
@@ -200,15 +183,15 @@ export const reauthBaseQuery: BaseQueryFn<
 
   const outcome = await activeRefresh.promise
 
-  // Retry original request only if refresh succeeded and generation remains identical
+  // Chỉ thử lại request ban đầu nếu refresh thành công và generation không đổi.
   const finalGen = (api.getState() as AppState)?.auth?.sessionGeneration ?? 0
   if (outcome.success && finalGen === requestGen) {
     result = await rawBaseQuery(args, api, extraOptions)
 
-    // Verify session generation AGAIN after the retry request completes
+    // Kiểm tra lại generation sau khi request thử lại hoàn tất.
     const postRetryGen = (api.getState() as AppState)?.auth?.sessionGeneration ?? 0
     if (postRetryGen !== requestGen) {
-      // Stale retry response discarded: prevents Account A retry data from entering Account B cache
+      // Loại phản hồi cũ để dữ liệu tài khoản A không vào cache của tài khoản B.
       return {
         error: {
           status: 'CUSTOM_ERROR',

@@ -4,6 +4,7 @@ import { tokenStorage } from '../../../shared/lib/tokenStorage.ts'
 import { useAuth } from '../hooks/useAuth.ts'
 import { triggerAuthBootstrap } from '../hooks/useAuthBootstrap.ts'
 
+/** Chờ khôi phục phiên, hiển thị lỗi có thể thử lại hoặc chỉ render route con khi đã đăng nhập. */
 export function ProtectedRoute() {
   const { isAuthenticated, isBootstrapping, bootstrapError } = useAuth()
   const dispatch = useDispatch()

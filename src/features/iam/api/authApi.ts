@@ -1,5 +1,5 @@
 import { baseApi } from '../../../shared/api/baseApi.ts'
-import { getApiBaseUrl } from '../../../shared/api/reauthBaseQuery.ts'
+import { getApiBaseUrl } from '../../../shared/api/apiBaseUrl.ts'
 import type { ApiResponse } from '../../../shared/api/types.ts'
 import type {
   CurrentUserResponseData,
@@ -10,6 +10,7 @@ import type {
 
 const API_BASE = getApiBaseUrl()
 
+/** Gửi request auth trực tiếp, đọc envelope JSON và ném lỗi có status/data để UI phân loại. */
 async function safeFetch<T>(
   url: string,
   options: RequestInit,
@@ -31,7 +32,7 @@ async function safeFetch<T>(
   try {
     json = (await response.json()) as ApiResponse<T>
   } catch {
-    // Response body is not valid JSON (e.g. 502/503 HTML from reverse proxy or gateway)
+    // Phản hồi không phải JSON hợp lệ (ví dụ trang HTML lỗi 502/503 từ proxy).
     const parseErr = new Error(
       response.status >= 500
         ? 'Dịch vụ xác thực tạm thời không khả dụng (Lỗi máy chủ).'
@@ -60,9 +61,9 @@ async function safeFetch<T>(
 }
 
 /**
- * Direct API caller for login.
- * Kept outside of RTK Query mutation state so that sensitive credentials
- * (passwords, refresh tokens) do not enter Redux actions or mutation cache.
+ * Gọi API đăng nhập trực tiếp ngoài RTK Query để mật khẩu và refresh token
+ * không đi vào Redux action hoặc cache của mutation.
+ * Gửi email đã trim và mật khẩu tới BE; trả envelope chứa cặp token và user.
  */
 export async function loginApi(
   credentials: LoginRequest,
@@ -84,8 +85,8 @@ export async function loginApi(
 }
 
 /**
- * Direct API caller for token refresh.
- * Keeps refresh token rotation out of RTK Query mutation cache.
+ * Gọi API làm mới token trực tiếp, tránh lưu refresh token trong cache mutation.
+ * Gửi refresh token một lần để nhận cặp token mới; hàm gọi chịu trách nhiệm lưu token.
  */
 export async function refreshApi(
   refreshToken: string,
@@ -106,7 +107,8 @@ export async function refreshApi(
 }
 
 /**
- * Direct API caller for logout session revocation.
+ * Gọi API đăng xuất trực tiếp để yêu cầu thu hồi phiên.
+ * Dùng access token đã chụp trước khi xóa state để yêu cầu BE thu hồi phiên.
  */
 export async function logoutApi(
   accessToken: string,
@@ -124,16 +126,17 @@ export async function logoutApi(
 }
 
 /**
- * RTK Query endpoints for safe non-credential data (current user profile).
+ * Endpoint RTK Query cho dữ liệu hồ sơ không chứa credential.
  */
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    // Lấy hồ sơ hiện hành; base query tự gắn bearer token và xử lý refresh khi cần.
     getMe: builder.query<ApiResponse<CurrentUserResponseData>, void>({
       query: () => ({
         url: '/auth/me',
         method: 'GET',
       }),
-      // Always fetch fresh IAM profile without stale caching
+      // Không giữ cache hồ sơ sau khi không còn component sử dụng.
       keepUnusedDataFor: 0,
     }),
   }),

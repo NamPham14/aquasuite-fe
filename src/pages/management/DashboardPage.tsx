@@ -1,208 +1,178 @@
-import { useState } from 'react'
-import { toast } from 'sonner'
+import { Link } from 'react-router-dom'
+import {
+  TrendingUp,
+  ShoppingCart,
+  Package,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Ban,
+} from 'lucide-react'
 import { useAuth } from '../../features/iam/hooks/useAuth.ts'
-import { authApi } from '../../features/iam/api/authApi.ts'
-import { setUserProfile } from '../../features/iam/model/authSlice.ts'
-import { useAppDispatch } from '../../app/store.ts'
-import { CANONICAL_ROLES, type CanonicalRole } from '../../features/iam/types/auth.types.ts'
-import { normalizeApiError } from '../../shared/api/apiError.ts'
 
-const ROLE_DEFINITIONS: Record<CanonicalRole, string> = {
-  SHOP_OWNER: 'Vai trò Chủ cửa hàng theo định danh hệ thống BE.',
-  SALES_STAFF: 'Vai trò Nhân viên bán hàng theo định danh hệ thống BE.',
-  ACCOUNTANT: 'Vai trò Kế toán theo định danh hệ thống BE.',
-  TECHNICAL_STAFF: 'Vai trò Nhân viên kỹ thuật theo định danh hệ thống BE.',
-  SHIPPER: 'Vai trò Nhân viên giao nhận theo định danh hệ thống BE.',
-  CUSTOMER: 'Vai trò Khách hàng theo định danh hệ thống BE.',
-}
+// Mock KPI metrics data
+const MOCK_METRICS = [
+  {
+    id: 'revenue',
+    label: 'Tổng doanh thu',
+    value: '128.500.000 ₫',
+    change: '+12.5% so với tháng trước',
+    changeType: 'positive' as const,
+    icon: TrendingUp,
+  },
+  {
+    id: 'orders',
+    label: 'Tổng đơn hàng',
+    value: '1.240',
+    unit: 'đơn hàng',
+    change: '+8.2% so với tháng trước',
+    changeType: 'positive' as const,
+    icon: ShoppingCart,
+  },
+  {
+    id: 'products',
+    label: 'Tổng sản phẩm',
+    value: '350',
+    unit: 'sản phẩm',
+    change: '+15 sản phẩm mới trong tháng',
+    changeType: 'neutral' as const,
+    icon: Package,
+  },
+  {
+    id: 'low-stock',
+    label: 'Sản phẩm sắp hết hàng',
+    value: '12',
+    unit: 'sản phẩm',
+    change: 'Cần bổ sung kho dự trữ',
+    changeType: 'warning' as const,
+    icon: AlertTriangle,
+  },
+]
+
+// Mock Monthly Revenue data
+const MOCK_MONTHLY_REVENUE = [
+  { month: 'Tháng 5', shortMonth: 'T5', value: 95000000, formatted: '95.000.000 ₫', heightPercent: 63, isCurrent: false },
+  { month: 'Tháng 6', shortMonth: 'T6', value: 105000000, formatted: '105.000.000 ₫', heightPercent: 70, isCurrent: false },
+  { month: 'Tháng 7', shortMonth: 'T7', value: 112000000, formatted: '112.000.000 ₫', heightPercent: 75, isCurrent: false },
+  { month: 'Tháng 8', shortMonth: 'T8', value: 118000000, formatted: '118.000.000 ₫', heightPercent: 79, isCurrent: false },
+  { month: 'Tháng 9', shortMonth: 'T9', value: 122000000, formatted: '122.000.000 ₫', heightPercent: 81, isCurrent: false },
+  { month: 'Tháng 10', shortMonth: 'T10', value: 128500000, formatted: '128.500.000 ₫', heightPercent: 86, isCurrent: true },
+]
+
+// Mock Inventory Status data
+const MOCK_INVENTORY_STATUS = [
+  {
+    status: 'Còn hàng',
+    count: 285,
+    percentage: 81.4,
+    colorClass: 'bg-emerald-500',
+    textColor: 'text-emerald-700',
+    icon: CheckCircle2,
+    description: 'Số lượng tồn an toàn, sẵn sàng xuất kho',
+  },
+  {
+    status: 'Sắp hết hàng',
+    count: 12,
+    percentage: 3.4,
+    colorClass: 'bg-amber-500',
+    textColor: 'text-amber-700',
+    icon: AlertTriangle,
+    description: 'Dưới mức định mức tối thiểu, cần đặt thêm',
+  },
+  {
+    status: 'Hết hàng',
+    count: 38,
+    percentage: 10.9,
+    colorClass: 'bg-rose-500',
+    textColor: 'text-rose-700',
+    icon: XCircle,
+    description: 'Kho đã hết sản phẩm, tạm dừng giao',
+  },
+  {
+    status: 'Ngừng kinh doanh',
+    count: 15,
+    percentage: 4.3,
+    colorClass: 'bg-slate-400',
+    textColor: 'text-slate-600',
+    icon: Ban,
+    description: 'Mẫu cũ đã ngừng nhập mới',
+  },
+]
 
 export function DashboardPage() {
-  const { user, logout, sessionGeneration } = useAuth()
-  const dispatch = useAppDispatch()
-  const [isRefreshingProfile, setIsRefreshingProfile] = useState(false)
-
-  const handleRefreshProfile = async () => {
-    setIsRefreshingProfile(true)
-    try {
-      const res = await dispatch(
-        authApi.endpoints.getMe.initiate(undefined, { forceRefetch: true }),
-      ).unwrap()
-      if (res.data) {
-        // High Fix: Update Redux state so the Dashboard UI immediately re-renders
-        dispatch(
-          setUserProfile({
-            user: res.data,
-            generation: sessionGeneration,
-          }),
-        )
-        toast.success(`Đã cập nhật hồ sơ người dùng (${res.data.username})`)
-      }
-    } catch (err: unknown) {
-      const error = normalizeApiError(err)
-      toast.error(`Không thể làm mới hồ sơ: ${error.message}`)
-    } finally {
-      setIsRefreshingProfile(false)
-    }
-  }
-
-  const assignedRoles = user?.roles ?? []
+  const { user } = useAuth()
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Banner */}
-      <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Xin chào, {user?.username || 'Người dùng'}!
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Bảng điều khiển AquaSuite Management Mockup (MVP).
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void handleRefreshProfile()}
-              disabled={isRefreshingProfile}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
-            >
-              {isRefreshingProfile ? 'Đang tải...' : 'Làm mới hồ sơ (/me)'}
-            </button>
-            <button
-              type="button"
-              onClick={() => void logout()}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
-            >
-              Đăng xuất
-            </button>
-          </div>
+    <div className="space-y-5">
+      <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
+        <Link to="/app/dashboard" className="hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-sky-600">Trang chủ</Link>
+        <span aria-hidden="true"> / </span><span aria-current="page">Bảng điều khiển</span>
+        <Link to="/app/system-info" className="ml-3 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-sky-600">Hồ sơ cá nhân</Link>
+      </nav>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Bảng điều khiển kinh doanh</h1>
+          <p className="mt-1 text-sm text-slate-500">Xin chào, {user?.username || 'Quản trị viên'}! Dưới đây là tổng quan hoạt động kinh doanh của cửa hàng.</p>
         </div>
+        <span className="rounded-md bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-800">Dữ liệu mẫu / Minh họa</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* User Identity Card */}
-        <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 border-gray-100">
-            Thông tin định danh hiện hành (Current User từ /me)
-          </h2>
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 text-sm">
-            <div>
-              <dt className="text-xs font-medium text-gray-400">User ID (UUID)</dt>
-              <dd className="font-mono text-gray-800 break-all">{user?.id || 'Chưa xác định'}</dd>
+      <section aria-label="Chỉ số tổng quan kinh doanh" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {MOCK_METRICS.map((metric) => (
+          <div key={metric.id} className="min-w-0 rounded-md border border-slate-200 bg-white p-4">
+            <div className="text-sm text-slate-700">{metric.label}</div>
+            <div className="mt-1 text-2xl font-bold tracking-tight tabular-nums text-slate-950">{metric.value}</div>
+            <div className={`mt-2 inline-flex rounded-md px-1.5 py-0.5 text-xs font-semibold ${metric.changeType === 'warning' ? 'bg-amber-100 text-amber-800' : metric.changeType === 'positive' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
+              {metric.change.split(' so với')[0]}
             </div>
-            <div>
-              <dt className="text-xs font-medium text-gray-400">Tên người dùng (Username)</dt>
-              <dd className="font-medium text-gray-800">{user?.username || 'N/A'}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-gray-400">Địa chỉ Email</dt>
-              <dd className="font-medium text-gray-800">{user?.email || 'N/A'}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-gray-400">Session Generation</dt>
-              <dd className="font-mono text-blue-600 font-semibold">{sessionGeneration}</dd>
-            </div>
-          </dl>
+            <div className="mt-1 text-xs text-slate-500">{metric.change.includes('so với') ? 'So với tháng trước' : metric.unit || 'Cần nhập thêm'}</div>
+          </div>
+        ))}
+      </section>
 
-          <div className="pt-2">
-            <span className="text-xs font-medium text-gray-400 block mb-1">
-              Vai trò thực tế được cấp (từ API /me):
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {assignedRoles.length > 0 ? (
-                assignedRoles.map((role: string) => (
-                  <span
-                    key={role}
-                    className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200"
-                  >
-                    {role}
-                  </span>
-                ))
-              ) : (
-                <span className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200">
-                  Người dùng chưa có vai trò nào được gán trong hệ thống.
-                </span>
-              )}
+      <section aria-label="Biểu đồ kinh doanh" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-md border border-slate-200 bg-white p-4">
+          <h2 className="text-base font-bold text-slate-900">Biểu đồ doanh thu 6 tháng gần nhất</h2>
+          <div className="mt-5 flex h-44 text-xs text-slate-500" role="img" aria-label="Doanh thu từ tháng 5 đến tháng 10, từ 95 đến 128,5 triệu đồng">
+            <div className="flex flex-col justify-between pr-2 pb-6 text-right tabular-nums"><span>150M</span><span>100M</span><span>50M</span><span>0</span></div>
+            <div className="relative flex-1 min-w-0">
+              <div aria-hidden="true" className="absolute inset-x-0 top-0 bottom-6 flex flex-col justify-between border-l border-slate-200"><div className="border-t border-slate-100"/><div className="border-t border-slate-100"/><div className="border-t border-slate-100"/><div className="border-t border-slate-200"/></div>
+              <div className="relative flex h-full items-end justify-around gap-2 px-2">
+                {MOCK_MONTHLY_REVENUE.map((item) => (
+                  <div key={item.month} className="flex h-full min-w-0 flex-1 flex-col items-center">
+                    <div className="flex w-full flex-1 items-end justify-center">
+                      <div className={`relative w-full max-w-10 rounded-t ${item.isCurrent ? 'bg-sky-600' : 'bg-slate-300'}`} style={{ height: `${item.value / 1500000}%` }}>
+                        <span className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-slate-700 tabular-nums">{(item.value / 1000000).toLocaleString('vi-VN')}M</span>
+                      </div>
+                    </div>
+                    <span className="flex h-6 shrink-0 items-end">{item.shortMonth}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+          <p className="mt-3 text-xs text-slate-500">Đơn vị: Triệu đồng</p>
+          <details className="mt-2 text-xs text-slate-600">
+            <summary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-sky-600">Xem bảng số liệu chi tiết (Hỗ trợ trình đọc màn hình)</summary>
+            <table className="mt-2 w-full text-left"><thead><tr><th>Tháng</th><th className="text-right">Doanh thu</th></tr></thead><tbody>{MOCK_MONTHLY_REVENUE.map((item) => <tr key={item.month}><td className="py-1">{item.month}</td><td className="text-right tabular-nums">{item.formatted}</td></tr>)}</tbody></table>
+          </details>
         </div>
-
-        {/* Session Security Card */}
-        <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 border-gray-100">
-            Mô hình bảo mật phiên (MVP Session)
-          </h2>
-          <ul className="text-xs text-gray-600 space-y-2 list-disc list-inside">
-            <li>
-              <strong>Access Token:</strong> Lưu trữ trong memory (Redux State), không lưu trong storage hay URL.
-            </li>
-            <li>
-              <strong>Refresh Token:</strong> Lưu trữ trong <code>sessionStorage</code>; fail-closed rotation (xóa storage trước khi gửi refresh, không retry token cũ khi kết quả không chắc chắn).
-            </li>
-            <li>
-              <strong>Chống Race Condition:</strong> Sử dụng <code>sessionGeneration</code> snapshot trước request đầu tiên, vô hiệu hóa toàn bộ response async thuộc phiên cũ.
-            </li>
-            <li>
-              <strong>Quyền hạn (Permissions):</strong> Backend thực thi phân quyền trên từng endpoint API; frontend chỉ hiển thị vai trò và không suy diễn permissions.
-            </li>
-          </ul>
+        <div className="rounded-md border border-slate-200 bg-white p-4">
+          <h2 className="text-base font-bold text-slate-900">Biểu đồ phân loại trạng thái tồn kho</h2>
+          <div className="mt-7 flex h-8 overflow-hidden rounded-md" role="img" aria-label="Tồn kho: Còn hàng 81.4%, Sắp hết hàng 3.4%, Hết hàng 10.9%, Ngừng kinh doanh 4.3%">
+            {MOCK_INVENTORY_STATUS.map((item) => <div key={item.status} style={{ width: `${item.percentage}%` }} className={`${item.colorClass} border-r-2 border-white last:border-r-0`} />)}
+          </div>
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {MOCK_INVENTORY_STATUS.map((item) => (
+              <div key={item.status} className="min-w-0 rounded-md border border-slate-200 p-2.5">
+                <div className="flex items-center gap-1.5 text-xs text-slate-700"><span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${item.colorClass}`} />{item.status}</div>
+                <div className="mt-2 text-xl font-bold tabular-nums text-slate-950">{item.count}</div>
+                <div className="mt-1 text-xs tabular-nums text-slate-500">{item.percentage}%</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-
-      {/* Canonical Roles Table */}
-      <div className="bg-white rounded-xl shadow-xs border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Danh mục 6 Canonical Roles theo chuẩn AquaSuite BE
-        </h2>
-        <p className="text-xs text-gray-500 mb-4">
-          Ghi nhận hiện trạng: Các vai trò định nghĩa theo schema DB BE. Quyền truy cập chi tiết được máy chủ thực thi trên từng API, không suy diễn ở giao diện client.
-        </p>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tên Role Canonical
-                </th>
-                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng thái đối với tài khoản hiện tại
-                </th>
-                <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Định nghĩa định danh
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {CANONICAL_ROLES.map((role) => {
-                const isAssigned = assignedRoles.includes(role)
-                return (
-                  <tr key={role} className={isAssigned ? 'bg-blue-50/50' : undefined}>
-                    <td className="px-4 py-3 whitespace-nowrap font-mono font-medium text-xs text-gray-900">
-                      {role}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-xs">
-                      {isAssigned ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                          Đang sở hữu
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                          Chưa sở hữu (Cần tài khoản test tương ứng)
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">
-                      {ROLE_DEFINITIONS[role]}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      </section>
     </div>
   )
 }

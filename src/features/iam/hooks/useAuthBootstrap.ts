@@ -18,6 +18,7 @@ interface RootAuthState {
   auth: AuthState
 }
 
+/** Nhận diện lỗi mạng/dịch vụ để phân biệt với phiên không hợp lệ khi bootstrap. */
 function isOutageOrNetworkError(err: any): boolean {
   if (!err) return false
   const status = err.status
@@ -37,6 +38,7 @@ function isOutageOrNetworkError(err: any): boolean {
 
 let isGlobalBootstrapInProgress = false
 
+/** Khôi phục phiên: consume refresh token, đổi token, tải /me và chỉ nhận kết quả của generation hiện tại. */
 export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
   if (isGlobalBootstrapInProgress) {
     return
@@ -56,7 +58,7 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
       getState().auth.sessionGeneration,
   )
 
-  // Pop refresh token: fail-closed before network call
+  // Lấy và xóa refresh token trước khi gọi mạng; nếu xóa thất bại thì dừng.
   const refreshToken = tokenStorage.popRefreshToken()
   if (!refreshToken) {
     dispatch(clearAuthLocal())
@@ -65,7 +67,7 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
   }
 
   try {
-    // Step 1: Refresh token pair directly
+    // Bước 1: gọi trực tiếp để đổi cặp token.
     const refreshRes = await refreshApi(refreshToken)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,7 +93,7 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
       return
     }
 
-    // Save new refresh token to sessionStorage
+    // Lưu refresh token mới vào sessionStorage.
     const saved = tokenStorage.setRefreshToken(tokenData.refresh_token)
     if (!saved) {
       dispatch(clearAuthLocal())
@@ -99,7 +101,7 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
       return
     }
 
-    // Temporarily store access token in memory to authenticate /me
+    // Tạm lưu access token trong bộ nhớ để xác thực request /me.
     dispatch(
       updateAccessToken({
         accessToken: tokenData.access_token,
@@ -108,7 +110,7 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
     )
 
     try {
-      // Step 2: Fetch current authenticated user profile
+      // Bước 2: lấy hồ sơ của người dùng hiện hành.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const meRes = await (dispatch as any)(
         authApi.endpoints.getMe.initiate(undefined, { forceRefetch: true }),
@@ -150,7 +152,7 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
       }
 
       if (isOutageOrNetworkError(meError)) {
-        // Token is preserved in sessionStorage; allow retry recovery
+        // Token mới còn trong sessionStorage, có thể cho phép thử khôi phục lại.
         dispatch(
           setBootstrapError({
             type: 'SERVICE_UNAVAILABLE',
@@ -159,7 +161,7 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
           }),
         )
       } else {
-        // 401 or 403 AUTH_008: invalid session -> fail-closed
+        // Phiên không hợp lệ: xóa token và trạng thái đăng nhập cục bộ.
         tokenStorage.clearRefreshToken()
         dispatch(clearAuthLocal())
         dispatch(
@@ -184,11 +186,9 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
     dispatch(clearAuthLocal())
     dispatch(baseApi.util.resetApiState())
 
-    // The refresh token was popped from storage before this network call.
-    // Whether this failure was an outage (503), network disconnect, or 401 invalid token,
-    // the refresh token has been consumed and cannot be retried safely.
-    // Transition to SESSION_EXPIRED to prompt the user to re-authenticate,
-    // preventing an infinite error screen loop with an unrecoverable token.
+    // Refresh token đã bị xóa trước request; dù là 503, mất mạng hay 401,
+    // không thể thử lại token cũ một cách an toàn. Yêu cầu đăng nhập lại
+    // để tránh lặp vô hạn với token không thể khôi phục.
     const message = isOutageOrNetworkError(refreshError)
       ? 'Dịch vụ xác thực tạm thời không khả dụng trong quá trình khôi phục phiên (503 / Mất kết nối). Vui lòng đăng nhập lại.'
       : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
@@ -205,7 +205,8 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
 }
 
 /**
- * Root bootstrap hook. Must ONLY be mounted once at application root (src/App.tsx).
+ * Hook khôi phục phiên; chỉ mount một lần tại gốc ứng dụng (src/App.tsx).
+ * Kích hoạt bootstrap khi App mount; ref tránh gọi lại trong cùng vòng đời component.
  */
 export function useAuthBootstrap() {
   const dispatch = useDispatch()
