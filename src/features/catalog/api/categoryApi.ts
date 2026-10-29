@@ -12,7 +12,7 @@ export const categoryApi = baseApi.injectEndpoints({
       query: (params) => ({ url: '/categories', params: params ?? undefined }),
       providesTags: (result) => [
         { type: 'Category', id: 'LIST' },
-        ...(result?.content.map(({ id }) => ({ type: 'Category' as const, id })) ?? []),
+        ...(result?.items.map(({ id }) => ({ type: 'Category' as const, id })) ?? []),
       ],
     }),
     getCategory: builder.query<Category, string>({

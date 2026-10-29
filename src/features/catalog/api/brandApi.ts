@@ -8,7 +8,7 @@ export const brandApi = baseApi.injectEndpoints({
       query: (params) => ({ url: '/brands', params: params ?? undefined }),
       providesTags: (result) => [
         { type: 'Brand', id: 'LIST' },
-        ...(result?.content.map(({ id }) => ({ type: 'Brand' as const, id })) ?? []),
+        ...(result?.items.map(({ id }) => ({ type: 'Brand' as const, id })) ?? []),
       ],
     }),
     getBrand: builder.query<Brand, string>({
