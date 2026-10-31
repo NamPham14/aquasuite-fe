@@ -1,8 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { FolderTree, Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { ManagementPageHeader, ManagementFilterBar, ManagementSearch, ManagementSelect } from '../../shared/ui/ManagementPage'
 import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
 import { ManagementDialog, ManagementForm, ManagementFormField, managementFieldClass } from '../../shared/ui/ManagementDialog'
+import { ManagementRowActions } from '../../shared/ui/ManagementRowActions'
 
 type Category = { code: string; name: string; parent: string; status: 'ACTIVE' | 'INACTIVE'; description: string; updated: string }
 type Mode = 'create' | 'edit' | 'view' | 'delete'
@@ -59,7 +61,6 @@ export function CategoriesPage() {
   const pageSize = 20
   const [page, setPage] = useState(1)
   const [dialog, setDialog] = useState<{ mode: Mode; item: Category } | null>(null)
-  const [notice, setNotice] = useState('')
   const filtered = useMemo(() => categories.filter((item) => `${item.code} ${item.name}`.toLocaleLowerCase('vi-VN').includes(search.trim().toLocaleLowerCase('vi-VN')) && (!status || item.status === status)).sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name, 'vi') : a.code.localeCompare(b.code)) * (direction === 'asc' ? 1 : -1)), [categories, search, status, sort, direction])
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const currentPage = Math.min(page, pages)
@@ -70,7 +71,11 @@ export function CategoriesPage() {
     { key: 'parent', header: 'Danh mục cha', cell: (item) => categories.find((parent) => parent.code === item.parent)?.name || 'Danh mục gốc' },
     { key: 'status', header: 'Trạng thái', cell: (item) => <span className={`rounded px-2 py-1 ${item.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-700'}`}>{item.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động'}</span> },
     { key: 'updated', header: 'Ngày cập nhật', cell: (item) => item.updated.split('-').reverse().join('/') },
-    { key: 'actions', header: 'Thao tác', cell: (item) => <div className="flex gap-1">{(['view', 'edit', 'delete'] as const).map((mode) => <button key={mode} type="button" onClick={() => setDialog({ mode, item })} aria-label={`${mode === 'view' ? 'Xem' : mode === 'edit' ? 'Sửa' : 'Xóa'} ${item.name}`} className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-sky-600">{mode === 'view' ? 'Xem' : mode === 'edit' ? 'Sửa' : 'Xóa'}</button>)}</div> },
+    { key: 'actions', header: 'Thao tác', cell: (item) => <ManagementRowActions actions={[
+      { variant: 'view', label: 'Xem', ariaLabel: `Xem ${item.name}`, onClick: () => setDialog({ mode: 'view', item }) },
+      { variant: 'edit', label: 'Sửa', ariaLabel: `Sửa ${item.name}`, onClick: () => setDialog({ mode: 'edit', item }) },
+      { variant: 'delete', label: 'Xóa', ariaLabel: `Xóa ${item.name}`, onClick: () => setDialog({ mode: 'delete', item }) },
+    ]} /> },
   ]
   const hasChildren = dialog?.mode === 'delete' && categories.some((category) => category.parent === dialog.item.code)
   return <div className="space-y-5">
@@ -81,11 +86,10 @@ export function CategoriesPage() {
       <ManagementSelect id="category-filter" label="Trạng thái" value={status} onChange={(value) => { setStatus(value); setPage(1) }}><option value="">Tất cả</option><option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Ngừng hoạt động</option></ManagementSelect>
       <ManagementSelect id="category-sort" label="Sắp xếp theo" value={sort} onChange={setSort}><option value="code">Mã</option><option value="name">Tên</option></ManagementSelect>
       <ManagementSelect id="category-direction" label="Thứ tự" value={direction} onChange={setDirection}><option value="asc">Tăng dần</option><option value="desc">Giảm dần</option></ManagementSelect>
-      <button type="button" className={button} onClick={() => { setSearch(''); setStatus(''); setSort('code'); setDirection('asc'); setPage(1); setNotice('') }}>Làm mới</button>
+      <button type="button" className={button} onClick={() => { setSearch(''); setStatus(''); setSort('code'); setDirection('asc'); setPage(1) }}>Làm mới</button>
     </ManagementFilterBar>
-    {notice && <p role="status" className="rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</p>}
     <section className="overflow-hidden rounded-lg border border-slate-200 bg-white"><h2 id="category-list" className="px-4 py-4 text-base font-semibold text-slate-900">Danh sách danh mục</h2><ManagementTable columns={columns} rows={rows} rowKey={(item) => item.code} labelledBy="category-list" emptyMessage="Không tìm thấy danh mục phù hợp." /><div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-600"><div className="flex items-center gap-3"><button className={button} type="button" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Trước</button><span>Trang {currentPage} / {pages}</span><button className={button} type="button" disabled={currentPage >= pages} onClick={() => setPage(currentPage + 1)}>Tiếp</button></div><span>Tổng số: {filtered.length} danh mục mẫu</span></div></section>
-    {dialog && dialog.mode !== 'delete' && <CategoryForm key={`${dialog.mode}-${dialog.item.code}`} mode={dialog.mode} item={dialog.item} categories={categories} onClose={() => setDialog(null)} onSave={(item) => { setCategories((previous) => dialog.mode === 'create' ? [...previous, item] : previous.map((category) => category.code === item.code ? item : category)); setDialog(null); setNotice(dialog.mode === 'create' ? 'Đã tạo danh mục mẫu.' : 'Đã cập nhật danh mục mẫu.') }} />}
-    {dialog?.mode === 'delete' && <ManagementDialog title="Xác nhận xóa danh mục" onClose={() => setDialog(null)}><div className="space-y-4 p-6"><p className="font-medium">{dialog.item.code} — {dialog.item.name}</p><p className={`rounded-md p-3 text-sm ${hasChildren ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800'}`}>{hasChildren ? 'Không thể xóa danh mục đang có danh mục con.' : 'Danh mục mẫu này sẽ bị xóa khỏi danh sách trong phiên hiện tại.'}</p><div className="flex justify-end gap-2"><button type="button" className={button} onClick={() => setDialog(null)}>Hủy</button><button type="button" disabled={!!hasChildren} className={`${button} text-red-700`} onClick={() => { setCategories((previous) => previous.filter((item) => item.code !== dialog.item.code)); setDialog(null); setNotice('Đã xóa danh mục mẫu.') }}>Xóa danh mục</button></div></div></ManagementDialog>}
+    {dialog && dialog.mode !== 'delete' && <CategoryForm key={`${dialog.mode}-${dialog.item.code}`} mode={dialog.mode} item={dialog.item} categories={categories} onClose={() => setDialog(null)} onSave={(item) => { setCategories((previous) => dialog.mode === 'create' ? [...previous, item] : previous.map((category) => category.code === item.code ? item : category)); setDialog(null); toast.success(dialog.mode === 'create' ? 'Đã tạo danh mục.' : 'Đã cập nhật danh mục.') }} />}
+    {dialog?.mode === 'delete' && <ManagementDialog title="Xác nhận xóa danh mục" onClose={() => setDialog(null)}><div className="space-y-4 p-6"><p className="font-medium">{dialog.item.code} — {dialog.item.name}</p><p className={`rounded-md p-3 text-sm ${hasChildren ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800'}`}>{hasChildren ? 'Không thể xóa danh mục đang có danh mục con.' : 'Danh mục mẫu này sẽ bị xóa khỏi danh sách trong phiên hiện tại.'}</p><div className="flex justify-end gap-2"><button type="button" className={button} onClick={() => setDialog(null)}>Hủy</button><button type="button" disabled={!!hasChildren} className={`${button} text-red-700`} onClick={() => { setCategories((previous) => previous.filter((item) => item.code !== dialog.item.code)); setDialog(null); toast.success('Đã xóa danh mục.') }}>Xóa danh mục</button></div></div></ManagementDialog>}
   </div>
 }

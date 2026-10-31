@@ -56,7 +56,8 @@ export const rawBaseQuery = fetchBaseQuery({
 export const reauthBaseQuery: BaseQueryFn<
   string | FetchArgs,
   unknown,
-  FetchBaseQueryError
+  FetchBaseQueryError,
+  { isRequestCurrent?: () => boolean }
 > = async (args, api, extraOptions) => {
   // Chụp generation trước request đầu tiên để phát hiện phiên thay đổi.
   const initialAppState = api.getState() as AppState
@@ -66,7 +67,7 @@ export const reauthBaseQuery: BaseQueryFn<
 
   // Kiểm tra phiên không đổi hoặc kết thúc trong khi request đang chạy.
   const postRequestGen = (api.getState() as AppState)?.auth?.sessionGeneration ?? 0
-  if (postRequestGen !== requestGen) {
+  if (postRequestGen !== requestGen || (extraOptions?.isRequestCurrent && !extraOptions.isRequestCurrent())) {
     // Trả lỗi thay vì đưa phản hồi cũ của tài khoản A vào cache của tài khoản B.
     return {
       error: {
@@ -82,13 +83,17 @@ export const reauthBaseQuery: BaseQueryFn<
     requestUrl.includes('/auth/refresh') ||
     requestUrl.includes('/auth/logout')
 
-  // Lỗi 403 không kích hoạt refresh; AUTH_008 kết thúc phiên cục bộ.
-  if (result.error?.status === 403) {
-    const errorData = result.error.data as { code?: string } | undefined
-    if (errorData?.code === 'AUTH_008') {
+  // Chỉ xử lý AUTH_008 sau khi đã xác nhận generation của response còn hiện hành.
+  const handleInactiveAccount = (response: typeof result) => {
+    if (response.error?.status === 403 && (response.error.data as { code?: string } | undefined)?.code === 'AUTH_008') {
       tokenStorage.clearRefreshToken()
       api.dispatch(clearAuthLocal())
     }
+  }
+
+  // Lỗi 403 không kích hoạt refresh.
+  if (result.error?.status === 403) {
+    handleInactiveAccount(result)
     return result
   }
 
@@ -185,12 +190,12 @@ export const reauthBaseQuery: BaseQueryFn<
 
   // Chỉ thử lại request ban đầu nếu refresh thành công và generation không đổi.
   const finalGen = (api.getState() as AppState)?.auth?.sessionGeneration ?? 0
-  if (outcome.success && finalGen === requestGen) {
+  if (outcome.success && finalGen === requestGen && (!extraOptions?.isRequestCurrent || extraOptions.isRequestCurrent())) {
     result = await rawBaseQuery(args, api, extraOptions)
 
     // Kiểm tra lại generation sau khi request thử lại hoàn tất.
     const postRetryGen = (api.getState() as AppState)?.auth?.sessionGeneration ?? 0
-    if (postRetryGen !== requestGen) {
+    if (postRetryGen !== requestGen || (extraOptions?.isRequestCurrent && !extraOptions.isRequestCurrent())) {
       // Loại phản hồi cũ để dữ liệu tài khoản A không vào cache của tài khoản B.
       return {
         error: {
@@ -199,6 +204,7 @@ export const reauthBaseQuery: BaseQueryFn<
         },
       }
     }
+    handleInactiveAccount(result)
   }
 
   return result

@@ -24,3 +24,6 @@ export { useAuthBootstrap, triggerAuthBootstrap } from './hooks/useAuthBootstrap
 export { LoginForm } from './components/LoginForm.tsx'
 export { ProtectedRoute } from './components/ProtectedRoute.tsx'
 export { PublicOnlyRoute } from './components/PublicOnlyRoute.tsx'
+export { iamAccessApi, useRolesQuery, useRoleQuery, usePermissionsQuery, usePermissionQuery, useCreatePermissionMutation, useUpdatePermissionMutation, useDeletePermissionMutation, useChangeAssignmentMutation } from './api/iamAccessApi.ts'
+export type { IamRole, IamPermission, PermissionQuery } from './api/iamAccessApi.ts'
+export { iamAccessReducer, resetIamAccess, denyIamAccess, beginIamProbe, finishIamProbe } from './model/iamAccessSlice.ts'

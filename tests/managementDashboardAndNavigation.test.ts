@@ -4,6 +4,8 @@ import { register } from 'node:module'
 import { JSDOM } from 'jsdom'
 import { configureStore } from '@reduxjs/toolkit'
 import { baseApi } from '../src/shared/api/baseApi.ts'
+import { iamAccessApi } from '../src/features/iam/api/iamAccessApi.ts'
+import { iamAccessReducer } from '../src/features/iam/model/iamAccessSlice.ts'
 import {
   authReducer,
   setCredentials,
@@ -22,6 +24,7 @@ const { act } = await import('react')
 const ReactDOMClient = await import('react-dom/client')
 const { renderToStaticMarkup } = await import('react-dom/server')
 const { ManagementTable } = await import('../src/shared/ui/ManagementTable.tsx')
+const { ManagementForm } = await import('../src/shared/ui/ManagementDialog.tsx')
 const { RouterProvider } = await import('react-router-dom')
 const { Provider } = await import('react-redux')
 
@@ -128,9 +131,11 @@ function createTestStore(authenticated = true, userOverride?: Record<string, unk
   const store = configureStore({
     reducer: {
       [baseApi.reducerPath]: baseApi.reducer,
+      [iamAccessApi.reducerPath]: iamAccessApi.reducer,
+      iamAccess: iamAccessReducer,
       auth: authReducer,
     },
-    middleware: (gDM) => gDM().concat(baseApi.middleware),
+    middleware: (gDM) => gDM().concat(baseApi.middleware, iamAccessApi.middleware),
   })
 
   if (authenticated) {
@@ -996,15 +1001,66 @@ test('Categories — shared form validates and prevents deleting a parent', asyn
   assert.equal(remove.disabled, true)
 })
 
-test('Access placeholders — routes are protected and present in navigation', async () => {
+test('Access pages — routes are protected and present in navigation', async () => {
   for (const path of ['/app/roles', '/app/permissions']) {
     const anonymous = await renderAppWithRouter(path, false)
     assert.equal(anonymous.router.state.location.pathname, '/login')
     const authenticated = await renderAppWithRouter(path, true)
     assert.ok(authenticated.container.querySelector(`#desktop-sidebar-navigation a[href="${path}"]`))
-    assert.ok(authenticated.container.textContent?.includes('Chưa kết nối dữ liệu'))
-    assert.ok(authenticated.container.querySelector('main table'))
+    assert.ok(authenticated.container.textContent?.includes(path.endsWith('roles') ? 'Quản lý Vai trò' : 'Quản lý Quyền'))
   }
+})
+
+test('Role assignment requires confirmation and cancel sends no mutation', async () => {
+  const originalFetch = globalThis.fetch
+  let mutations = 0
+  const role = { id: 'r1', code: 'SHOP_OWNER', description: 'Chủ cửa hàng', active: true, permissions: [] }
+  let releaseMutation!: (response: Response) => void
+  const pendingMutation = new Promise<Response>((resolve) => { releaseMutation = resolve })
+  globalThis.fetch = async (input) => {
+    const request = input as Request
+    if (request.method === 'PUT' || request.method === 'DELETE') { mutations++; return pendingMutation }
+    const data = request.url.includes('/iam/permissions') ? { items: [{ id: 'p1', code: 'ORDER_READ', description: 'Xem đơn' }], page: 0, size: 20, totalElements: 1, totalPages: 1 } : request.url.endsWith('/r1') ? role : [role]
+    return new Response(JSON.stringify({ success: true, data }), { status: 200, headers: { 'content-type': 'application/json' } })
+  }
+  try {
+    const { container } = await renderAppWithRouter('/app/roles', true)
+    window.HTMLDialogElement.prototype.showModal = function () { this.open = true }
+    window.HTMLDialogElement.prototype.close = function () { this.open = false }
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)) })
+    const view = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Xem quyền')!
+    assert.ok(view)
+    await act(async () => { view.click(); await new Promise((resolve) => setTimeout(resolve, 50)) })
+    const assign = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Gán quyền')!
+    assert.ok(assign)
+    await act(async () => { assign.click() })
+    assert.ok(container.querySelector('dialog')?.textContent?.includes('ORDER_READ'))
+    assert.ok(container.querySelector('dialog')?.textContent?.includes('SHOP_OWNER'))
+    assert.equal(mutations, 0)
+    const cancel = Array.from(container.querySelectorAll('dialog button')).find((button) => button.textContent === 'Hủy')!
+    await act(async () => { cancel.click() })
+    assert.equal(mutations, 0)
+    const assignAgain = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Gán quyền')!
+    await act(async () => { assignAgain.click() })
+    const confirm = Array.from(container.querySelectorAll('dialog button')).find((button) => button.textContent === 'Xác nhận')!
+    await act(async () => { confirm.click(); confirm.click(); await new Promise((resolve) => setTimeout(resolve, 20)) })
+    assert.equal(mutations, 1)
+    assert.ok(container.querySelector('dialog button[aria-label="Đóng"]:disabled'))
+    await act(async () => { releaseMutation(new Response(JSON.stringify({ success: true, data: role }), { status: 200, headers: { 'content-type': 'application/json' } })); await new Promise((resolve) => setTimeout(resolve, 40)) })
+  } finally { globalThis.fetch = originalFetch }
+})
+
+test('Permission list shows a useful server error without treating it as empty data', async () => {
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async () => new Response(JSON.stringify({ success: false, code: 'DB_001', message: 'Không thể tải dữ liệu' }), { status: 500, headers: { 'content-type': 'application/json' } })
+  try {
+    const { container } = await renderAppWithRouter('/app/permissions', true)
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)) })
+    assert.ok(container.textContent?.includes('Không tải được danh sách quyền.'))
+    assert.ok(container.textContent?.includes('DB_001'))
+    assert.ok(container.textContent?.includes('Thử lại'))
+    assert.ok(!container.textContent?.includes('Không tìm thấy quyền.'))
+  } finally { globalThis.fetch = originalFetch }
 })
 
 test('Products — combined filters, empty state and reset operate on sample rows', async () => {
@@ -1049,6 +1105,14 @@ test('ManagementTable — supports different columns and an empty state', () => 
   const empty = renderToStaticMarkup(React.createElement(ManagementTable, { ...props, rows: [] }))
   assert.ok(empty.includes('colSpan="2"'))
   assert.ok(empty.includes('Không có kho'))
+})
+
+test('ManagementForm — submit remains enabled by default and can be disabled', () => {
+  const props = { onSubmit: () => {}, onClose: () => {}, submitLabel: 'Lưu', children: 'Nội dung' }
+  const enabled = renderToStaticMarkup(React.createElement(ManagementForm, props))
+  const disabled = renderToStaticMarkup(React.createElement(ManagementForm, { ...props, submitDisabled: true }))
+  assert.match(enabled, /<button type="submit" class=/)
+  assert.match(disabled, /<button type="submit" disabled=/)
 })
 
 test('Dashboard — Redesigned according to Achromatic Ledger with clean Welcome Header and no technical auth clutter', async () => {

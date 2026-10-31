@@ -13,6 +13,7 @@ Các file và export dưới đây là hiện trạng code, không phải một 
 | Ô tìm kiếm có nhãn | `ManagementSearch` | `src/shared/ui/ManagementPage.tsx` |
 | Bộ chọn lọc có nhãn | `ManagementSelect` | `src/shared/ui/ManagementPage.tsx` |
 | Bảng với cột và ô do trang tự định nghĩa | `ManagementTable`, `ManagementTableColumn<T>` | `src/shared/ui/ManagementTable.tsx` |
+| Nút thao tác phân biệt theo ý nghĩa của từng dòng | `ManagementRowActions`, `ManagementActionButton` | `src/shared/ui/ManagementRowActions.tsx` |
 | Hộp thoại mở phía trên trang | `ManagementDialog` | `src/shared/ui/ManagementDialog.tsx` |
 | Khung form và các nút đóng/lưu | `ManagementForm` | `src/shared/ui/ManagementDialog.tsx` |
 | Nhãn, gợi ý hoặc lỗi cho một trường | `ManagementFormField` | `src/shared/ui/ManagementDialog.tsx` |
@@ -76,11 +77,13 @@ function ItemTable({ items }: { items: Item[] }) {
 
 `rowKey` phải ổn định và duy nhất trong danh sách. `labelledBy` phải trỏ đến `id` của tiêu đề có thật. Bảng cung cấp hàng rỗng và vùng cuộn ngang có thể focus; không tự tải dữ liệu, phân trang, tìm kiếm, sắp xếp, chọn dòng hay cấp quyền. Hiện ô mặc định `whitespace-nowrap`, nên nội dung dài có thể làm bảng cuộn ngang; xem xét nội dung và kiểm tra mobile khi dùng.
 
+`ManagementRowActions` dùng cho nhóm hành động của từng dòng: truyền mảng action có `variant`, `label`, `ariaLabel`, `onClick` và `disabled` tùy chọn. Màu và biểu tượng thể hiện ngữ nghĩa nhất quán: Xem trung tính, Sửa xanh nhạt, Xóa đỏ nhạt. Với hành động ngoài bộ Xem/Sửa/Xóa, dùng `ManagementActionButton` trực tiếp; Gán quyền có nền xanh đậm, Gỡ quyền có nền đỏ nhạt. Component chỉ trình bày nút, không xác nhận thao tác nguy hiểm hay gọi API; trang vẫn chịu trách nhiệm xử lý nghiệp vụ và xác nhận xóa/gỡ.
+
 ## Dialog và form
 
-`ManagementDialog` dùng thẻ HTML `<dialog>` và gọi `showModal()` khi được mount. Trang quản lý state mở/đóng bằng conditional render; nút X và Escape gọi `onClose`. Không render nhiều dialog này đồng thời: tiêu đề hiện dùng cùng một `id`. Kiểm tra focus, bàn phím và hành vi trình duyệt cho luồng thực tế.
+`ManagementDialog` dùng thẻ HTML `<dialog>` và gọi `showModal()` khi được mount. Trang quản lý state mở/đóng bằng conditional render; nút X và Escape gọi `onClose`. `closeDisabled` tùy chọn, mặc định `false`, khóa nút X và Escape trong lúc chờ. Không render nhiều dialog này đồng thời: tiêu đề hiện dùng cùng một `id`. Kiểm tra focus, bàn phím và hành vi trình duyệt cho luồng thực tế.
 
-`ManagementForm` tạo thẻ `<form noValidate>`, bố trí phần nội dung và nút Hủy/Đóng, Lưu. `onSubmit` và `submitLabel` là bắt buộc; `readOnly` ẩn nút submit nhưng **không tự khóa các input**. Trang phải tự đặt `disabled`/`readOnly`, quản lý state, validation, pending, lỗi và xử lý lưu. Không dùng một form giả để thể hiện thao tác đã kết nối backend.
+`ManagementForm` tạo thẻ `<form noValidate>`, bố trí phần nội dung và nút Hủy/Đóng, Lưu. `onSubmit` và `submitLabel` là bắt buộc; `readOnly` ẩn nút submit nhưng **không tự khóa các input**. `submitDisabled` tùy chọn (mặc định `false`) vô hiệu hóa nút submit; `closeDisabled` khóa nút Hủy/Đóng. Trang vẫn phải chặn gửi lặp trong handler và quản lý state, validation, pending, lỗi, đóng dialog và xử lý lưu. Không dùng một form giả để thể hiện thao tác đã kết nối backend.
 
 `ManagementFormField` liên kết `label` với control qua `id`, và hiển thị `error` hoặc `hint` (`error` được ưu tiên). Nó không tự gắn thuộc tính vào input: khi có lỗi, trang cần gắn `aria-invalid` và `aria-describedby` tới `${id}-error`; khi có hint, có thể gắn tới `${id}-hint`. Dùng ID riêng cho từng trường.
 

@@ -7,7 +7,8 @@ import { CategoriesPage } from '../pages/management/CategoriesPage'
 import { BrandsPage } from '../pages/management/BrandsPage'
 import { InventoryPage } from '../pages/management/InventoryPage'
 import { SystemInfoPage } from '../pages/management/SystemInfoPage'
-import { AccessPlaceholderPage } from '../pages/management/AccessPlaceholderPage'
+import { RolesPage } from '../pages/management/RolesPage'
+import { PermissionsPage } from '../pages/management/PermissionsPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ProtectedRoute } from '../features/iam/components/ProtectedRoute'
 import { PublicOnlyRoute } from '../features/iam/components/PublicOnlyRoute'
@@ -70,8 +71,8 @@ export const routeConfig: RouteObject[] = [
             path: 'system-info',
             element: <SystemInfoPage />,
           },
-          { path: 'roles', element: <AccessPlaceholderPage kind="roles" /> },
-          { path: 'permissions', element: <AccessPlaceholderPage kind="permissions" /> },
+          { path: 'roles', element: <RolesPage /> },
+          { path: 'permissions', element: <PermissionsPage /> },
         ],
       },
     ],
