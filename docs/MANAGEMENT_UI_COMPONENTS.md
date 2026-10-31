@@ -19,7 +19,7 @@ Các file và export dưới đây là hiện trạng code, không phải một 
 | Nhãn, gợi ý hoặc lỗi cho một trường | `ManagementFormField` | `src/shared/ui/ManagementDialog.tsx` |
 | Style chung cho input/select/textarea trong form | `managementFieldClass` | `src/shared/ui/ManagementDialog.tsx` |
 
-Trong TypeScript/React đây là function component, type và hằng style; không phải class. Các trang [Danh mục](../src/pages/management/CategoriesPage.tsx), [Thương hiệu](../src/pages/management/BrandsPage.tsx), [Sản phẩm](../src/pages/management/ProductsPage.tsx) và [Vai trò/Quyền](../src/pages/management/AccessPlaceholderPage.tsx) là ví dụ đang dùng các thành phần này. Danh mục và Thương hiệu hiện dùng **dữ liệu mẫu trong state**, mất khi rời trang hoặc tải lại; Vai trò/Quyền chưa kết nối dữ liệu. Không coi các trang này là contract API hoặc chính sách phân quyền.
+Trong TypeScript/React đây là function component, type và hằng style; không phải class. Các trang [Danh mục](../src/pages/management/CategoriesPage.tsx), [Thương hiệu](../src/pages/management/BrandsPage.tsx), [Sản phẩm](../src/pages/management/ProductsPage.tsx) và [Vai trò/Quyền](../src/pages/management/AccessPlaceholderPage.tsx) là ví dụ đang dùng các thành phần này. Danh mục và Thương hiệu đã kết nối CRUD thật qua `features/catalog`, gồm phân trang/lọc phía server, form và trạng thái loading/error/empty; contract vẫn được xác định bởi BE và spec WORK-013, không phải bởi component trình bày. Không coi việc hiện hoặc ẩn nút trên FE là chính sách thực thi phân quyền.
 
 ## Tiêu đề, tìm kiếm và lọc
 

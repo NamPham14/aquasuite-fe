@@ -1,68 +1,255 @@
-import { useState, type FormEvent } from 'react'
-import { Tags, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Plus, Tags } from 'lucide-react'
 import { toast } from 'sonner'
-import { ManagementPageHeader, ManagementFilterBar, ManagementSearch, ManagementSelect } from '../../shared/ui/ManagementPage'
-import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
-import { ManagementDialog, ManagementForm, ManagementFormField, managementFieldClass } from '../../shared/ui/ManagementDialog'
+import {
+  BrandForm,
+  CatalogDeleteDialog,
+  CatalogMobileList,
+  CatalogPagination,
+  CatalogStatusBadge,
+  getCatalogErrorState,
+  useCatalogListState,
+  useCreateBrandMutation,
+  useDeleteBrandMutation,
+  useGetBrandsQuery,
+  useUpdateBrandMutation,
+  type Brand,
+  type CatalogDialogMode,
+  type ValidBrandFormValues,
+} from '../../features/catalog'
+import { ManagementDialog } from '../../shared/ui/ManagementDialog'
+import {
+  ManagementFilterBar,
+  ManagementPageHeader,
+  ManagementSearch,
+  ManagementSelect,
+} from '../../shared/ui/ManagementPage'
 import { ManagementRowActions } from '../../shared/ui/ManagementRowActions'
+import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
 
-type Brand = { code: string; name: string; status: 'ACTIVE' | 'INACTIVE'; description: string }
-type Mode = 'create' | 'edit' | 'view' | 'delete'
-const initialBrands: Brand[] = [
-  { code: 'BRAND-A', name: 'Thương hiệu A', status: 'ACTIVE', description: '' },
-  { code: 'BRAND-B', name: 'Thương hiệu B', status: 'ACTIVE', description: '' },
-  { code: 'BRAND-C', name: 'Thương hiệu C', status: 'INACTIVE', description: '' },
-]
-const blank: Brand = { code: '', name: '', status: 'ACTIVE', description: '' }
-const button = 'inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600'
-const primary = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-sky-600'
+const secondaryButton =
+  'inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50'
+const primaryButton =
+  'inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600'
 
-function BrandForm({ mode, item, brands, onClose, onSave }: { mode: 'create' | 'edit' | 'view'; item: Brand; brands: Brand[]; onClose: () => void; onSave: (item: Brand) => void }) {
-  const [form, setForm] = useState(item)
-  const [errors, setErrors] = useState<{ code?: string; name?: string }>({})
-  const readOnly = mode === 'view'
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const code = form.code.trim().toUpperCase()
-    const name = form.name.trim()
-    const next = { code: !code ? 'Vui lòng nhập mã thương hiệu.' : mode === 'create' && brands.some((brand) => brand.code === code) ? 'Mã thương hiệu đã tồn tại.' : undefined, name: !name ? 'Vui lòng nhập tên thương hiệu.' : name.length > 100 ? 'Tên thương hiệu tối đa 100 ký tự.' : undefined }
-    setErrors(next)
-    if (!next.code && !next.name) onSave({ ...form, code, name, description: form.description.trim() })
-  }
-  return <ManagementDialog title={mode === 'create' ? 'Thêm thương hiệu' : mode === 'edit' ? 'Sửa thương hiệu' : 'Chi tiết thương hiệu'} onClose={onClose}>
-    <ManagementForm onSubmit={submit} onClose={onClose} readOnly={readOnly} submitLabel={mode === 'create' ? 'Tạo thương hiệu' : 'Lưu thay đổi'}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ManagementFormField id="brand-code" label="Mã thương hiệu *" error={errors.code} hint={mode === 'create' ? 'Mã sẽ được chuyển thành chữ hoa.' : undefined}><input id="brand-code" className={managementFieldClass} value={form.code} disabled={mode !== 'create'} onChange={(event) => setForm({ ...form, code: event.target.value })} aria-invalid={!!errors.code} aria-describedby={errors.code ? 'brand-code-error' : mode === 'create' ? 'brand-code-hint' : undefined} /></ManagementFormField>
-        <ManagementFormField id="brand-name" label="Tên thương hiệu *" error={errors.name}><input id="brand-name" className={managementFieldClass} value={form.name} disabled={readOnly} onChange={(event) => setForm({ ...form, name: event.target.value })} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'brand-name-error' : undefined} /></ManagementFormField>
-        <ManagementFormField id="brand-state" label="Trạng thái *"><select id="brand-state" className={managementFieldClass} value={form.status} disabled={readOnly} onChange={(event) => setForm({ ...form, status: event.target.value as Brand['status'] })}><option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Ngừng hoạt động</option></select></ManagementFormField>
-      </div>
-      <ManagementFormField id="brand-description" label="Mô tả" hint="Không bắt buộc, tối đa 5000 ký tự."><textarea id="brand-description" className={managementFieldClass} rows={4} maxLength={5000} value={form.description} disabled={readOnly} onChange={(event) => setForm({ ...form, description: event.target.value })} aria-describedby="brand-description-hint" /></ManagementFormField>
-    </ManagementForm>
-  </ManagementDialog>
+/** Chế độ hộp thoại và thương hiệu được chọn; tạo mới không cần bản ghi. */
+interface BrandDialogState {
+  mode: CatalogDialogMode
+  item?: Brand
 }
 
+/** Điều phối danh sách, bộ lọc và các thao tác quản lý thương hiệu qua BE. */
 export function BrandsPage() {
-  const [brands, setBrands] = useState(initialBrands)
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
-  const [dialog, setDialog] = useState<{ mode: Mode; item: Brand } | null>(null)
-  const rows = brands.filter((item) => `${item.code} ${item.name}`.toLocaleLowerCase('vi-VN').includes(search.trim().toLocaleLowerCase('vi-VN')) && (!status || item.status === status))
+  const filters = useCatalogListState()
+  const { page, setPage } = filters
+  const list = useGetBrandsQuery(filters.query)
+  const [createBrand, createState] = useCreateBrandMutation()
+  const [updateBrand, updateState] = useUpdateBrandMutation()
+  const [deleteBrand, deleteState] = useDeleteBrandMutation()
+  const [dialog, setDialog] = useState<BrandDialogState | null>(null)
+  const [formError, setFormError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [deleteError, setDeleteError] = useState('')
+  const data = list.data
+  const rows = data?.items ?? []
+
+  useEffect(() => {
+    if (data && data.totalPages > 0 && page >= data.totalPages) {
+      setPage(data.totalPages - 1)
+    }
+  }, [data, page, setPage])
+
+  /** Mở hộp thoại mới và xóa lỗi của thao tác trước. */
+  function openDialog(mode: CatalogDialogMode, item?: Brand) {
+    setFormError('')
+    setFieldErrors({})
+    setDeleteError('')
+    setDialog({ mode, item })
+  }
+
+  /** Tạo hoặc cập nhật thương hiệu; chỉ gửi mã khi tạo vì mã không thể thay đổi. */
+  async function saveBrand(values: ValidBrandFormValues) {
+    setFormError('')
+    setFieldErrors({})
+    try {
+      if (dialog?.mode === 'create') {
+        await createBrand({
+          code: values.code,
+          name: values.name,
+          description: values.description || null,
+          status: values.status,
+        }).unwrap()
+        toast.success('Đã tạo thương hiệu.')
+      } else if (dialog?.mode === 'edit' && dialog.item) {
+        await updateBrand({
+          id: dialog.item.id,
+          data: {
+            name: values.name,
+            description: values.description || null,
+            status: values.status,
+          },
+        }).unwrap()
+        toast.success('Đã cập nhật thương hiệu.')
+      }
+      setDialog(null)
+    } catch (error) {
+      const state = getCatalogErrorState(error)
+      setFormError(state.message)
+      setFieldErrors(state.fields)
+    }
+  }
+
+  /** Gửi yêu cầu xóa sau xác nhận và giữ lỗi trong hộp thoại nếu BE từ chối. */
+  async function confirmDelete() {
+    if (dialog?.mode !== 'delete' || !dialog.item || deleteState.isLoading) return
+    setDeleteError('')
+    try {
+      await deleteBrand(dialog.item.id).unwrap()
+      setDialog(null)
+      toast.success('Đã xóa thương hiệu.')
+    } catch (error) {
+      setDeleteError(getCatalogErrorState(error).message)
+    }
+  }
+
   const columns: ManagementTableColumn<Brand>[] = [
-    { key: 'code', header: 'Mã thương hiệu', cell: (item) => item.code },
+    { key: 'code', header: 'Mã thương hiệu', cell: (item) => <span className="font-medium text-slate-900">{item.code}</span> },
     { key: 'name', header: 'Tên thương hiệu', cell: (item) => item.name },
-    { key: 'status', header: 'Trạng thái', cell: (item) => <span className={`rounded px-2 py-1 ${item.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-700'}`}>{item.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng hoạt động'}</span> },
-    { key: 'actions', header: 'Thao tác', cell: (item) => <ManagementRowActions actions={[
-      { variant: 'view', label: 'Xem', ariaLabel: `Xem ${item.name}`, onClick: () => setDialog({ mode: 'view', item }) },
-      { variant: 'edit', label: 'Sửa', ariaLabel: `Sửa ${item.name}`, onClick: () => setDialog({ mode: 'edit', item }) },
-      { variant: 'delete', label: 'Xóa', ariaLabel: `Xóa ${item.name}`, onClick: () => setDialog({ mode: 'delete', item }) },
-    ]} /> },
+    { key: 'status', header: 'Trạng thái', cell: (item) => <CatalogStatusBadge status={item.status} /> },
+    {
+      key: 'actions',
+      header: 'Thao tác',
+      cell: (item) => (
+        <ManagementRowActions actions={[
+          { variant: 'view', label: 'Xem', ariaLabel: `Xem ${item.name}`, onClick: () => openDialog('view', item) },
+          { variant: 'edit', label: 'Sửa', ariaLabel: `Sửa ${item.name}`, onClick: () => openDialog('edit', item) },
+          { variant: 'delete', label: 'Xóa', ariaLabel: `Xóa ${item.name}`, onClick: () => openDialog('delete', item) },
+        ]} />
+      ),
+    },
   ]
-  return <div className="space-y-5">
-    <ManagementPageHeader title="Quản lý Thương hiệu" description="Quản lý các thương hiệu sản phẩm" breadcrumb="Thương hiệu" group="Quản lý danh mục" icon={<Tags className="h-6 w-6" />} />
-    <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-slate-600">Dữ liệu mẫu — thay đổi sẽ mất khi rời trang hoặc tải lại.</p><button type="button" className={primary} onClick={() => setDialog({ mode: 'create', item: blank })}><Plus className="h-4 w-4" aria-hidden="true" />Thêm thương hiệu</button></div>
-    <ManagementFilterBar><ManagementSearch id="brand-search" label="Tìm kiếm" value={search} onChange={setSearch} placeholder="Tìm theo mã hoặc tên..." /><ManagementSelect id="brand-filter" label="Trạng thái" value={status} onChange={setStatus}><option value="">Tất cả</option><option value="ACTIVE">Hoạt động</option><option value="INACTIVE">Ngừng hoạt động</option></ManagementSelect><button type="button" className={button} onClick={() => { setSearch(''); setStatus('') }}>Làm mới</button></ManagementFilterBar>
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white"><h2 id="brand-list" className="px-4 py-4 text-base font-semibold text-slate-900">Danh sách thương hiệu</h2><ManagementTable columns={columns} rows={rows} rowKey={(item) => item.code} labelledBy="brand-list" emptyMessage="Không tìm thấy thương hiệu phù hợp." /><p className="border-t border-slate-100 p-4 text-sm text-slate-600">Tổng số: {rows.length} thương hiệu mẫu</p></section>
-    {dialog && dialog.mode !== 'delete' && <BrandForm key={`${dialog.mode}-${dialog.item.code}`} mode={dialog.mode} item={dialog.item} brands={brands} onClose={() => setDialog(null)} onSave={(item) => { setBrands((previous) => dialog.mode === 'create' ? [...previous, item] : previous.map((brand) => brand.code === item.code ? item : brand)); setDialog(null); toast.success(dialog.mode === 'create' ? 'Đã tạo thương hiệu.' : 'Đã cập nhật thương hiệu.') }} />}
-    {dialog?.mode === 'delete' && <ManagementDialog title="Xác nhận xóa thương hiệu" onClose={() => setDialog(null)}><div className="space-y-4 p-6"><p className="font-medium">{dialog.item.code} — {dialog.item.name}</p><p className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">Thương hiệu mẫu này sẽ bị xóa khỏi danh sách trên trang.</p><div className="flex justify-end gap-2"><button type="button" className={button} onClick={() => setDialog(null)}>Hủy</button><button type="button" className={`${button} text-red-700`} onClick={() => { setBrands((previous) => previous.filter((item) => item.code !== dialog.item.code)); setDialog(null); toast.success('Đã xóa thương hiệu.') }}>Xóa thương hiệu</button></div></div></ManagementDialog>}
-  </div>
+
+  const listError = list.isError ? getCatalogErrorState(list.error).message : ''
+  return (
+    <div className="space-y-5">
+      <ManagementPageHeader
+        title="Quản lý Thương hiệu"
+        description="Quản lý mã, tên và trạng thái thương hiệu sản phẩm"
+        breadcrumb="Thương hiệu"
+        group="Quản lý danh mục"
+        icon={<Tags className="h-6 w-6" />}
+      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-600">Mã thương hiệu là khóa ổn định và không thể sửa sau khi tạo.</p>
+        <button type="button" className={primaryButton} onClick={() => openDialog('create')}>
+          <Plus className="h-4 w-4" aria-hidden="true" /> Thêm thương hiệu
+        </button>
+      </div>
+      <ManagementFilterBar>
+        <ManagementSearch
+          id="brand-search"
+          label="Tìm kiếm"
+          value={filters.search}
+          onChange={filters.setSearch}
+          placeholder="Tìm theo mã hoặc tên..."
+          disabled={list.isLoading}
+        />
+        <ManagementSelect id="brand-status-filter" label="Trạng thái" value={filters.status} onChange={filters.setStatus} disabled={list.isLoading}>
+          <option value="">Tất cả</option>
+          <option value="ACTIVE">Hoạt động</option>
+          <option value="INACTIVE">Ngừng hoạt động</option>
+        </ManagementSelect>
+        <ManagementSelect id="brand-sort" label="Sắp xếp theo" value={filters.sortBy} onChange={filters.setSortBy} disabled={list.isLoading}>
+          <option value="code">Mã</option>
+          <option value="name">Tên</option>
+          <option value="status">Trạng thái</option>
+        </ManagementSelect>
+        <ManagementSelect id="brand-direction" label="Thứ tự" value={filters.direction} onChange={filters.setDirection} disabled={list.isLoading}>
+          <option value="asc">Tăng dần</option>
+          <option value="desc">Giảm dần</option>
+        </ManagementSelect>
+        <button type="button" className={secondaryButton} onClick={filters.reset} disabled={list.isLoading}>Đặt lại</button>
+      </ManagementFilterBar>
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white" aria-busy={list.isFetching}>
+        <div className="flex items-center justify-between gap-3 px-4 py-4">
+          <h2 id="brand-list" className="text-base font-semibold text-slate-900">Danh sách thương hiệu</h2>
+          {list.isFetching && !list.isLoading && <span className="text-xs text-slate-500">Đang cập nhật...</span>}
+        </div>
+        {listError && (
+          <div role="alert" className="mx-4 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-rose-50 p-3 text-sm text-rose-800">
+            <span>{listError}</span>
+            <button type="button" className={secondaryButton} onClick={() => void list.refetch()}>Thử lại</button>
+          </div>
+        )}
+        <div className="hidden sm:block [&_table]:text-sm">
+          <ManagementTable
+            columns={columns}
+            rows={rows}
+            rowKey={(item) => item.id}
+            labelledBy="brand-list"
+            emptyMessage={list.isLoading ? 'Đang tải thương hiệu...' : listError ? 'Chưa thể tải dữ liệu.' : 'Không tìm thấy thương hiệu phù hợp.'}
+          />
+        </div>
+        <CatalogMobileList
+          rows={rows}
+          rowKey={(item) => item.id}
+          emptyMessage={list.isLoading ? 'Đang tải thương hiệu...' : listError ? 'Chưa thể tải dữ liệu.' : 'Không tìm thấy thương hiệu phù hợp.'}
+          renderRow={(item) => (
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900">{item.name}</p>
+                  <p className="mt-0.5 text-sm text-slate-600">{item.code}</p>
+                </div>
+                <CatalogStatusBadge status={item.status} />
+              </div>
+              {item.description && <p className="line-clamp-2 text-sm text-slate-600">{item.description}</p>}
+              <ManagementRowActions actions={[
+                { variant: 'view', label: 'Xem', ariaLabel: `Xem ${item.name}`, onClick: () => openDialog('view', item) },
+                { variant: 'edit', label: 'Sửa', ariaLabel: `Sửa ${item.name}`, onClick: () => openDialog('edit', item) },
+                { variant: 'delete', label: 'Xóa', ariaLabel: `Xóa ${item.name}`, onClick: () => openDialog('delete', item) },
+              ]} />
+            </div>
+          )}
+        />
+        <CatalogPagination
+          page={data?.page ?? filters.page}
+          totalPages={data?.totalPages ?? 0}
+          totalElements={data?.totalElements ?? 0}
+          noun="thương hiệu"
+          disabled={list.isFetching}
+          onPageChange={filters.setPage}
+        />
+      </section>
+      {dialog && dialog.mode !== 'delete' && (
+        <ManagementDialog
+          title={dialog.mode === 'create' ? 'Thêm thương hiệu' : dialog.mode === 'edit' ? 'Sửa thương hiệu' : 'Chi tiết thương hiệu'}
+          onClose={() => setDialog(null)}
+          closeDisabled={createState.isLoading || updateState.isLoading}
+        >
+          <BrandForm
+            key={`${dialog.mode}-${dialog.item?.id ?? 'new'}`}
+            mode={dialog.mode}
+            brand={dialog.item}
+            pending={createState.isLoading || updateState.isLoading}
+            apiError={formError}
+            apiFieldErrors={fieldErrors}
+            onClose={() => setDialog(null)}
+            onSubmit={saveBrand}
+          />
+        </ManagementDialog>
+      )}
+      {dialog?.mode === 'delete' && dialog.item && (
+        <CatalogDeleteDialog
+          kind="thương hiệu"
+          code={dialog.item.code}
+          name={dialog.item.name}
+          pending={deleteState.isLoading}
+          error={deleteError}
+          onClose={() => setDialog(null)}
+          onConfirm={() => void confirmDelete()}
+        />
+      )}
+    </div>
+  )
 }

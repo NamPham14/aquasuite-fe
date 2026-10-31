@@ -936,69 +936,135 @@ test('Dashboard Mockup — 2 Charts render accessible data representations', asy
   assert.ok(container.innerHTML.includes('3.4%'))
 })
 
-test('Placeholder Pages — All 4 placeholders render disclaimer of no CRUD or business API', async () => {
+const categoryRows = [
+  { id: 'cat-root', code: 'SANITARY', name: 'Thiết bị vệ sinh', description: null, status: 'ACTIVE', parentId: null, createdAt: '2026-10-20T08:00:00Z', updatedAt: '2026-10-28T08:00:00Z' },
+  { id: 'cat-inactive', code: 'ACCESSORY', name: 'Phụ kiện', description: null, status: 'INACTIVE', parentId: null, createdAt: '2026-10-20T08:00:00Z', updatedAt: '2026-10-28T08:00:00Z' },
+]
+const brandRows = [
+  { id: 'brand-a', code: 'BRAND_A', name: 'Thương hiệu A', description: null, status: 'ACTIVE' },
+  { id: 'brand-c', code: 'BRAND_C', name: 'Thương hiệu C', description: null, status: 'INACTIVE' },
+]
+
+function installCatalogFetchMock() {
+  const originalFetch = globalThis.fetch
+  const requests: Request[] = []
+  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const request = input instanceof Request ? input : new Request(input, init)
+    requests.push(request)
+    const url = new URL(request.url)
+    const ok = (data: unknown, status = 200) => new Response(
+      JSON.stringify({ success: true, code: 'SUCCESS', message: 'Thành công', data, timestamp: new Date().toISOString() }),
+      { status, headers: { 'content-type': 'application/json' } },
+    )
+    if (url.pathname.endsWith('/catalog/categories/options')) {
+      return ok([{ categoryId: 'cat-root', categoryCode: 'SANITARY', categoryName: 'Thiết bị vệ sinh' }])
+    }
+    if (url.pathname.endsWith('/catalog/categories') && request.method === 'GET') {
+      const status = url.searchParams.get('status')
+      const items = status ? categoryRows.filter((row) => row.status === status) : categoryRows
+      return ok({ items, page: 0, size: 20, totalElements: items.length, totalPages: items.length ? 1 : 0 })
+    }
+    if (url.pathname.endsWith('/catalog/brands') && request.method === 'GET') {
+      const status = url.searchParams.get('status')
+      const items = status ? brandRows.filter((row) => row.status === status) : brandRows
+      return ok({ items, page: 0, size: 20, totalElements: items.length, totalPages: items.length ? 1 : 0 })
+    }
+    if (url.pathname.endsWith('/catalog/categories/cat-root') && request.method === 'DELETE') {
+      return new Response(JSON.stringify({ success: false, code: 'CAT_013', message: 'Category has children', timestamp: new Date().toISOString() }), {
+        status: 409,
+        headers: { 'content-type': 'application/json' },
+      })
+    }
+    return ok(null)
+  }
+  return { requests, restore: () => { globalThis.fetch = originalFetch } }
+}
+
+async function settleCatalogUi() {
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 30)) })
+}
+
+test('Placeholder Pages — only unimplemented management pages show a no-API disclaimer', async () => {
+  const mock = installCatalogFetchMock()
+  try {
   const p1 = await renderAppWithRouter('/app/products', true)
   assert.ok(p1.container.innerHTML.includes('Quản lý Sản phẩm'))
   assert.ok(p1.container.textContent?.includes('chưa kết nối API nghiệp vụ'))
   assert.ok(!p1.container.textContent?.includes('Trang giao diện mẫu (Placeholder) — WORK-002'))
 
   const p2 = await renderAppWithRouter('/app/categories', true)
+  await settleCatalogUi()
   assert.ok(p2.container.innerHTML.includes('Quản lý Danh mục'))
-  assert.ok(p2.container.textContent?.includes('Dữ liệu mẫu'))
-  assert.ok(p2.container.textContent?.includes('thay đổi sẽ mất khi rời trang hoặc tải lại'))
+  assert.ok(p2.container.textContent?.includes('SANITARY'))
+  assert.ok(!p2.container.textContent?.includes('Dữ liệu mẫu'))
 
   const p3 = await renderAppWithRouter('/app/brands', true)
+  await settleCatalogUi()
   assert.ok(p3.container.innerHTML.includes('Quản lý Thương hiệu'))
-  assert.ok(p3.container.textContent?.includes('Dữ liệu mẫu'))
+  assert.ok(p3.container.textContent?.includes('BRAND_A'))
 
   const p4 = await renderAppWithRouter('/app/inventory', true)
   assert.ok(p4.container.innerHTML.includes('Quản lý Tồn kho'))
   assert.ok(p4.container.innerHTML.includes('chưa kết nối API nghiệp vụ'))
+  } finally {
+    mock.restore()
+  }
 })
 
-test('Categories — sample table filters and paginates', async () => {
-  const { container } = await renderAppWithRouter('/app/categories', true)
-  assert.equal(container.querySelector('#category-size'), null)
-  const status = container.querySelector<HTMLSelectElement>('#category-filter')!
-  await act(async () => {
-    status.value = 'INACTIVE'
-    status.dispatchEvent(new window.Event('change', { bubbles: true }))
-  })
-  assert.ok(container.textContent?.includes('ACCESSORY'))
-  assert.ok(!container.textContent?.includes('SANITARY'))
-  assert.ok(container.textContent?.includes('Tổng số: 1 danh mục mẫu'))
+test('Categories — status filter is sent to BE and server page is rendered', async () => {
+  const mock = installCatalogFetchMock()
+  try {
+    const { container } = await renderAppWithRouter('/app/categories', true)
+    await settleCatalogUi()
+    const status = container.querySelector<HTMLSelectElement>('#category-status-filter')!
+    await act(async () => { status.value = 'INACTIVE'; status.dispatchEvent(new window.Event('change', { bubbles: true })) })
+    await settleCatalogUi()
+    assert.ok(container.textContent?.includes('ACCESSORY'))
+    assert.ok(!container.textContent?.includes('SANITARY'))
+    assert.ok(container.textContent?.includes('Tổng số: 1 danh mục'))
+    assert.ok(mock.requests.some((request) => request.url.includes('status=INACTIVE')))
+  } finally {
+    mock.restore()
+  }
 })
 
-test('Brands — filters sample data and validates the shared form', async () => {
-  const { container } = await renderAppWithRouter('/app/brands', true)
-  const status = container.querySelector<HTMLSelectElement>('#brand-filter')!
-  await act(async () => { status.value = 'INACTIVE'; status.dispatchEvent(new window.Event('change', { bubbles: true })) })
-  assert.ok(container.textContent?.includes('BRAND-C'))
-  assert.ok(!container.textContent?.includes('BRAND-A'))
-  window.HTMLDialogElement.prototype.showModal = function () { this.open = true }
-  window.HTMLDialogElement.prototype.close = function () { this.open = false }
-  const add = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.includes('Thêm thương hiệu'))!
-  await act(async () => { add.click() })
-  await act(async () => { container.querySelector('dialog form')!.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })) })
-  assert.ok(container.textContent?.includes('Vui lòng nhập mã thương hiệu.'))
-  assert.ok(container.textContent?.includes('Vui lòng nhập tên thương hiệu.'))
+test('Brands — server filter and shared form validation work together', async () => {
+  const mock = installCatalogFetchMock()
+  try {
+    const { container } = await renderAppWithRouter('/app/brands', true)
+    await settleCatalogUi()
+    const status = container.querySelector<HTMLSelectElement>('#brand-status-filter')!
+    await act(async () => { status.value = 'INACTIVE'; status.dispatchEvent(new window.Event('change', { bubbles: true })) })
+    await settleCatalogUi()
+    assert.ok(container.textContent?.includes('BRAND_C'))
+    assert.ok(!container.textContent?.includes('BRAND_A'))
+    window.HTMLDialogElement.prototype.showModal = function () { this.open = true }
+    window.HTMLDialogElement.prototype.close = function () { this.open = false }
+    const add = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.includes('Thêm thương hiệu'))!
+    await act(async () => { add.click() })
+    await act(async () => { container.querySelector('dialog form')!.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })) })
+    assert.ok(container.textContent?.includes('Vui lòng nhập mã.'))
+    assert.ok(container.textContent?.includes('Vui lòng nhập tên.'))
+  } finally {
+    mock.restore()
+  }
 })
 
-test('Categories — shared form validates and prevents deleting a parent', async () => {
-  const { container } = await renderAppWithRouter('/app/categories', true)
-  window.HTMLDialogElement.prototype.showModal = function () { this.open = true }
-  window.HTMLDialogElement.prototype.close = function () { this.open = false }
-  const add = Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.includes('Thêm danh mục'))!
-  await act(async () => { add.click() })
-  const form = container.querySelector('dialog form')!
-  await act(async () => { form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })) })
-  assert.ok(container.textContent?.includes('Vui lòng nhập mã danh mục.'))
-  assert.ok(container.textContent?.includes('Vui lòng nhập tên danh mục.'))
-  await act(async () => { (container.querySelector('dialog button[aria-label="Đóng"]') as HTMLButtonElement).click() })
-  await act(async () => { (container.querySelector('button[aria-label="Xóa Thiết bị vệ sinh"]') as HTMLButtonElement).click() })
-  assert.ok(container.textContent?.includes('Không thể xóa danh mục đang có danh mục con.'))
-  const remove = Array.from(container.querySelectorAll('dialog button')).find((button) => button.textContent === 'Xóa danh mục')!
-  assert.equal(remove.disabled, true)
+test('Categories — delete conflict is decided by BE and shown in the dialog', async () => {
+  const mock = installCatalogFetchMock()
+  try {
+    const { container } = await renderAppWithRouter('/app/categories', true)
+    await settleCatalogUi()
+    window.HTMLDialogElement.prototype.showModal = function () { this.open = true }
+    window.HTMLDialogElement.prototype.close = function () { this.open = false }
+    const removeRoot = container.querySelector('button[aria-label="Xóa Thiết bị vệ sinh"]') as HTMLButtonElement
+    await act(async () => { removeRoot.click() })
+    const confirm = Array.from(container.querySelectorAll('dialog button')).find((button) => button.textContent === 'Xóa danh mục')!
+    await act(async () => { confirm.click(); await new Promise((resolve) => setTimeout(resolve, 20)) })
+    assert.ok(container.textContent?.includes('Không thể xóa danh mục đang có danh mục con.'))
+  } finally {
+    mock.restore()
+  }
 })
 
 test('Access pages — routes are protected and present in navigation', async () => {

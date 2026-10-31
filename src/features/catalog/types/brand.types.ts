@@ -1,20 +1,32 @@
-import type { AuditableEntity } from '../../../shared/types'
+import type { CatalogStatus } from './catalog.types.ts'
 
-export interface Brand extends AuditableEntity {
+/** Thương hiệu do API catalog trả về. */
+export interface Brand {
+  id: string
+  code: string
   name: string
-  slug: string
-  description?: string
-  logoUrl?: string
-  active: boolean
+  description: string | null
+  status: CatalogStatus
 }
 
+/** Thương hiệu rút gọn dùng trong danh sách lựa chọn. */
+export interface BrandOption {
+  brandId: string
+  brandCode: string
+  brandName: string
+}
+
+/** Dữ liệu tạo thương hiệu, bao gồm mã ổn định bắt buộc. */
 export interface CreateBrandRequest {
+  code: string
   name: string
-  slug: string
-  description?: string
-  logoUrl?: string
-  active: boolean
+  description: string | null
+  status: CatalogStatus
 }
 
-export type UpdateBrandRequest = Partial<CreateBrandRequest>
-
+/** Các trường có thể thay đổi; mã thương hiệu không thuộc request cập nhật. */
+export interface UpdateBrandRequest {
+  name: string
+  description: string | null
+  status: CatalogStatus
+}
