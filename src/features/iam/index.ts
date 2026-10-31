@@ -26,4 +26,19 @@ export { ProtectedRoute } from './components/ProtectedRoute.tsx'
 export { PublicOnlyRoute } from './components/PublicOnlyRoute.tsx'
 export { iamAccessApi, useRolesQuery, useRoleQuery, usePermissionsQuery, usePermissionQuery, useCreatePermissionMutation, useUpdatePermissionMutation, useDeletePermissionMutation, useChangeAssignmentMutation } from './api/iamAccessApi.ts'
 export type { IamRole, IamPermission, PermissionQuery } from './api/iamAccessApi.ts'
-export { iamAccessReducer, resetIamAccess, denyIamAccess, beginIamProbe, finishIamProbe } from './model/iamAccessSlice.ts'
+export {
+  iamAccessReducer,
+  resetIamAccess,
+  denyIamAccess,
+  beginIamProbe,
+  finishIamProbe,
+  beginIamMutation,
+  finishIamMutation,
+  requireRoleReconciliation,
+  requirePermissionReconciliation,
+  clearRoleReconciliation,
+  clearPermissionReconciliation,
+  requireIamReconciliation,
+  clearIamReconciliation,
+} from './model/iamAccessSlice.ts'
+export type { ReconciliationTarget, IamAccessState, IamAccessStatus } from './model/iamAccessSlice.ts'

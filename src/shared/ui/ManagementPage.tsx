@@ -36,27 +36,27 @@ export function ManagementFilterBar({ children }: { children: ReactNode }) {
   return <div role="search" aria-label="Tìm kiếm và lọc" className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row sm:flex-wrap sm:items-end">{children}</div>
 }
 
-export function ManagementSearch({ id, label, value, onChange, placeholder }: {
-  id: string; label: string; value: string; onChange: (value: string) => void; placeholder: string
+export function ManagementSearch({ id, label, value, onChange, placeholder, disabled = false }: {
+  id: string; label: string; value: string; onChange: (value: string) => void; placeholder: string; disabled?: boolean
 }) {
   return (
     <div className="min-w-0 flex-1 sm:min-w-56">
       <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-slate-700">{label}</label>
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
-        <input id={id} type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="h-10 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <input id={id} type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} disabled={disabled} className="h-10 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60" />
       </div>
     </div>
   )
 }
 
-export function ManagementSelect({ id, label, value, onChange, children }: {
-  id: string; label: string; value: string; onChange: (value: string) => void; children: ReactNode
+export function ManagementSelect({ id, label, value, onChange, children, disabled = false }: {
+  id: string; label: string; value: string; onChange: (value: string) => void; children: ReactNode; disabled?: boolean
 }) {
   return (
     <div className="sm:min-w-44">
       <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-slate-700">{label}</label>
-      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500">{children}</select>
+      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} disabled={disabled} className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60">{children}</select>
     </div>
   )
 }

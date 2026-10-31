@@ -1042,7 +1042,7 @@ test('Role assignment requires confirmation and cancel sends no mutation', async
     assert.equal(mutations, 0)
     const assignAgain = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Gán quyền')!
     await act(async () => { assignAgain.click() })
-    const confirm = Array.from(container.querySelectorAll('dialog button')).find((button) => button.textContent === 'Xác nhận')!
+    const confirm = Array.from(container.querySelectorAll('dialog button')).find((button) => button.textContent?.includes('Xác nhận gán quyền'))!
     await act(async () => { confirm.click(); confirm.click(); await new Promise((resolve) => setTimeout(resolve, 20)) })
     assert.equal(mutations, 1)
     assert.ok(container.querySelector('dialog button[aria-label="Đóng"]:disabled'))
