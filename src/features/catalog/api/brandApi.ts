@@ -3,6 +3,8 @@ import type { ApiResponse, PageResponse } from '../../../shared/api/types.ts'
 import type {
   Brand,
   BrandOption,
+  CatalogImportJob,
+  CatalogImportSubmitResponse,
   CatalogListParams,
   CreateBrandRequest,
   UpdateBrandRequest,
@@ -61,6 +63,30 @@ export const brandApi = baseApi.injectEndpoints({
         { type: 'Brand', id: 'OPTIONS' },
       ],
     }),
+    downloadBrandImportTemplate: builder.mutation<Blob, void>({
+      query: () => ({
+        url: '/brands/import-template',
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
+    submitBrandImportJob: builder.mutation<CatalogImportSubmitResponse, FormData>({
+      query: (formData) => ({
+        url: '/brands/import-jobs',
+        method: 'POST',
+        body: formData,
+      }),
+      transformResponse: responseData<CatalogImportSubmitResponse>,
+    }),
+    getBrandImportProgress: builder.query<CatalogImportJob, string>({
+      query: (jobId) => `/brands/import-jobs/${jobId}`,
+      transformResponse: responseData<CatalogImportJob>,
+    }),
+    downloadBrandImportReport: builder.mutation<Blob, string>({
+      query: (jobId) => ({
+        url: `/brands/import-jobs/${jobId}/error-report`,
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
   }),
 })
 
@@ -71,4 +97,9 @@ export const {
   useCreateBrandMutation,
   useUpdateBrandMutation,
   useDeleteBrandMutation,
+  useDownloadBrandImportTemplateMutation,
+  useSubmitBrandImportJobMutation,
+  useGetBrandImportProgressQuery,
+  useLazyGetBrandImportProgressQuery,
+  useDownloadBrandImportReportMutation,
 } = brandApi

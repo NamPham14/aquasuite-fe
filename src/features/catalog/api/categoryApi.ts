@@ -1,6 +1,8 @@
 import { baseApi } from '../../../shared/api/baseApi.ts'
 import type { ApiResponse, PageResponse } from '../../../shared/api/types.ts'
 import type {
+  CatalogImportJob,
+  CatalogImportSubmitResponse,
   CatalogListParams,
   Category,
   CategoryOption,
@@ -61,6 +63,30 @@ export const categoryApi = baseApi.injectEndpoints({
         { type: 'Category', id: 'OPTIONS' },
       ],
     }),
+    downloadCategoryImportTemplate: builder.mutation<Blob, void>({
+      query: () => ({
+        url: '/catalog/categories/import-template',
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
+    submitCategoryImportJob: builder.mutation<CatalogImportSubmitResponse, FormData>({
+      query: (formData) => ({
+        url: '/catalog/categories/import-jobs',
+        method: 'POST',
+        body: formData,
+      }),
+      transformResponse: responseData<CatalogImportSubmitResponse>,
+    }),
+    getCategoryImportProgress: builder.query<CatalogImportJob, string>({
+      query: (jobId) => `/catalog/categories/import-jobs/${jobId}`,
+      transformResponse: responseData<CatalogImportJob>,
+    }),
+    downloadCategoryImportReport: builder.mutation<Blob, string>({
+      query: (jobId) => ({
+        url: `/catalog/categories/import-jobs/${jobId}/error-report`,
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
   }),
 })
 
@@ -71,4 +97,9 @@ export const {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,
+  useDownloadCategoryImportTemplateMutation,
+  useSubmitCategoryImportJobMutation,
+  useGetCategoryImportProgressQuery,
+  useLazyGetCategoryImportProgressQuery,
+  useDownloadCategoryImportReportMutation,
 } = categoryApi

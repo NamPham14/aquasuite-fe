@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { FolderTree, Plus } from 'lucide-react'
+import { FileSpreadsheet, FolderTree, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   CategoryForm,
+  CategoryImportDialog,
   CatalogDeleteDialog,
   CatalogMobileList,
   CatalogPagination,
@@ -56,6 +57,7 @@ export function CategoriesPage() {
   const [updateCategory, updateState] = useUpdateCategoryMutation()
   const [deleteCategory, deleteState] = useDeleteCategoryMutation()
   const [dialog, setDialog] = useState<CategoryDialogState | null>(null)
+  const [isImportOpen, setIsImportOpen] = useState(false)
   const [formError, setFormError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [deleteError, setDeleteError] = useState('')
@@ -161,9 +163,18 @@ export function CategoriesPage() {
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-600">Danh sách dạng phẳng; máy chủ kiểm tra tên trùng, vòng lặp và quan hệ cha con.</p>
-        <button type="button" className={primaryButton} onClick={() => openDialog('create')}>
-          <Plus className="h-4 w-4" aria-hidden="true" /> Thêm danh mục
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className={secondaryButton}
+            onClick={() => setIsImportOpen(true)}
+          >
+            <FileSpreadsheet className="h-4 w-4" aria-hidden="true" /> Nhập Excel
+          </button>
+          <button type="button" className={primaryButton} onClick={() => openDialog('create')}>
+            <Plus className="h-4 w-4" aria-hidden="true" /> Thêm danh mục
+          </button>
+        </div>
       </div>
       <ManagementFilterBar>
         <ManagementSearch
@@ -277,6 +288,15 @@ export function CategoriesPage() {
           error={deleteError}
           onClose={() => setDialog(null)}
           onConfirm={() => void confirmDelete()}
+        />
+      )}
+      {isImportOpen && (
+        <CategoryImportDialog
+          onSuccess={() => {
+            void list.refetch()
+            void optionsQuery.refetch()
+          }}
+          onClose={() => setIsImportOpen(false)}
         />
       )}
     </div>

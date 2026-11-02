@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Plus, Tags } from 'lucide-react'
+import { FileSpreadsheet, Plus, Tags } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   BrandForm,
+  BrandImportDialog,
   CatalogDeleteDialog,
   CatalogMobileList,
   CatalogPagination,
@@ -47,6 +48,7 @@ export function BrandsPage() {
   const [updateBrand, updateState] = useUpdateBrandMutation()
   const [deleteBrand, deleteState] = useDeleteBrandMutation()
   const [dialog, setDialog] = useState<BrandDialogState | null>(null)
+  const [isImportOpen, setIsImportOpen] = useState(false)
   const [formError, setFormError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [deleteError, setDeleteError] = useState('')
@@ -141,9 +143,18 @@ export function BrandsPage() {
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-600">Mã thương hiệu là khóa ổn định và không thể sửa sau khi tạo.</p>
-        <button type="button" className={primaryButton} onClick={() => openDialog('create')}>
-          <Plus className="h-4 w-4" aria-hidden="true" /> Thêm thương hiệu
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className={secondaryButton}
+            onClick={() => setIsImportOpen(true)}
+          >
+            <FileSpreadsheet className="h-4 w-4" aria-hidden="true" /> Nhập Excel
+          </button>
+          <button type="button" className={primaryButton} onClick={() => openDialog('create')}>
+            <Plus className="h-4 w-4" aria-hidden="true" /> Thêm thương hiệu
+          </button>
+        </div>
       </div>
       <ManagementFilterBar>
         <ManagementSearch
@@ -248,6 +259,12 @@ export function BrandsPage() {
           error={deleteError}
           onClose={() => setDialog(null)}
           onConfirm={() => void confirmDelete()}
+        />
+      )}
+      {isImportOpen && (
+        <BrandImportDialog
+          onSuccess={() => void list.refetch()}
+          onClose={() => setIsImportOpen(false)}
         />
       )}
     </div>

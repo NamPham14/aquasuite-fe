@@ -11,4 +11,8 @@ export type {
   CatalogSortDirection,
   CatalogStatus,
 } from './catalog.types'
-
+export type {
+  CatalogImportJob,
+  CatalogImportJobStatus,
+  CatalogImportSubmitResponse,
+} from './import.types'
