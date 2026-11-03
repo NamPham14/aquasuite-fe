@@ -9,6 +9,7 @@ import { InventoryPage } from '../pages/management/InventoryPage'
 import { SystemInfoPage } from '../pages/management/SystemInfoPage'
 import { RolesPage } from '../pages/management/RolesPage'
 import { PermissionsPage } from '../pages/management/PermissionsPage'
+import { UsersPage } from '../pages/management/UsersPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ProtectedRoute } from '../features/iam/components/ProtectedRoute'
 import { PublicOnlyRoute } from '../features/iam/components/PublicOnlyRoute'
@@ -73,6 +74,7 @@ export const routeConfig: RouteObject[] = [
           },
           { path: 'roles', element: <RolesPage /> },
           { path: 'permissions', element: <PermissionsPage /> },
+          { path: 'users', element: <UsersPage /> },
         ],
       },
     ],

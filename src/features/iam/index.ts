@@ -24,6 +24,9 @@ export { useAuthBootstrap, triggerAuthBootstrap } from './hooks/useAuthBootstrap
 export { LoginForm } from './components/LoginForm.tsx'
 export { ProtectedRoute } from './components/ProtectedRoute.tsx'
 export { PublicOnlyRoute } from './components/PublicOnlyRoute.tsx'
+export { UserAccountForm } from './components/UserAccountForm.tsx'
+export { UserAccountDetailDialog } from './components/UserAccountDetailDialog.tsx'
+export { UserAccountStatusDialog } from './components/UserAccountStatusDialog.tsx'
 export { iamAccessApi, useRolesQuery, useRoleQuery, usePermissionsQuery, usePermissionQuery, useCreatePermissionMutation, useUpdatePermissionMutation, useDeletePermissionMutation, useChangeAssignmentMutation } from './api/iamAccessApi.ts'
 export type { IamRole, IamPermission, PermissionQuery } from './api/iamAccessApi.ts'
 export {
@@ -42,3 +45,26 @@ export {
   clearIamReconciliation,
 } from './model/iamAccessSlice.ts'
 export type { ReconciliationTarget, IamAccessState, IamAccessStatus } from './model/iamAccessSlice.ts'
+export {
+  userAccountApi,
+  useGetUserAccountStatsQuery,
+  useGetUserAccountsQuery,
+  useGetUserAccountQuery,
+  useGetAssignableRolesQuery,
+  useCreateUserAccountMutation,
+  useUpdateUserAccountMutation,
+  useChangeUserAccountStatusMutation,
+} from './api/userAccountApi.ts'
+export { getUserAccountErrorState } from './lib/userAccountError.ts'
+export type {
+  AssignableRole,
+  ChangeUserStatusRequest,
+  CreateUserAccountRequest,
+  UpdateUserAccountRequest,
+  UserAccount,
+  UserAccountFormValues,
+  UserAccountPage,
+  UserAccountQuery,
+  UserAccountStats,
+  UserAccountStatus,
+} from './types/userAccount.types.ts'

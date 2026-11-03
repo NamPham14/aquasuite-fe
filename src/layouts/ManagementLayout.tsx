@@ -64,6 +64,7 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
   {
     group: 'Quản lý truy cập',
     items: [
+      { name: 'Tài khoản người dùng', to: '/app/users', icon: UsersRound },
       { name: 'Vai trò', to: '/app/roles', icon: UsersRound },
       { name: 'Quyền', to: '/app/permissions', icon: KeyRound },
     ],
