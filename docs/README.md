@@ -2,6 +2,10 @@
 
 ## Tài liệu
 
+- [UC 29 FE demo](specifications/FE-UC29-DEMO.md): giao diện đặt cọc/giữ hàng bằng dữ liệu demo và [wireframe draw.io](specifications/FE-UC29-DEMO.drawio).
+
+- [Manage Combo FE](specifications/FE-MANAGE-COMBO.md): phạm vi UC-13, contract backend, cấu trúc triển khai và phần SRS chưa được hỗ trợ.
+
 - [Cấu trúc frontend](FRONTEND_PACKAGE_STRUCTURE.md): kiến trúc đích, trách nhiệm các khu vực và ranh giới feature.
 - [Component UI trang quản lý](MANAGEMENT_UI_COMPONENTS.md): danh mục component dùng chung, cách dùng và giới hạn hiện tại.
 - [Workflow phát triển](workflow/feature-delivery.md): phân loại rủi ro, Delivery Brief và quy trình plan, triển khai, review.
@@ -17,4 +21,4 @@ Repo BE là repo riêng. Khi tích hợp, tham khảo contract, spec và impleme
 
 `.agent/work/` là ghi chú cục bộ, không đồng bộ qua Git. Quyết định và đặc tả cần cả nhóm sử dụng phải được ghi vào tài liệu chia sẻ hoặc PR phù hợp.
 
-- [Customer login FE](specifications/FE-CUSTOMER-LOGIN.md): /login-customer, API contract v? [wireframe draw.io](specifications/FE-CUSTOMER-LOGIN.drawio).
+- [Customer login FE](specifications/FE-CUSTOMER-LOGIN.md): /login-customer, API contract và [wireframe draw.io](specifications/FE-CUSTOMER-LOGIN.drawio).

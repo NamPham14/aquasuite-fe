@@ -3,6 +3,7 @@ import { Outlet, NavLink, Link } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
+  Layers,
   FolderTree,
   Tags,
   Warehouse,
@@ -15,6 +16,7 @@ import {
   ChevronRight,
   UsersRound,
   KeyRound,
+  HandCoins,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -54,12 +56,17 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
         to: '/app/brands',
         icon: Tags,
       },
+      { name: 'Combo', to: '/app/combos', icon: Layers },
       {
         name: 'Tồn kho',
         to: '/app/inventory',
         icon: Warehouse,
       },
     ],
+  },
+  {
+    group: 'Bán hàng',
+    items: [{ name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins }],
   },
   {
     group: 'Quản lý truy cập',

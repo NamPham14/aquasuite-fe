@@ -1,0 +1,280 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="1" name="01 · Danh sách desktop">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageWidth="1440" pageHeight="1200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="AquaSuite&#10;HỆ THỐNG QUẢN LÝ&#10;&#10;Bảng điều khiển&#10;Sản phẩm&#10;Danh mục&#10;Thương hiệu&#10;Combo&#10;Tồn kho&#10;&#10;[Đặt cọc &amp; Giữ hàng]&#10;&#10;Vai trò&#10;Quyền" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="220" height="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="Hồ sơ cá nhân                                                          Đăng xuất" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="260" y="20" width="1140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="AquaSuite / Bán hàng / Đặt cọc &amp; Giữ hàng&#10;Đặt cọc &amp; Giữ hàng" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=22;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="100" width="1100" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="DEMO FE — Dữ liệu mô phỏng trong phiên trang. Không ghi tiền hoặc tồn thật." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="210" width="1100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Tạo đơn mới theo yêu cầu giữ của khách" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="290" width="760" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="+ Tạo yêu cầu giữ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e0f2fe;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="290" width="320" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Tìm kiếm&#10;[Mã đơn hoặc tên khách...]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="360" width="500" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="Trạng thái&#10;[Tất cả v]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="800" y="360" width="340" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Đặt lại bộ lọc" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="385" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="Danh sách yêu cầu giữ                                                        [Tải lại]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="480" width="1100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Mã đơn           Khách hàng                Cọc tối thiểu       Đã xác minh        Trạng thái          Thao tác" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=14;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="540" width="1100" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="DH-DEMO-001    Nguyễn Minh Anh          5.000.000 đ         0 đ                 Chờ xác minh        [Xem]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=14;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="595" width="1100" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="DH-DEMO-002    Công ty An Phát          6.800.000 đ         6.800.000 đ         Chờ bổ sung hàng    [Xem]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=14;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="670" width="1100" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="2 / 2 yêu cầu demo" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="745" width="1100" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="16" value="Dùng ManagementPageHeader / FilterBar / Table / RowActions hiện có.&#10;Tìm kiếm và lọc dữ liệu demo; chưa đề xuất endpoint danh sách production." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="840" width="1100" height="100" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="2" name="02 · Tạo đơn và yêu cầu giữ">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageWidth="1440" pageHeight="1200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="DIALOG WIDE — Tạo đơn &amp; yêu cầu giữ hàng                                      [X]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=22;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="200" y="30" width="1000" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="Đơn mới: đã thanh toán = 0. Yêu cầu giữ chưa khóa tồn." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="120" width="960" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Khách hàng *&#10;[Chọn khách demo v]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="190" width="470" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Kho giữ hàng *&#10;[Kho chính v]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="710" y="190" width="470" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Sản phẩm &amp; phạm vi yêu cầu giữ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="300" width="960" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="[x] Lavabo đặt bàn trắng · LVB-001 · 2.500.000 đ&#10;Số lượng mua * [10]                     Số lượng yêu cầu giữ * [4]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="360" width="960" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="[ ] Sen tắm nóng lạnh · SEN-002 · 3.200.000 đ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="490" width="960" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="[ ] Bồn cầu một khối · BC-003 · 6.800.000 đ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="570" width="960" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Ngày giao dự kiến&#10;[dd/mm/yyyy] Không làm hết hạn giữ có cọc." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="655" width="470" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="Ghi chú&#10;[Nhập thỏa thuận giao hàng...]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="710" y="655" width="470" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Giá trị yêu cầu giữ: 10.000.000 đ&#10;Cọc tối thiểu (20%): 2.000.000 đ&#10;Tính trên phần yêu cầu giữ, kể cả phần đang thiếu hàng." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e0f2fe;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="770" width="960" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="[Lỗi validation hiển thị tại đây nếu dữ liệu không hợp lệ]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fff1f2;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="895" width="960" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="[Hủy]                     [Tạo đơn &amp; yêu cầu giữ]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="965" width="530" height="55" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="3" name="03 · Chi tiết cọc và giữ hàng">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageWidth="1440" pageHeight="1550">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="DIALOG WIDE — Đặt cọc · DH-DEMO-001                                          [X]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=22;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="1000" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="Nguyễn Minh Anh · Kho chính · Chưa hẹn ngày giao                  [Chờ xác minh]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="100" width="960" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Tổng đơn&#10;25.000.000 đ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="185" width="310" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Giá trị yêu cầu giữ&#10;25.000.000 đ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="545" y="185" width="310" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Cọc tối thiểu · 20%&#10;5.000.000 đ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="870" y="185" width="310" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Tiền đã xác minh&#10;0 đ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="290" width="310" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Tiền chờ xác minh&#10;5.000.000 đ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="545" y="290" width="310" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="Còn phải thu toàn đơn&#10;25.000.000 đ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="870" y="290" width="310" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Hàng yêu cầu giữ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="410" width="960" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="Sản phẩm                       Mua         Yêu cầu giữ         Đang giữ         Chờ bổ sung&#10;Lavabo đặt bàn trắng           10          10                  0                 10" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=15;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="455" width="960" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="[Đồng bộ giữ hàng demo — khóa khi VERIFIED chưa đủ 20%]&#10;Giữ hàng không đồng nghĩa được phép xuất kho." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e0f2fe;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="570" width="960" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="Khoản cọc&#10;5.000.000 đ · Chuyển khoản · DEMO-001                  [Chờ xác minh]&#10;[Mô phỏng xác minh]       [Mô phỏng từ chối]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="670" width="960" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="Ghi nhận cọc demo&#10;Số tiền có thể thu đã trừ cả tiền đã xác minh và đang chờ." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="815" width="960" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="Số tiền (VND) *&#10;[...................]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="910" width="310" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="16" value="Hình thức *&#10;[Tiền mặt v]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="545" y="910" width="310" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="17" value="Mã tham chiếu&#10;[...................]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="870" y="910" width="310" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="18" value="[Ghi nhận cọc demo]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e0f2fe;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="870" y="1015" width="310" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="19" value="Lịch sử xử lý demo&#10;• Tạo đơn mới, chưa thanh toán.&#10;• Ghi nhận khoản cọc demo, chờ xác minh." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="1090" width="960" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="20" value="CHỈ DEMO: mô phỏng xác minh không thể hiện quyền kế toán của nhân viên bán hàng.&#10;Sau VERIFIED: bấm đồng bộ để thấy giữ được 8 / chờ 2. Đồng bộ lại không cộng trùng." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="1230" width="960" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="Dialog cuộn dọc; bảng hàng cuộn ngang trên màn hình nhỏ.&#10;Escape / nút X đóng; trả focus về nút mở. Khóa gửi lặp khi xử lý." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="220" y="1350" width="960" height="90" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="4" name="04 · Mobile và trạng thái">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageWidth="1440" pageHeight="1200">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="[Menu]      AquaSuite       [Hồ sơ]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="390" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="Đặt cọc &amp; Giữ hàng&#10;Theo dõi yêu cầu giữ" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=20;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="90" width="390" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="DEMO — Không ghi tiền / tồn thật" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="195" width="390" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="[+ Tạo yêu cầu giữ]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e0f2fe;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="285" width="390" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Tìm kiếm [..................]&#10;Trạng thái [Tất cả v]&#10;[Đặt lại bộ lọc]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="360" width="390" height="135" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Danh sách yêu cầu giữ       [Tải lại]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="515" width="390" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="DH-DEMO-001&#10;Nguyễn Minh Anh&#10;Chờ xác minh&#10;Cọc tối thiểu: 5.000.000 đ&#10;Đã xác minh: 0 đ&#10;[Xem]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="575" width="390" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="DH-DEMO-002&#10;Công ty Xây dựng An Phát&#10;Chờ bổ sung hàng&#10;Cọc tối thiểu: 6.800.000 đ&#10;Đã xác minh: 6.800.000 đ&#10;[Xem]" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="795" width="390" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Loading&#10;Đang tải dữ liệu demo...&#10;Vùng danh sách aria-busy." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="90" width="850" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="Empty&#10;Không có yêu cầu phù hợp. Hãy đổi bộ lọc hoặc tạo yêu cầu mới." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="230" width="850" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Error&#10;Thông báo lỗi tại trang / dialog, role=alert.&#10;Không đóng form khi thao tác thất bại. Tải lại danh sách để thử lại." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fff1f2;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="360" width="850" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="Validation&#10;Chọn khách, ít nhất một dòng cần giữ.&#10;Số mua: 1–9.999; số giữ: 0–số mua; ngày giao không trong quá khứ.&#10;Cọc: VND nguyên dương, không vượt số có thể thu. Chuyển khoản cần tham chiếu." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fff1f2;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="510" width="850" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="Responsive / bàn phím&#10;Danh sách dọc trên mobile; dialog tối đa 94vw / 90vh.&#10;Control có label; bảng cuộn ngang có thể focus; focus ring theo component chung.&#10;Không thêm theme hoặc CSS toàn cục." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e0f2fe;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="700" width="850" height="140" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="5" name="05 · Luồng và chuyển trạng thái">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageWidth="1500" pageHeight="1150">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="UC 29 — Luồng demo FE và ranh giới thay API" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e2e8f0;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=24;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1400" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="Tạo yêu cầu&#10;Khách + SKU + số mua/giữ + kho" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="150" width="350" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Đơn mới&#10;Đã trả = 0; đang giữ = 0&#10;Cọc tối thiểu = 20% phần chọn" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e0f2fe;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="540" y="150" width="350" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Ghi cọc demo&#10;PENDING — chưa khóa hàng" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="150" width="350" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Mô phỏng kế toán&#10;VERIFIED hoặc REJECTED" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="400" width="350" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="VERIFIED đạt 20%?&#10;Chưa đủ: thu bổ sung cùng đơn" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="540" y="400" width="350" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Đồng bộ giữ hàng&#10;Phân bổ tối đa tồn khả dụng" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#e0f2fe;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="400" width="350" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="Đã giữ đủ hàng&#10;held = requested" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#dcfce7;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="690" width="350" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Chờ bổ sung hàng&#10;held &lt; requested; không hạ cọc" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#fef3c7;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="540" y="690" width="350" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=0;fontSize=14;" edge="1" parent="1" source="3" target="4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=0;fontSize=14;" edge="1" parent="1" source="4" target="5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=0;fontSize=14;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="VERIFIED" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=0;fontSize=14;" edge="1" parent="1" source="6" target="7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="Chưa đủ" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=0;fontSize=14;" edge="1" parent="1" source="7" target="5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="16" value="Đạt" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=0;fontSize=14;" edge="1" parent="1" source="7" target="8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="17" value="Đủ tồn" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=0;fontSize=14;" edge="1" parent="1" source="8" target="9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="18" value="Thiếu tồn" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;html=0;fontSize=14;" edge="1" parent="1" source="8" target="10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="19" value="Sau này thay API&#10;Repository là data port FE, chưa phải HTTP contract.&#10;Giá / tiền / permission / idempotency phải do BE xác nhận.&#10;Bỏ control mô phỏng; xác minh thuộc finance. Không mở đường bỏ qua cọc." style="rounded=0;whiteSpace=wrap;html=0;fillColor=#f8fafc;strokeColor=#94a3b8;fontColor=#0f172a;fontSize=16;align=left;verticalAlign=middle;spacingLeft=16;spacingRight=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="880" width="1350" height="150" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -6,6 +6,8 @@ import { DashboardPage } from '../pages/management/DashboardPage'
 import { ProductsPage } from '../pages/management/ProductsPage'
 import { CategoriesPage } from '../pages/management/CategoriesPage'
 import { BrandsPage } from '../pages/management/BrandsPage'
+import { CombosPage } from '../pages/management/CombosPage'
+import { DepositsPage } from '../pages/management/DepositsPage'
 import { InventoryPage } from '../pages/management/InventoryPage'
 import { SystemInfoPage } from '../pages/management/SystemInfoPage'
 import { RolesPage } from '../pages/management/RolesPage'
@@ -65,6 +67,8 @@ export const routeConfig: RouteObject[] = [
             path: 'brands',
             element: <BrandsPage />,
           },
+          { path: 'combos', element: <CombosPage /> },
+          { path: 'deposits', element: <DepositsPage /> },
           {
             path: 'inventory',
             element: <InventoryPage />,
