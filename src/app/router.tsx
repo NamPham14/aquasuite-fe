@@ -10,6 +10,10 @@ import { SystemInfoPage } from '../pages/management/SystemInfoPage'
 import { RolesPage } from '../pages/management/RolesPage'
 import { PermissionsPage } from '../pages/management/PermissionsPage'
 import { UsersPage } from '../pages/management/UsersPage'
+import { QuotationsPage } from '../pages/management/QuotationsPage'
+import { QuotationCreatePage } from '../pages/management/QuotationCreatePage'
+import { QuotationEditPage } from '../pages/management/QuotationEditPage'
+import { QuotationDetailPage } from '../pages/management/QuotationDetailPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ProtectedRoute } from '../features/iam/components/ProtectedRoute'
 import { PublicOnlyRoute } from '../features/iam/components/PublicOnlyRoute'
@@ -67,6 +71,22 @@ export const routeConfig: RouteObject[] = [
           {
             path: 'inventory',
             element: <InventoryPage />,
+          },
+          {
+            path: 'quotations',
+            element: <QuotationsPage />,
+          },
+          {
+            path: 'quotations/new',
+            element: <QuotationCreatePage />,
+          },
+          {
+            path: 'quotations/:id',
+            element: <QuotationDetailPage />,
+          },
+          {
+            path: 'quotations/:id/edit',
+            element: <QuotationEditPage />,
           },
           {
             path: 'system-info',
