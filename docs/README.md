@@ -16,3 +16,5 @@
 Repo BE là repo riêng. Khi tích hợp, tham khảo contract, spec và implementation BE tương ứng nếu có quyền truy cập; đường dẫn sibling trên một máy không phải yêu cầu bắt buộc cho mọi thành viên. Nếu thiếu nguồn xác nhận contract, ghi rõ giới hạn và hỏi người phụ trách.
 
 `.agent/work/` là ghi chú cục bộ, không đồng bộ qua Git. Quyết định và đặc tả cần cả nhóm sử dụng phải được ghi vào tài liệu chia sẻ hoặc PR phù hợp.
+
+- [Customer login FE](specifications/FE-CUSTOMER-LOGIN.md): /login-customer, API contract v? [wireframe draw.io](specifications/FE-CUSTOMER-LOGIN.drawio).

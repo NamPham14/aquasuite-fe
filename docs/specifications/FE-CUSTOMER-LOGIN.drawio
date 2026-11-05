@@ -1,0 +1,105 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Desktop" id="Desktop">
+    <mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1400" pageHeight="1000">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;fillColor=#fafaf9;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="1040" height="800" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="AquaSuite&#10;Kh?ng gian d?nh cho kh?ch h?ng" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;fontColor=#134e4a;strokeColor=none;fillColor=none;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="65" width="1000" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="T?I KHO?N KH?CH H?NG&#10;Ch?o m?ng tr? l?i.&#10;??ng nh?p b?ng s? ?i?n tho?i ?? ??ng k?&#10;v? m?t kh?u c?a b?n." style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="360.0" y="205" width="400" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="S? ?i?n tho?i" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="360.0" y="355" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Nh?p s? ?i?n tho?i ?? ??ng k?" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="360.0" y="390" width="400" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="M?t kh?u" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="360.0" y="465" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Nh?p m?t kh?u                            Hi?n" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="360.0" y="500" width="400" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="??ng nh?p" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;fillColor=#115e59;fontColor=#ffffff;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360.0" y="580" width="400" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="B?n l? nh?n vi?n? ??ng nh?p h? th?ng" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;strokeColor=none;fillColor=none;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="360.0" y="675" width="400" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="? 2026 AquaSuite" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;strokeColor=none;fillColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360.0" y="775" width="400" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Mobile" id="Mobile">
+    <mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1400" pageHeight="1000">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;fillColor=#fafaf9;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="390" height="800" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="AquaSuite&#10;Kh?ng gian d?nh cho kh?ch h?ng" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;fontColor=#134e4a;strokeColor=none;fillColor=none;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="65" width="350" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="T?I KHO?N KH?CH H?NG&#10;Ch?o m?ng tr? l?i.&#10;??ng nh?p b?ng s? ?i?n tho?i ?? ??ng k?&#10;v? m?t kh?u c?a b?n." style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="60.0" y="205" width="350" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="S? ?i?n tho?i" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="60.0" y="355" width="350" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Nh?p s? ?i?n tho?i ?? ??ng k?" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="60.0" y="390" width="350" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="M?t kh?u" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="60.0" y="465" width="350" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Nh?p m?t kh?u                            Hi?n" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="60.0" y="500" width="350" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="??ng nh?p" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;fillColor=#115e59;fontColor=#ffffff;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60.0" y="580" width="350" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="B?n l? nh?n vi?n? ??ng nh?p h? th?ng" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;strokeColor=none;fillColor=none;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60.0" y="675" width="350" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="? 2026 AquaSuite" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;strokeColor=none;fillColor=none;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60.0" y="775" width="350" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="States and flow" id="States-and-flow">
+    <mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" page="1" pageWidth="1400" pageHeight="1000">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="Validation&#10;&#10;S?T Vi?t Nam: 10 s?, ??u 03/05/07/08/09.&#10;M?t kh?u b?t bu?c, kh?ng blank, t?i ?a 100 k? t?.&#10;L?i hi?n th? d??i input; focus tr??ng l?i ??u ti?n." style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;verticalAlign=top;spacing=20;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="610" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="Submitting&#10;&#10;N?t: ?ang ??ng nh?p?&#10;Kh?a input v? n?t; ch?n g?i l?p.&#10;POST /api/v1/auth/customer-login {phone,password}" style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;verticalAlign=top;spacing=20;" vertex="1" parent="1">
+          <mxGeometry x="690" y="40" width="610" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="Authentication error&#10;&#10;AUTH_003: S? ?i?n tho?i ho?c m?t kh?u kh?ng ch?nh x?c.&#10;AUTH_008: T?i kho?n ch?a k?ch ho?t/?? v? hi?u h?a.&#10;Alert ph?a tr?n form, gi? d? li?u ?? s?a." style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;verticalAlign=top;spacing=20;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="610" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Service / network error&#10;&#10;AUTH_009 / 5xx / m?t k?t n?i:&#10;D?ch v? t?m th?i kh?ng kh? d?ng. Vui l?ng th? l?i sau.&#10;M? l?i n?t ?? ng??i d?ng ch? ??ng th? l?i." style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;verticalAlign=top;spacing=20;" vertex="1" parent="1">
+          <mxGeometry x="690" y="300" width="610" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Success / existing session&#10;&#10;L?u phi?n theo c? ch? hi?n c?; GET /auth/me.&#10;Ch? ?i?u h??ng sau khi h? s? h?p l?.&#10;?i ??n /app/dashboard chung hi?n c?." style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;verticalAlign=top;spacing=20;" vertex="1" parent="1">
+          <mxGeometry x="40" y="560" width="610" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="Navigation / mobile&#10;&#10;Nh?n vi?n ? /login. Hi?n/?n m?t kh?u kh?ng submit.&#10;Mobile: m?t c?t, input 16px; label v? focus r? r?ng.&#10;Kh?ng th?m li?n k?t ??ng k?/qu?n m?t kh?u ch?a c?." style="rounded=0;whiteSpace=wrap;html=0;fontSize=16;fillColor=#ffffff;strokeColor=#94a3b8;align=left;verticalAlign=top;spacing=20;" vertex="1" parent="1">
+          <mxGeometry x="690" y="560" width="610" height="220" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

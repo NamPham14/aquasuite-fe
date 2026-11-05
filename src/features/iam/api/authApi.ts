@@ -3,6 +3,7 @@ import { getApiBaseUrl } from '../../../shared/api/apiBaseUrl.ts'
 import type { ApiResponse } from '../../../shared/api/types.ts'
 import type {
   CurrentUserResponseData,
+  CustomerLoginRequest,
   LoginRequest,
   LoginResponseData,
   TokenResponseData,
@@ -79,6 +80,21 @@ export async function loginApi(
         email: credentials.email.trim(),
         password: credentials.password,
       }),
+    },
+    'Đăng nhập không thành công',
+  )
+}
+
+/** Customer credentials go directly to fetch, never Redux or RTK Query cache. */
+export async function customerLoginApi(
+  credentials: CustomerLoginRequest,
+): Promise<ApiResponse<LoginResponseData>> {
+  return safeFetch<LoginResponseData>(
+    `${API_BASE}/auth/customer-login`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: credentials.phone.trim(), password: credentials.password }),
     },
     'Đăng nhập không thành công',
   )

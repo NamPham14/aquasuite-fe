@@ -1,6 +1,7 @@
 import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router-dom'
 import { AuthLayout, ManagementLayout } from '../layouts'
 import { LoginPage } from '../pages/auth/LoginPage'
+import { CustomerLoginPage } from '../pages/auth/CustomerLoginPage'
 import { DashboardPage } from '../pages/management/DashboardPage'
 import { ProductsPage } from '../pages/management/ProductsPage'
 import { CategoriesPage } from '../pages/management/CategoriesPage'
@@ -21,6 +22,7 @@ export const routeConfig: RouteObject[] = [
   {
     element: <PublicOnlyRoute />,
     children: [
+      { path: '/login-customer', element: <CustomerLoginPage /> },
       {
         element: <AuthLayout />,
         children: [
