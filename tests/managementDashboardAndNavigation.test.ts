@@ -944,6 +944,42 @@ const brandRows = [
   { id: 'brand-a', code: 'BRAND_A', name: 'Thương hiệu A', description: null, status: 'ACTIVE' },
   { id: 'brand-c', code: 'BRAND_C', name: 'Thương hiệu C', description: null, status: 'INACTIVE' },
 ]
+const productRows = [
+  {
+    productId: 'prod-1',
+    productCode: 'PROD_1',
+    productName: 'Máy lọc nước RO AquaPure',
+    categoryId: 'cat-root',
+    categoryName: 'Thiết bị vệ sinh',
+    brandId: 'brand-a',
+    brandName: 'Thương hiệu A',
+    productType: 'NORMAL',
+    status: 'ACTIVE',
+    primaryImageUrl: null,
+    minSellingPrice: 100000,
+    maxSellingPrice: 200000,
+    totalVariants: 1,
+    createdAt: '2026-10-20T08:00:00Z',
+    updatedAt: '2026-10-28T08:00:00Z',
+  },
+  {
+    productId: 'prod-2',
+    productCode: 'PROD_2',
+    productName: 'Phụ kiện lọc nước',
+    categoryId: 'cat-inactive',
+    categoryName: 'Phụ kiện',
+    brandId: 'brand-c',
+    brandName: 'Thương hiệu C',
+    productType: 'NORMAL',
+    status: 'DRAFT',
+    primaryImageUrl: null,
+    minSellingPrice: 50000,
+    maxSellingPrice: 50000,
+    totalVariants: 0,
+    createdAt: '2026-10-21T08:00:00Z',
+    updatedAt: '2026-10-28T08:00:00Z',
+  },
+]
 
 function installCatalogFetchMock() {
   const originalFetch = globalThis.fetch
@@ -959,6 +995,9 @@ function installCatalogFetchMock() {
     if (url.pathname.endsWith('/catalog/categories/options')) {
       return ok([{ categoryId: 'cat-root', categoryCode: 'SANITARY', categoryName: 'Thiết bị vệ sinh' }])
     }
+    if (url.pathname.endsWith('/catalog/brands/options')) {
+      return ok([{ brandId: 'brand-a', brandCode: 'BRAND_A', brandName: 'Thương hiệu A' }])
+    }
     if (url.pathname.endsWith('/catalog/categories') && request.method === 'GET') {
       const status = url.searchParams.get('status')
       const items = status ? categoryRows.filter((row) => row.status === status) : categoryRows
@@ -968,6 +1007,11 @@ function installCatalogFetchMock() {
       const status = url.searchParams.get('status')
       const items = status ? brandRows.filter((row) => row.status === status) : brandRows
       return ok({ items, page: 0, size: 20, totalElements: items.length, totalPages: items.length ? 1 : 0 })
+    }
+    if (url.pathname.endsWith('/catalog/products') && request.method === 'GET') {
+      const status = url.searchParams.get('status')
+      const items = status ? productRows.filter((row) => row.status === status) : productRows
+      return ok({ content: items, number: 0, size: 20, totalElements: items.length, totalPages: items.length ? 1 : 0 })
     }
     if (url.pathname.endsWith('/catalog/categories/cat-root') && request.method === 'DELETE') {
       return new Response(JSON.stringify({ success: false, code: 'CAT_013', message: 'Category has children', timestamp: new Date().toISOString() }), {
@@ -988,9 +1032,10 @@ test('Placeholder Pages — only unimplemented management pages show a no-API di
   const mock = installCatalogFetchMock()
   try {
   const p1 = await renderAppWithRouter('/app/products', true)
+  await settleCatalogUi()
   assert.ok(p1.container.innerHTML.includes('Quản lý Sản phẩm'))
-  assert.ok(p1.container.textContent?.includes('chưa kết nối API nghiệp vụ'))
-  assert.ok(!p1.container.textContent?.includes('Trang giao diện mẫu (Placeholder) — WORK-002'))
+  assert.ok(p1.container.textContent?.includes('PROD_1'))
+  assert.ok(!p1.container.textContent?.includes('Dữ liệu mẫu'))
 
   const p2 = await renderAppWithRouter('/app/categories', true)
   await settleCatalogUi()
@@ -1129,23 +1174,28 @@ test('Permission list shows a useful server error without treating it as empty d
   } finally { globalThis.fetch = originalFetch }
 })
 
-test('Products — combined filters, empty state and reset operate on sample rows', async () => {
-  const { container } = await renderAppWithRouter('/app/products', true)
-  const category = container.querySelector<HTMLSelectElement>('#product-category')!
-  const status = container.querySelector<HTMLSelectElement>('#product-status')!
-  await act(async () => {
-    category.value = 'Máy lọc nước'
-    category.dispatchEvent(new window.Event('change', { bubbles: true }))
-    status.value = 'Sắp hết hàng'
-    status.dispatchEvent(new window.Event('change', { bubbles: true }))
-  })
-  assert.ok(container.textContent?.includes('Không tìm thấy sản phẩm phù hợp'))
-  assert.ok(container.textContent?.includes('Hiển thị 0 / 3 sản phẩm mẫu'))
-  const reset = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Xóa bộ lọc')!
-  await act(async () => { reset.click() })
-  assert.ok(container.textContent?.includes('Hiển thị 3 / 3 sản phẩm mẫu'))
-  assert.equal(category.value, '')
-  assert.equal(status.value, '')
+test('Products — combined filters, empty state and reset operate with real API integration', async () => {
+  const mock = installCatalogFetchMock()
+  try {
+    const { container } = await renderAppWithRouter('/app/products', true)
+    await settleCatalogUi()
+    assert.ok(container.textContent?.includes('PROD_1'))
+    const status = container.querySelector<HTMLSelectElement>('#product-status-filter')!
+    await act(async () => {
+      status.value = 'DRAFT'
+      status.dispatchEvent(new window.Event('change', { bubbles: true }))
+    })
+    await settleCatalogUi()
+    assert.ok(container.textContent?.includes('PROD_2'))
+    assert.ok(!container.textContent?.includes('PROD_1'))
+    const reset = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Xóa bộ lọc')!
+    await act(async () => { reset.click() })
+    await settleCatalogUi()
+    assert.equal(status.value, '')
+    assert.ok(container.textContent?.includes('PROD_1'))
+  } finally {
+    mock.restore()
+  }
 })
 
 test('Products — search matches code and name, combined with filters', () => {
