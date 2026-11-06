@@ -33,6 +33,11 @@ export interface QuotationUpsertRequest {
   vatRate?: number
   shippingFee?: number
   note?: string
+  depositPercent?: number
+  depositAmount?: number
+  creditTermDays?: number
+  remainingDebtAmount?: number
+  debtCondition?: string
   items: QuotationItemRequest[]
   milestones?: QuotationPaymentMilestone[]
 }
@@ -115,6 +120,13 @@ export interface QuotationResponse {
   note?: string
   items: QuotationItemResponse[]
   milestones: QuotationPaymentMilestone[]
+  depositPercent?: number
+  depositAmount?: number
+  creditTermDays?: number
+  remainingDebtAmount?: number
+  debtCondition?: string
+  orderId?: string
+  orderCode?: string
   summary?: QuotationSummaryResponse
   approval?: QuotationApprovalInfo
   ownerData?: QuotationOwnerData
