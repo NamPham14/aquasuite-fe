@@ -19,6 +19,7 @@ import {
   HandCoins,
   FileSpreadsheet,
   ShoppingCart,
+  WalletCards,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -72,6 +73,7 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
       { name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins },
       { name: 'Đơn hàng', to: '/app/orders', icon: ShoppingCart },
       { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
+      { name: 'Công nợ khách hàng', to: '/app/customer-debts', icon: WalletCards },
     ],
   },
   {
