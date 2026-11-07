@@ -552,7 +552,9 @@ export function QuotationTable({
                         {row.projectName}
                       </span>
                       <span className="text-[11px] text-slate-500 truncate" title={row.customerName}>
-                        {row.customerName || 'Khách vãng lai'}
+                        {row.customerName && row.customerName !== 'Walk-in Retail Customer'
+                          ? row.customerName
+                          : 'Khách lẻ tại quầy'}
                       </span>
                     </div>
                   </td>

@@ -1,8 +1,54 @@
 import { Eye, ShoppingBag } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import type { SalesOrderSummaryResponse } from '../types/salesOrder.types'
-import { OrderStatusBadge } from './OrderStatusBadge'
-import { PaymentStatusBadge } from './PaymentStatusBadge'
+import type { OrderStatus, PaymentStatus, SalesOrderSummaryResponse } from '../types/salesOrder.types'
+
+const ORDER_STATUS_CONFIG: Record<
+  OrderStatus,
+  { label: string; className: string; border: string; dotColor: string }
+> = {
+  PROCESSING: {
+    label: 'Đang xử lý',
+    className: 'bg-sky-50 text-sky-700',
+    border: 'border-sky-200',
+    dotColor: 'bg-sky-500',
+  },
+  COMPLETED: {
+    label: 'Hoàn tất',
+    className: 'bg-emerald-50 text-emerald-700',
+    border: 'border-emerald-200',
+    dotColor: 'bg-emerald-500',
+  },
+  CANCELLED: {
+    label: 'Đã hủy',
+    className: 'bg-rose-50 text-rose-700',
+    border: 'border-rose-200',
+    dotColor: 'bg-rose-500',
+  },
+}
+
+const PAYMENT_STATUS_CONFIG: Record<
+  PaymentStatus,
+  { label: string; className: string; border: string; dotColor: string }
+> = {
+  UNPAID: {
+    label: 'Chưa thanh toán',
+    className: 'bg-amber-50 text-amber-700',
+    border: 'border-amber-200',
+    dotColor: 'bg-amber-500',
+  },
+  PARTIALLY_PAID: {
+    label: 'Thanh toán 1 phần',
+    className: 'bg-sky-50 text-sky-700',
+    border: 'border-sky-200',
+    dotColor: 'bg-sky-500',
+  },
+  PAID: {
+    label: 'Đã thanh toán',
+    className: 'bg-emerald-50 text-emerald-700',
+    border: 'border-emerald-200',
+    dotColor: 'bg-emerald-500',
+  },
+}
 
 interface OrderTableProps {
   orders: SalesOrderSummaryResponse[]
@@ -57,25 +103,39 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
 
   return (
     <div className="border border-slate-200 rounded-lg bg-white overflow-hidden shadow-2xs">
-      <div className="w-full">
-        <table className="w-full text-left text-xs text-slate-700 table-fixed">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-xs text-slate-700 table-fixed min-w-[880px]">
           <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase border-b border-slate-200 font-semibold tracking-wider">
             <tr>
-              <th className="px-4 py-3 w-[22%]">Mã & Ngày tạo</th>
-              <th className="px-4 py-3 w-[28%]">Khách hàng & Kênh</th>
-              <th className="px-4 py-3 w-[18%] text-right">Tổng tiền</th>
-              <th className="px-4 py-3 w-[22%] text-center">Trạng thái & TT</th>
-              <th className="px-4 py-3 w-[10%] text-center">Thao tác</th>
+              <th className="px-4 py-3 w-[16%] text-left">Mã & Ngày tạo</th>
+              <th className="px-2 py-3 w-[12%] text-center">Loại đơn</th>
+              <th className="px-4 py-3 w-[22%] text-left">Khách hàng & Kênh</th>
+              <th className="px-4 py-3 w-[14%] text-right">Tổng tiền</th>
+              <th className="px-2 py-3 w-[14%] text-center">Trạng thái đơn</th>
+              <th className="px-2 py-3 w-[16%] text-center">Thanh toán</th>
+              <th className="px-2 py-3 w-[6%] text-center">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {orders.map((order) => {
               const isProject = order.orderType === 'PROJECT'
+              const orderStatusConfig = ORDER_STATUS_CONFIG[order.orderStatus] ?? {
+                label: order.orderStatus,
+                className: 'bg-slate-50 text-slate-700',
+                border: 'border-slate-200',
+                dotColor: 'bg-slate-400',
+              }
+              const paymentStatusConfig = PAYMENT_STATUS_CONFIG[order.paymentStatus] ?? {
+                label: order.paymentStatus,
+                className: 'bg-slate-50 text-slate-700',
+                border: 'border-slate-200',
+                dotColor: 'bg-slate-400',
+              }
 
               return (
                 <tr key={order.orderId} className="hover:bg-slate-50/70 transition-colors">
                   {/* Cột 1: Mã & Ngày tạo */}
-                  <td className="px-4 py-3 align-top">
+                  <td className="px-4 py-3.5 align-middle text-left">
                     <Link
                       to={`/app/orders/${order.orderId}`}
                       className="font-mono font-bold text-xs text-sky-700 hover:text-sky-800 hover:underline block"
@@ -85,31 +145,36 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
                     <div className="text-[11px] text-slate-400 mt-0.5">
                       {formatDate(order.orderDate || order.createdAt)}
                     </div>
-                    <div className="mt-1">
+                  </td>
+
+                  {/* Cột 2: Loại đơn hàng (Căn giữa cân đối tuyệt đối) */}
+                  <td className="px-2 py-3.5 align-middle text-center">
+                    <div className="flex items-center justify-center">
                       <span
-                        className={`inline-block px-1.5 py-0.2 rounded text-[10px] font-semibold ${
+                        className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
                           isProject
-                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         }`}
                       >
+                        <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-70" />
                         {isProject ? 'Dự án (PROJECT)' : 'Bán lẻ (RETAIL)'}
                       </span>
                     </div>
                   </td>
 
-                  {/* Cột 2: Khách hàng & Kênh */}
-                  <td className="px-4 py-3 align-top">
+                  {/* Cột 3: Khách hàng & Kênh */}
+                  <td className="px-4 py-3.5 align-middle text-left">
                     <div className="font-semibold text-slate-900 truncate">
-                      {order.customerName || 'Khách vãng lai tại quầy'}
+                      {order.customerName && order.customerName !== 'Walk-in Retail Customer'
+                        ? order.customerName
+                        : 'Khách lẻ tại quầy'}
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      {order.customerPhone ? (
+                    {order.customerPhone && order.customerPhone !== '0000000000' && (
+                      <div className="text-[11px] text-slate-500 mt-0.5">
                         <span>SĐT: {order.customerPhone}</span>
-                      ) : (
-                        <span className="italic text-slate-400">Không có SĐT</span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                     {isProject && order.projectName && (
                       <div className="text-[11px] text-indigo-700 truncate mt-0.5">
                         Dự án: {order.projectName}
@@ -117,8 +182,8 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
                     )}
                   </td>
 
-                  {/* Cột 3: Tổng tiền */}
-                  <td className="px-4 py-3 align-top text-right">
+                  {/* Cột 4: Tổng tiền */}
+                  <td className="px-4 py-3.5 align-middle text-right">
                     <div className="font-bold text-slate-900 text-sm">
                       {formatMoney(order.totalAmount)}
                     </div>
@@ -127,25 +192,41 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
                     </div>
                   </td>
 
-                  {/* Cột 4: Trạng thái & Thanh toán */}
-                  <td className="px-4 py-3 align-top text-center space-y-1.5">
-                    <div>
-                      <OrderStatusBadge status={order.orderStatus} />
-                    </div>
-                    <div>
-                      <PaymentStatusBadge status={order.paymentStatus} />
+                  {/* Cột 5: Trạng thái đơn hàng (Cột riêng biệt, căn giữa cân đối) */}
+                  <td className="px-2 py-3.5 align-middle text-center">
+                    <div className="flex items-center justify-center">
+                      <span
+                        className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${orderStatusConfig.className} ${orderStatusConfig.border}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${orderStatusConfig.dotColor}`} />
+                        {orderStatusConfig.label}
+                      </span>
                     </div>
                   </td>
 
-                  {/* Cột 5: Thao tác */}
-                  <td className="px-4 py-3 align-top text-center">
-                    <Link
-                      to={`/app/orders/${order.orderId}`}
-                      className="inline-flex items-center justify-center p-1.5 rounded text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition"
-                      title="Xem chi tiết đơn hàng"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Link>
+                  {/* Cột 6: Thanh toán (Cột riêng biệt, căn giữa cân đối) */}
+                  <td className="px-2 py-3.5 align-middle text-center">
+                    <div className="flex items-center justify-center">
+                      <span
+                        className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${paymentStatusConfig.className} ${paymentStatusConfig.border}`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${paymentStatusConfig.dotColor}`} />
+                        {paymentStatusConfig.label}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Cột 7: Thao tác */}
+                  <td className="px-2 py-3.5 align-middle text-center">
+                    <div className="flex items-center justify-center">
+                      <Link
+                        to={`/app/orders/${order.orderId}`}
+                        className="inline-flex items-center justify-center p-1.5 rounded text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition"
+                        title="Xem chi tiết đơn hàng"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               )
