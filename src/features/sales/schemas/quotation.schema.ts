@@ -30,6 +30,11 @@ export const quotationSchema = z
     }),
     shippingFee: z.number().min(0, 'Phí vận chuyển phải lớn hơn hoặc bằng 0.'),
     note: z.string().trim().max(2000, 'Ghi chú tối đa 2000 ký tự.').optional().or(z.literal('')),
+    depositPercent: z.number().min(0).max(100).optional(),
+    depositAmount: z.number().min(0).optional(),
+    creditTermDays: z.number().int().min(0).max(365).optional(),
+    remainingDebtAmount: z.number().min(0).optional(),
+    debtCondition: z.string().trim().max(1000).optional().or(z.literal('')),
     items: z.array(quotationItemSchema).default([]),
     milestones: z.array(paymentMilestoneSchema).optional().default([]),
   })

@@ -22,6 +22,7 @@ import {
   Loader2,
   AlertCircle,
   CreditCard,
+  ShoppingCart,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -34,6 +35,7 @@ import {
   useCreateRevisionMutation,
   useMarkAcceptedMutation,
   useMarkLostMutation,
+  useConvertToOrderMutation,
   QuotationStatusBadge,
   QuotationActionDialog,
   QuotationRevisionHistoryDrawer,
@@ -64,9 +66,22 @@ export function QuotationDetailPage() {
   const [createRevision, { isLoading: isCreatingRev }] = useCreateRevisionMutation()
   const [markAccepted, { isLoading: isAccepting }] = useMarkAcceptedMutation()
   const [markLost, { isLoading: isLosing }] = useMarkLostMutation()
+  const [convertToOrder, { isLoading: isConverting }] = useConvertToOrderMutation()
 
   const [isRevisionDrawerOpen, setIsRevisionDrawerOpen] = useState(false)
   const [actionDialog, setActionDialog] = useState<QuotationActionType | null>(null)
+
+  const handleConvertToOrder = async () => {
+    if (!id) return
+    try {
+      const res = await convertToOrder({ id }).unwrap()
+      const createdOrderCode = res?.data?.orderCode || res?.orderCode
+      toast.success(`Chuyển đổi thành công đơn hàng ${createdOrderCode || ''}!`)
+      refetch()
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Không thể chuyển đổi báo giá thành đơn hàng.')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -298,6 +313,27 @@ export function QuotationDetailPage() {
             </button>
           )}
 
+          {/* Đã chuyển thành đơn hàng */}
+          {quotation.orderId && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold shadow-2xs">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Đã tạo đơn: {quotation.orderCode || 'SO-...'}</span>
+            </span>
+          )}
+
+          {/* Nút Chuyển thành Đơn hàng (Convert Quotation to Project Order) */}
+          {!quotation.orderId && (quotation.status === 'ACCEPTED' || quotation.status === 'APPROVED') && (
+            <button
+              type="button"
+              onClick={handleConvertToOrder}
+              disabled={isConverting}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-800 text-white text-xs font-bold hover:bg-sky-900 transition shadow-2xs disabled:opacity-50"
+            >
+              <ShoppingCart className="w-3.5 h-3.5" />
+              <span>{isConverting ? 'Đang tạo đơn...' : 'Chuyển thành Đơn hàng'}</span>
+            </button>
+          )}
+
           {/* Xóa nháp Rev 1 */}
           {quotation.status === 'DRAFT' && quotation.revisionNo === 1 && (
             <button
@@ -457,34 +493,87 @@ export function QuotationDetailPage() {
           </div>
         </div>
 
-        {/* Payment Milestones (If any) */}
-        {quotation.milestones && quotation.milestones.length > 0 && (
+        {/* Điều khoản thanh toán & Công nợ (Tách bạch Đặt cọc, Công nợ, Theo đợt) */}
+        {(quotation.depositPercent || quotation.creditTermDays || (quotation.milestones && quotation.milestones.length > 0)) && (
           <div className="space-y-3">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-sky-700" />
-              <span>Tiến Độ Thanh Toán Theo Giai Đoạn Hợp Đồng</span>
+              <span>Điều khoản Thanh toán & Công nợ</span>
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {quotation.milestones.map((m, idx) => {
-                const milestoneAmount = (grandTotal * m.percent) / 100
 
-                return (
-                  <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900">
-                        Đợt {idx + 1}: {m.stageName}
-                      </span>
-                      <span className="text-xs font-black text-sky-800 bg-sky-100 px-2 py-0.5 rounded">
-                        {m.percent}%
-                      </span>
-                    </div>
-                    <div className="text-xs font-semibold text-slate-600">
-                      Tương đương: <span className="font-bold text-slate-900">{formatMoney(milestoneAmount)}</span>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Thẻ Đặt cọc */}
+              {quotation.depositPercent != null && quotation.depositPercent > 0 && (
+                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                      <span>💰</span> ĐIỀU KHOẢN ĐẶT CỌC
+                    </span>
+                    <span className="text-xs font-black text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded">
+                      {quotation.depositPercent}% đơn hàng
+                    </span>
                   </div>
-                )
-              })}
+                  <div className="text-xs font-semibold text-slate-700">
+                    Số tiền đặt cọc: <span className="font-bold text-slate-900 text-sm">{formatMoney(quotation.depositAmount || (grandTotal * quotation.depositPercent) / 100)}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 italic">Thanh toán ngay khi xác nhận đơn hàng để chuẩn bị và giữ hàng.</p>
+                </div>
+              )}
+
+              {/* Thẻ Công nợ */}
+              {quotation.creditTermDays != null && quotation.creditTermDays > 0 && (
+                <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-900 flex items-center gap-1.5">
+                      <span>📑</span> ĐIỀU KHOẢN CÔNG NỢ
+                    </span>
+                    <span className="text-xs font-black text-blue-900 bg-blue-200/80 px-2 py-0.5 rounded">
+                      Hạn {quotation.creditTermDays} ngày
+                    </span>
+                  </div>
+                  <div className="text-xs font-semibold text-slate-700">
+                    Số tiền công nợ còn lại: <span className="font-bold text-blue-900 text-sm">
+                      {formatMoney(
+                        quotation.remainingDebtAmount ||
+                        Math.max(0, grandTotal - (quotation.depositAmount || (quotation.depositPercent ? (grandTotal * quotation.depositPercent) / 100 : 0)))
+                      )}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600">
+                    Thời hạn thanh toán: Trong vòng <strong>{quotation.creditTermDays} ngày</strong> tính từ ngày nhận hàng.
+                  </p>
+                </div>
+              )}
             </div>
+
+            {/* Tiến độ theo đợt */}
+            {quotation.milestones && quotation.milestones.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <div className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                  <span>📅</span> Tiến độ thanh toán theo đợt ({quotation.milestones.length} đợt)
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {quotation.milestones.map((m, idx) => {
+                    const milestoneAmount = (grandTotal * m.percent) / 100
+                    return (
+                      <div key={idx} className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-900">
+                            Đợt {idx + 1}: {m.stageName}
+                          </span>
+                          <span className="text-xs font-black text-sky-800 bg-sky-100 px-2 py-0.5 rounded">
+                            {m.percent}%
+                          </span>
+                        </div>
+                        <div className="text-xs font-semibold text-slate-600">
+                          Tương đương: <span className="font-bold text-slate-900">{formatMoney(milestoneAmount)}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -8,10 +8,11 @@ import {
   Trash2,
   AlertTriangle,
   ShoppingBag,
-  Check,
   CheckCircle,
   XCircle,
   Send,
+  ChevronDown,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -217,7 +218,27 @@ export function QuotationEditor({ initialData, isEditMode = false }: QuotationEd
     return []
   })
 
-  // Milestones State
+  // 3 Loại Điều khoản thanh toán: Đặt cọc, Công nợ, Theo đợt
+  const [hasDepositTerm, setHasDepositTerm] = useState<boolean>(() => {
+    return initialData?.depositPercent != null && initialData.depositPercent > 0
+  })
+  const [depositPercent, setDepositPercent] = useState<number | string>(() => {
+    return initialData?.depositPercent ?? ''
+  })
+
+  const [hasDebtTerm, setHasDebtTerm] = useState<boolean>(() => {
+    return initialData?.creditTermDays != null && initialData.creditTermDays > 0
+  })
+  const [creditTermDays, setCreditTermDays] = useState<number | string>(() => {
+    return initialData?.creditTermDays ?? ''
+  })
+  const [remainingDebtAmount, setRemainingDebtAmount] = useState<number | string>(() => {
+    return initialData?.remainingDebtAmount ?? ''
+  })
+
+  const [hasMilestonesTerm, setHasMilestonesTerm] = useState<boolean>(() => {
+    return Boolean(initialData?.milestones && initialData.milestones.length > 0)
+  })
   const [milestones, setMilestones] = useState<QuotationPaymentMilestone[]>(() => {
     if (initialData?.milestones && initialData.milestones.length > 0) {
       return initialData.milestones
@@ -240,6 +261,8 @@ export function QuotationEditor({ initialData, isEditMode = false }: QuotationEd
       },
     ]
   })
+
+  const [isTermDropdownOpen, setIsTermDropdownOpen] = useState(false)
 
   // Drawer state
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -321,16 +344,24 @@ export function QuotationEditor({ initialData, isEditMode = false }: QuotationEd
           vatRate: Number(vatRate) || 0,
           shippingFee: Number(shippingFee) || 0,
           note,
+          depositPercent: hasDepositTerm && depositPercent !== '' ? Number(depositPercent) : undefined,
+          depositAmount: hasDepositTerm && depositPercent !== '' ? ((clientSummary?.grandTotal || 0) * Number(depositPercent)) / 100 : undefined,
+          creditTermDays: hasDebtTerm && creditTermDays !== '' ? Number(creditTermDays) : undefined,
+          remainingDebtAmount: hasDebtTerm
+            ? (remainingDebtAmount !== '' ? Number(remainingDebtAmount) : Math.max(0, (clientSummary?.grandTotal || 0) - (hasDepositTerm && depositPercent !== '' ? ((clientSummary?.grandTotal || 0) * Number(depositPercent)) / 100 : 0)))
+            : undefined,
           items: items.map((i) => ({
             variantId: i.variantId,
             quantity: Number(i.quantity) || 1,
             discountRate: Number(i.discountRate) || 0,
           })),
-          milestones: milestones.map((m, index) => ({
-            sortOrder: index + 1,
-            stageName: m.stageName,
-            percent: Number(m.percent) || 0,
-          })),
+          milestones: hasMilestonesTerm
+            ? milestones.map((m, index) => ({
+                sortOrder: index + 1,
+                stageName: m.stageName,
+                percent: Number(m.percent) || 0,
+              }))
+            : [],
         }
         const res = await previewApi(payload).unwrap()
         const summary = (res as any)?.data?.summary || (res as any)?.summary
@@ -437,6 +468,23 @@ export function QuotationEditor({ initialData, isEditMode = false }: QuotationEd
     }
   }
 
+  // Thêm 1 trong 3 loại điều khoản (Cọc, Công nợ, Theo đợt)
+  const handleAddTerm = (type: 'DEPOSIT' | 'DEBT' | 'MILESTONE') => {
+    if (type === 'DEPOSIT') {
+      setHasDepositTerm(true)
+      if (!depositPercent) setDepositPercent(30)
+      toast.success('Đã thêm điều khoản Đặt cọc')
+    } else if (type === 'DEBT') {
+      setHasDebtTerm(true)
+      if (!creditTermDays) setCreditTermDays(30)
+      toast.success('Đã thêm điều khoản Công nợ')
+    } else if (type === 'MILESTONE') {
+      setHasMilestonesTerm(true)
+      toast.success('Đã thêm điều khoản Thanh toán theo đợt')
+    }
+    setIsTermDropdownOpen(false)
+  }
+
   // Thêm mốc thanh toán
   const addMilestone = () => {
     setMilestones((prev) => [
@@ -478,16 +526,24 @@ export function QuotationEditor({ initialData, isEditMode = false }: QuotationEd
       vatRate,
       shippingFee: Number(shippingFee) || 0,
       note,
+      depositPercent: hasDepositTerm && depositPercent !== '' ? Number(depositPercent) : undefined,
+      depositAmount: hasDepositTerm && depositPercent !== '' ? ((displaySummary?.grandTotal || 0) * Number(depositPercent)) / 100 : undefined,
+      creditTermDays: hasDebtTerm && creditTermDays !== '' ? Number(creditTermDays) : undefined,
+      remainingDebtAmount: hasDebtTerm
+        ? (remainingDebtAmount !== '' ? Number(remainingDebtAmount) : Math.max(0, (displaySummary?.grandTotal || 0) - (hasDepositTerm && depositPercent !== '' ? ((displaySummary?.grandTotal || 0) * Number(depositPercent)) / 100 : 0)))
+        : undefined,
       items: items.map((i) => ({
         variantId: i.variantId,
         quantity: Number(i.quantity) || 1,
         discountRate: Number(i.discountRate) || 0,
       })),
-      milestones: milestones.map((m, index) => ({
-        sortOrder: index + 1,
-        stageName: m.stageName,
-        percent: Number(m.percent) || 0,
-      })),
+      milestones: hasMilestonesTerm
+        ? milestones.map((m, index) => ({
+            sortOrder: index + 1,
+            stageName: m.stageName,
+            percent: Number(m.percent) || 0,
+          }))
+        : [],
     }
 
     // Validate Zod
@@ -1042,96 +1098,265 @@ export function QuotationEditor({ initialData, isEditMode = false }: QuotationEd
 
         {/* PHẦN 3 & 4: ĐIỀU KHOẢN THANH TOÁN & TỔNG HỢP BÁO GIÁ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* PHẦN 3: ĐIỀU KHOẢN THANH TOÁN (MỐC = 100%) */}
+          {/* PHẦN 3: ĐIỀU KHOẢN THANH TOÁN (CỌC / CÔNG NỢ / THEO ĐỢT) */}
           <div className="rounded border border-slate-200 bg-white p-4 space-y-3 flex flex-col justify-between">
-            <div>
+            <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h3 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
-                  3. Điều khoản thanh toán
+                  3. Điều khoản thanh toán & Công nợ
                 </h3>
 
-                {/* Trạng thái 100% phẳng, hiện đại - KHÔNG DÙNG BONG BÓNG BO TRÒN */}
-                <div className="flex items-center gap-1 text-xs">
-                  {totalMilestonePercent === 100 ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      <Check className="w-3 h-3 text-emerald-600" /> Đạt 100%
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      {totalMilestonePercent}% / 100%
-                    </span>
+                {/* 1 NÚT THÊM ĐIỀU KHOẢN DUY NHẤT VỚI 3 OPTION DROPDOWN */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsTermDropdownOpen((prev) => !prev)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-800 shadow-sm transition"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-sky-600" />
+                    <span>Thêm điều khoản</span>
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
+
+                  {isTermDropdownOpen && (
+                    <div className="absolute right-0 mt-1.5 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-30 space-y-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleAddTerm('DEPOSIT')}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-sky-50 flex items-start gap-2.5 transition"
+                      >
+                        <span className="p-1 rounded bg-amber-100 text-amber-700 text-xs">💰</span>
+                        <div>
+                          <div className="font-semibold text-slate-900">Điều khoản Đặt cọc</div>
+                          <div className="text-[11px] text-slate-500">Cọc bao nhiêu % đơn hàng</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAddTerm('DEBT')}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-sky-50 flex items-start gap-2.5 transition"
+                      >
+                        <span className="p-1 rounded bg-blue-100 text-blue-700 text-xs">📑</span>
+                        <div>
+                          <div className="font-semibold text-slate-900">Điều khoản Công nợ</div>
+                          <div className="text-[11px] text-slate-500">Nợ bao nhiêu, sau bao lâu thì trả</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAddTerm('MILESTONE')}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-sky-50 flex items-start gap-2.5 transition"
+                      >
+                        <span className="p-1 rounded bg-purple-100 text-purple-700 text-xs">📅</span>
+                        <div>
+                          <div className="font-semibold text-slate-900">Thanh toán theo đợt</div>
+                          <div className="text-[11px] text-slate-500">Chia theo mốc tiến độ (Đợt 1, 2...)</div>
+                        </div>
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Progress bar phẳng siêu gọn */}
-              <div className="w-full bg-slate-100 h-1.5 rounded overflow-hidden mt-2">
-                <div
-                  className={`h-full transition-all duration-300 ${
-                    totalMilestonePercent === 100 ? 'bg-emerald-500' : 'bg-amber-500'
-                  }`}
-                  style={{ width: `${Math.min(100, Math.max(0, totalMilestonePercent))}%` }}
-                />
-              </div>
-
-              {totalMilestonePercent !== 100 && (
-                <div className="mt-2 p-2 rounded bg-amber-50/70 border border-amber-200 flex items-center gap-1.5 text-[11px] text-amber-800">
-                  <AlertTriangle className="w-3 h-3 shrink-0 text-amber-600" />
-                  <span>Tổng tỷ lệ các đợt phải đúng bằng 100% (hiện tại còn lệch {100 - totalMilestonePercent}%).</span>
+              {/* TRƯỜNG HỢP CHƯA CHỌN ĐIỀU KHOẢN NÀO */}
+              {!hasDepositTerm && !hasDebtTerm && !hasMilestonesTerm && (
+                <div className="p-6 rounded-lg border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                  <p className="font-medium text-slate-600 mb-1">Chưa chọn điều khoản thanh toán riêng</p>
+                  <p className="text-[11px]">Bấm nút <strong>"+ Thêm điều khoản"</strong> ở góc trên để chọn: Đặt cọc, Công nợ hoặc Thanh toán theo đợt.</p>
                 </div>
               )}
 
-              {/* Danh sách đợt thanh toán phẳng gọn */}
-              <div className="space-y-1.5 mt-3">
-                {milestones.map((m, idx) => (
-                  <div
-                    key={idx}
-                    className="p-2 rounded border border-slate-200 bg-slate-50/40 flex items-center gap-2 text-xs"
-                  >
-                    <input
-                      type="text"
-                      placeholder="Tên đợt (ví dụ: Đợt 1: Đặt cọc 30%)..."
-                      value={m.stageName}
-                      onChange={(e) => updateMilestone(idx, 'stageName', e.target.value)}
-                      className="flex-1 rounded border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:border-slate-400 bg-white font-medium"
-                    />
-                    <div className="flex items-center gap-0.5 shrink-0">
+              {/* 1. KHỐI ĐIỀU KHOẢN ĐẶT CỌC */}
+              {hasDepositTerm && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50/40 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-amber-900 flex items-center gap-1.5">
+                      <span>💰</span> ĐIỀU KHOẢN ĐẶT CỌC
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHasDepositTerm(false)
+                        setDepositPercent('')
+                      }}
+                      className="text-slate-400 hover:text-rose-600 p-0.5 rounded transition"
+                      title="Bỏ điều khoản đặt cọc"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="text-slate-700 font-medium">Khách đặt cọc:</span>
+                    <div className="flex items-center gap-1">
                       <input
                         type="number"
-                        min="0"
+                        min="1"
                         max="100"
-                        value={m.percent}
-                        onChange={(e) =>
-                          updateMilestone(idx, 'percent', Number(e.target.value))
-                        }
-                        className="w-14 text-right font-semibold rounded border border-slate-200 px-1 py-1 text-xs focus:outline-none focus:border-slate-400 bg-white"
+                        value={depositPercent}
+                        onChange={(e) => setDepositPercent(e.target.value)}
+                        placeholder="30"
+                        className="w-16 rounded border border-amber-300 bg-white px-2 py-1 text-xs font-bold text-right focus:outline-none focus:border-amber-500"
                       />
-                      <span className="text-slate-400 text-[11px]">%</span>
+                      <span className="text-slate-600 font-bold">% đơn</span>
                     </div>
-                    {milestones.length > 1 && (
+                    <span className="text-slate-300">|</span>
+                    <span className="text-slate-600">
+                      Tương đương: <strong className="text-amber-900 font-bold">{formatMoney(((displaySummary?.grandTotal || 0) * (Number(depositPercent) || 0)) / 100)}</strong>
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 italic">Khách hàng thanh toán tiền cọc ngay khi xác nhận đặt hàng để tiến hành giao/giữ hàng.</p>
+                </div>
+              )}
+
+              {/* 2. KHỐI ĐIỀU KHOẢN CÔNG NỢ */}
+              {hasDebtTerm && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50/40 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-blue-900 flex items-center gap-1.5">
+                      <span>📑</span> ĐIỀU KHOẢN CÔNG NỢ
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHasDebtTerm(false)
+                        setCreditTermDays('')
+                        setRemainingDebtAmount('')
+                      }}
+                      className="text-slate-400 hover:text-rose-600 p-0.5 rounded transition"
+                      title="Bỏ điều khoản công nợ"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-slate-700">
+                      <span>Số tiền công nợ:</span>
+                      <span className="font-bold text-blue-900 text-sm">
+                        {formatMoney(
+                          remainingDebtAmount !== ''
+                            ? Number(remainingDebtAmount)
+                            : Math.max(0, (displaySummary?.grandTotal || 0) - ((displaySummary?.grandTotal || 0) * (Number(depositPercent) || 0)) / 100)
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5 text-slate-700">
+                      <span>Thời hạn thanh toán: Sau</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="365"
+                        value={creditTermDays}
+                        onChange={(e) => setCreditTermDays(e.target.value)}
+                        placeholder="30"
+                        className="w-16 rounded border border-blue-300 bg-white px-2 py-1 text-xs font-bold text-center focus:outline-none focus:border-blue-500"
+                      />
+                      <span>ngày tính từ ngày nhận hàng</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. KHỐI THANH TOÁN THEO ĐỢT (MILESTONES) */}
+              {hasMilestonesTerm && (
+                <div className="rounded-lg border border-purple-200 bg-purple-50/20 p-3 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-purple-900 flex items-center gap-1.5">
+                      <span>📅</span> THANH TOÁN THEO ĐỢT ({milestones.length} ĐỢT)
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
+                        totalMilestonePercent === 100
+                          ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                          : 'text-amber-700 bg-amber-50 border-amber-200'
+                      }`}>
+                        {totalMilestonePercent}% / 100%
+                      </span>
+
                       <button
                         type="button"
-                        onClick={() => removeMilestone(idx)}
-                        className="text-slate-300 hover:text-rose-600 p-1 transition"
-                        title="Xóa đợt"
+                        onClick={() => setHasMilestonesTerm(false)}
+                        className="text-slate-400 hover:text-rose-600 p-0.5 rounded transition"
+                        title="Bỏ thanh toán theo đợt"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={addMilestone}
-                className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 hover:text-slate-900"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Thêm đợt thanh toán</span>
-              </button>
+                  {/* Progress bar */}
+                  <div className="w-full bg-slate-100 h-1.5 rounded overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-300 ${
+                        totalMilestonePercent === 100 ? 'bg-emerald-500' : 'bg-amber-500'
+                      }`}
+                      style={{ width: `${Math.min(100, Math.max(0, totalMilestonePercent))}%` }}
+                    />
+                  </div>
+
+                  {totalMilestonePercent !== 100 && (
+                    <div className="p-1.5 rounded bg-amber-50 border border-amber-200 text-[10px] text-amber-800 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                      <span>Tổng tỷ lệ các đợt phải đúng 100% (còn lệch {100 - totalMilestonePercent}%).</span>
+                    </div>
+                  )}
+
+                  {/* Danh sách đợt */}
+                  <div className="space-y-1.5">
+                    {milestones.map((m, idx) => (
+                      <div
+                        key={idx}
+                        className="p-1.5 rounded border border-slate-200 bg-white flex items-center gap-1.5 text-xs"
+                      >
+                        <input
+                          type="text"
+                          placeholder={`Đợt ${idx + 1}: Tên đợt...`}
+                          value={m.stageName}
+                          onChange={(e) => updateMilestone(idx, 'stageName', e.target.value)}
+                          className="flex-1 rounded border border-slate-200 px-2 py-1 text-xs focus:outline-none focus:border-slate-400 font-medium"
+                        />
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={m.percent}
+                            onChange={(e) =>
+                              updateMilestone(idx, 'percent', Number(e.target.value))
+                            }
+                            className="w-14 text-right font-semibold rounded border border-slate-200 px-1 py-1 text-xs focus:outline-none focus:border-slate-400"
+                          />
+                          <span className="text-slate-400 text-[11px]">%</span>
+                        </div>
+                        {milestones.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeMilestone(idx)}
+                            className="text-slate-300 hover:text-rose-600 p-1 transition"
+                            title="Xóa đợt"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addMilestone}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-700 hover:text-slate-900"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Thêm mốc đợt</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

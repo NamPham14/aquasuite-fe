@@ -22,6 +22,10 @@ import { QuotationDetailPage } from '../pages/management/QuotationDetailPage'
 import { OrdersPage } from '../pages/management/OrdersPage'
 import { POSOrderCreatePage } from '../pages/management/POSOrderCreatePage'
 import { OrderDetailPage } from '../pages/management/OrderDetailPage'
+import { PurchaseOrdersPage } from '../pages/management/PurchaseOrdersPage'
+import { PurchaseOrderCreatePage } from '../pages/management/PurchaseOrderCreatePage'
+import { PurchaseOrderEditPage } from '../pages/management/PurchaseOrderEditPage'
+import { PurchaseOrderDetailPage } from '../pages/management/PurchaseOrderDetailPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ProtectedRoute } from '../features/iam/components/ProtectedRoute'
 import { PublicOnlyRoute } from '../features/iam/components/PublicOnlyRoute'
@@ -104,17 +108,33 @@ export const routeConfig: RouteObject[] = [
             element: <QuotationEditPage />,
           },
           {
-            path: 'orders',
-            element: <OrdersPage />,
+            path: 'purchase-orders',
+            element: <PurchaseOrdersPage />,
           },
           {
-            path: 'orders/pos',
-            element: <POSOrderCreatePage />,
+            path: 'purchase-orders/new',
+            element: <PurchaseOrderCreatePage />,
           },
           {
-            path: 'orders/:id',
-            element: <OrderDetailPage />,
+            path: 'purchase-orders/:id',
+            element: <PurchaseOrderDetailPage />,
           },
+          {
+            path: 'purchase-orders/:id/edit',
+            element: <PurchaseOrderEditPage />,
+          },
+            {
+                path: 'orders',
+                element: <OrdersPage />,
+            },
+            {
+                path: 'orders/pos',
+                element: <POSOrderCreatePage />,
+            },
+            {
+                path: 'orders/:id',
+                element: <OrderDetailPage />,
+            },
           {
             path: 'system-info',
             element: <SystemInfoPage />,
