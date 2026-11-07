@@ -15,6 +15,7 @@ import { RolesPage } from '../pages/management/RolesPage'
 import { PermissionsPage } from '../pages/management/PermissionsPage'
 import { UsersPage } from '../pages/management/UsersPage'
 import { CustomerDebtsPage } from '../pages/management/CustomerDebtsPage'
+import { PaymentVerificationsPage } from '../pages/management/PaymentVerificationsPage'
 import { QuotationsPage } from '../pages/management/QuotationsPage'
 import { QuotationCreatePage } from '../pages/management/QuotationCreatePage'
 import { QuotationEditPage } from '../pages/management/QuotationEditPage'
@@ -123,18 +124,18 @@ export const routeConfig: RouteObject[] = [
             path: 'purchase-orders/:id/edit',
             element: <PurchaseOrderEditPage />,
           },
-            {
-                path: 'orders',
-                element: <OrdersPage />,
-            },
-            {
-                path: 'orders/pos',
-                element: <POSOrderCreatePage />,
-            },
-            {
-                path: 'orders/:id',
-                element: <OrderDetailPage />,
-            },
+          {
+            path: 'orders',
+            element: <OrdersPage />,
+          },
+          {
+            path: 'orders/pos',
+            element: <POSOrderCreatePage />,
+          },
+          {
+            path: 'orders/:id',
+            element: <OrderDetailPage />,
+          },
           {
             path: 'system-info',
             element: <SystemInfoPage />,
@@ -143,6 +144,7 @@ export const routeConfig: RouteObject[] = [
           { path: 'permissions', element: <PermissionsPage /> },
           { path: 'users', element: <UsersPage /> },
           { path: 'customer-debts', element: <CustomerDebtsPage /> },
+          { path: 'payment-verifications', element: <PaymentVerificationsPage /> },
         ],
       },
     ],

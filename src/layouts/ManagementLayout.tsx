@@ -29,6 +29,8 @@ interface NavItem {
   to: string
   icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>
   exact?: boolean
+  /** Nếu có, chỉ hiển thị mục này cho người dùng có một trong các vai trò liệt kê. */
+  roles?: string[]
 }
 
 const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
@@ -75,6 +77,7 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
       { name: 'Đơn hàng', to: '/app/orders', icon: ShoppingCart },
       { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
       { name: 'Công nợ khách hàng', to: '/app/customer-debts', icon: WalletCards },
+      { name: 'Xác minh thanh toán', to: '/app/payment-verifications', icon: ShieldCheck, roles: ['ACCOUNTANT'] },
     ],
   },
   {
@@ -98,13 +101,18 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
 ]
 
 function NavList({ navId, onItemClick, dark = false }: { navId: string; onItemClick?: () => void; dark?: boolean }) {
+  const { user } = useAuth()
+  const roles = user?.roles ?? []
+  const canSee = (item: NavItem) => !item.roles || item.roles.some((r) => roles.includes(r))
   return (
     <nav className="space-y-1 px-3 py-4" aria-label="Menu điều hướng chính" id={navId}>
-      {NAV_ITEMS.map((section) => (
+      {NAV_ITEMS.map((section) => ({ section, visible: section.items.filter(canSee) }))
+        .filter(({ visible }) => visible.length > 0)
+        .map(({ section, visible }) => (
         <div key={section.group}>
 
           <div className="space-y-1">
-            {section.items.map((item) => {
+            {visible.map((item) => {
               const Icon = item.icon
               return (
                 <NavLink
