@@ -15,7 +15,7 @@ export function CatalogDeleteDialog({
   onClose,
   onConfirm,
 }: {
-  kind: 'danh mục' | 'thương hiệu'
+  kind: 'danh mục' | 'thương hiệu' | 'sản phẩm'
   code: string
   name: string
   pending: boolean

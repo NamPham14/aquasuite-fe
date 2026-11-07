@@ -18,6 +18,7 @@ import {
   KeyRound,
   HandCoins,
   FileSpreadsheet,
+  ShoppingCart,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -69,6 +70,7 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
     group: 'Bán hàng & Đơn hàng',
     items: [
       { name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins },
+      { name: 'Đơn hàng', to: '/app/orders', icon: ShoppingCart },
       { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
     ],
   },

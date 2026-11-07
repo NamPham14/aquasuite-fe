@@ -4,6 +4,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { baseApi } from '../src/shared/api/baseApi.ts'
 import { brandApi } from '../src/features/catalog/api/brandApi.ts'
 import { categoryApi } from '../src/features/catalog/api/categoryApi.ts'
+import { productApi } from '../src/features/catalog/api/productApi.ts'
 import {
   getCatalogErrorState,
   translateImportJobReason,
@@ -285,4 +286,101 @@ test('Brand & Category import error codes and reasons are properly mapped', () =
   assert.equal(translateImportJobReason('EMPTY_DATA'), 'File Excel không có dòng dữ liệu nào.')
   assert.equal(translateImportJobReason('ROW_LIMIT'), 'Số lượng dòng dữ liệu vượt quá giới hạn 10.000 dòng.')
   assert.equal(translateImportJobReason('PROCESSING_FAILED'), 'Đã xảy ra lỗi trong quá trình xử lý dữ liệu.')
+})
+
+test('Product import API: submit, progress and report contracts', async () => {
+  const requests: { url: string; method: string }[] = []
+
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const request = input instanceof Request ? input : new Request(input, init)
+    requests.push({
+      url: request.url,
+      method: request.method,
+    })
+
+    // Submit job
+    if (request.url.endsWith('/api/v1/catalog/import') && request.method === 'POST') {
+      return new Response(
+        JSON.stringify({
+          status: 200,
+          message: 'File import đã được tiếp nhận',
+          data: { jobId: 'imp-prd-999', importMode: 'SKIP_EXISTING', fileName: 'products.xlsx' },
+        }),
+        {
+          status: 202,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // Progress
+    if (request.url.includes('/api/v1/catalog/import/imp-prd-999/progress')) {
+      return new Response(
+        JSON.stringify({
+          status: 200,
+          message: 'Tiến độ import sản phẩm',
+          data: {
+            jobId: 'imp-prd-999',
+            status: 'COMPLETED',
+            totalRows: 50,
+            processedRows: 50,
+            successRows: 48,
+            errorRows: 2,
+            percentage: 100,
+            message: 'Hoàn tất',
+            startedAt: '2026-11-06T10:00:00Z',
+            finishedAt: '2026-11-06T10:00:05Z',
+          },
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    // Error report
+    if (request.url.endsWith('/api/v1/catalog/import/imp-prd-999/error-report')) {
+      return new Response(new Uint8Array([13, 14, 15]), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': 'attachment; filename=Catalog_Import_Errors_imp-prd-999.xlsx',
+        },
+      })
+    }
+
+    return new Response(JSON.stringify({ success: false, code: 'SYS_004', message: 'Not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }) as typeof fetch
+
+  const store = createStore()
+
+  // 1. Submit file
+  const formData = new FormData()
+  formData.append('file', new Blob(['product test']), 'products.xlsx')
+  formData.append('importMode', 'SKIP_EXISTING')
+  const submitResult = await store.dispatch(productApi.endpoints.submitProductImportJob.initiate(formData)).unwrap()
+  assert.equal(submitResult.jobId, 'imp-prd-999')
+  assert.equal(submitResult.status, 'QUEUED')
+  assert.match(requests[0]!.url, /\/api\/v1\/catalog\/import$/)
+  assert.equal(requests[0]!.method, 'POST')
+
+  // 2. Progress
+  const progressResult = await store.dispatch(productApi.endpoints.getProductImportProgress.initiate('imp-prd-999')).unwrap()
+  assert.equal(progressResult.jobId, 'imp-prd-999')
+  assert.equal(progressResult.status, 'COMPLETED')
+  assert.equal(progressResult.totalRows, 50)
+  assert.equal(progressResult.processedRows, 50)
+  assert.equal(progressResult.createdRows, 48)
+  assert.equal(progressResult.errorRows, 2)
+  assert.equal(progressResult.percentage, 100)
+  assert.match(requests[1]!.url, /\/api\/v1\/catalog\/import\/imp-prd-999\/progress$/)
+
+  // 3. Error report
+  const reportBlob = await store.dispatch(productApi.endpoints.downloadProductImportReport.initiate('imp-prd-999')).unwrap()
+  assert.ok(reportBlob instanceof Blob || typeof reportBlob === 'object')
+  assert.match(requests[2]!.url, /\/api\/v1\/catalog\/import\/imp-prd-999\/error-report$/)
 })
