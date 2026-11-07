@@ -3,6 +3,7 @@ import { AuthLayout, ManagementLayout } from '../layouts'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { DashboardPage } from '../pages/management/DashboardPage'
 import { ProductsPage } from '../pages/management/ProductsPage'
+import { ProductVariantsPage } from '../pages/management/ProductVariantsPage'
 import { CategoriesPage } from '../pages/management/CategoriesPage'
 import { BrandsPage } from '../pages/management/BrandsPage'
 import { InventoryPage } from '../pages/management/InventoryPage'
@@ -59,6 +60,10 @@ export const routeConfig: RouteObject[] = [
           {
             path: 'products',
             element: <ProductsPage />,
+          },
+          {
+            path: 'products/:productId/variants',
+            element: <ProductVariantsPage />,
           },
           {
             path: 'categories',
