@@ -4,6 +4,7 @@ import { LoginPage } from '../pages/auth/LoginPage'
 import { CustomerLoginPage } from '../pages/auth/CustomerLoginPage'
 import { DashboardPage } from '../pages/management/DashboardPage'
 import { ProductsPage } from '../pages/management/ProductsPage'
+import { ProductVariantsPage } from '../pages/management/ProductVariantsPage'
 import { CategoriesPage } from '../pages/management/CategoriesPage'
 import { BrandsPage } from '../pages/management/BrandsPage'
 import { CombosPage } from '../pages/management/CombosPage'
@@ -12,6 +13,11 @@ import { InventoryPage } from '../pages/management/InventoryPage'
 import { SystemInfoPage } from '../pages/management/SystemInfoPage'
 import { RolesPage } from '../pages/management/RolesPage'
 import { PermissionsPage } from '../pages/management/PermissionsPage'
+import { UsersPage } from '../pages/management/UsersPage'
+import { QuotationsPage } from '../pages/management/QuotationsPage'
+import { QuotationCreatePage } from '../pages/management/QuotationCreatePage'
+import { QuotationEditPage } from '../pages/management/QuotationEditPage'
+import { QuotationDetailPage } from '../pages/management/QuotationDetailPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { ProtectedRoute } from '../features/iam/components/ProtectedRoute'
 import { PublicOnlyRoute } from '../features/iam/components/PublicOnlyRoute'
@@ -60,6 +66,10 @@ export const routeConfig: RouteObject[] = [
             element: <ProductsPage />,
           },
           {
+            path: 'products/:productId/variants',
+            element: <ProductVariantsPage />,
+          },
+          {
             path: 'categories',
             element: <CategoriesPage />,
           },
@@ -74,11 +84,28 @@ export const routeConfig: RouteObject[] = [
             element: <InventoryPage />,
           },
           {
+            path: 'quotations',
+            element: <QuotationsPage />,
+          },
+          {
+            path: 'quotations/new',
+            element: <QuotationCreatePage />,
+          },
+          {
+            path: 'quotations/:id',
+            element: <QuotationDetailPage />,
+          },
+          {
+            path: 'quotations/:id/edit',
+            element: <QuotationEditPage />,
+          },
+          {
             path: 'system-info',
             element: <SystemInfoPage />,
           },
           { path: 'roles', element: <RolesPage /> },
           { path: 'permissions', element: <PermissionsPage /> },
+          { path: 'users', element: <UsersPage /> },
         ],
       },
     ],

@@ -17,6 +17,7 @@ import {
   UsersRound,
   KeyRound,
   HandCoins,
+  FileSpreadsheet,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -65,12 +66,16 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
     ],
   },
   {
-    group: 'Bán hàng',
-    items: [{ name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins }],
+    group: 'Bán hàng & Đơn hàng',
+    items: [
+      { name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins },
+      { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
+    ],
   },
   {
     group: 'Quản lý truy cập',
     items: [
+      { name: 'Tài khoản người dùng', to: '/app/users', icon: UsersRound },
       { name: 'Vai trò', to: '/app/roles', icon: UsersRound },
       { name: 'Quyền', to: '/app/permissions', icon: KeyRound },
     ],

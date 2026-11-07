@@ -1,6 +1,8 @@
 export * from './api/brandApi'
 export { BundleManagement } from './components/BundleManagement'
 export * from './api/categoryApi'
+export * from './api/productApi'
+export * from './api/variantApi'
 export { BrandForm } from './components/BrandForm'
 export { BrandImportDialog } from './components/BrandImportDialog'
 export { CatalogDeleteDialog } from './components/CatalogDeleteDialog'
