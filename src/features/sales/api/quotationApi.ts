@@ -185,6 +185,20 @@ export const quotationApi = baseApi.injectEndpoints({
       query: (quotationCode) => `/sales/quotations/code/${quotationCode}/revisions`,
       transformResponse: (res: any) => res?.data ?? res,
     }),
+
+    convertToOrder: builder.mutation<any, { id: string; body?: { note?: string; deliveryAddress?: string; dueDate?: string } }>({
+      query: ({ id, body }) => ({
+        url: `/sales/quotations/${id}/convert-to-order`,
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'Quotation', id },
+        { type: 'Quotation', id: 'LIST' },
+        { type: 'Order' as any, id: 'LIST' },
+      ],
+    }),
   }),
 })
 
@@ -203,4 +217,5 @@ export const {
   useMarkAcceptedMutation,
   useMarkLostMutation,
   useGetRevisionHistoryQuery,
+  useConvertToOrderMutation,
 } = quotationApi

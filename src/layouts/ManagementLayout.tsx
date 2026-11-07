@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Outlet, NavLink, Link } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -16,6 +16,7 @@ import {
   UsersRound,
   KeyRound,
   FileSpreadsheet,
+  Truck,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -69,6 +70,16 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
         name: 'Báo giá',
         to: '/app/quotations',
         icon: FileSpreadsheet,
+      },
+    ],
+  },
+  {
+    group: 'Mua hàng & Cung ứng',
+    items: [
+      {
+        name: 'Đơn mua hàng (PO)',
+        to: '/app/purchase-orders',
+        icon: Truck,
       },
     ],
   },
