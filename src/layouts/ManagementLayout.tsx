@@ -16,6 +16,7 @@ import {
   UsersRound,
   KeyRound,
   FileSpreadsheet,
+  WalletCards,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -69,6 +70,11 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
         name: 'Báo giá',
         to: '/app/quotations',
         icon: FileSpreadsheet,
+      },
+      {
+        name: 'Công nợ khách hàng',
+        to: '/app/customer-debts',
+        icon: WalletCards,
       },
     ],
   },
