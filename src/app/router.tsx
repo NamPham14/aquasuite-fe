@@ -15,6 +15,9 @@ import { QuotationsPage } from '../pages/management/QuotationsPage'
 import { QuotationCreatePage } from '../pages/management/QuotationCreatePage'
 import { QuotationEditPage } from '../pages/management/QuotationEditPage'
 import { QuotationDetailPage } from '../pages/management/QuotationDetailPage'
+import { OrdersPage } from '../pages/management/OrdersPage'
+import { POSOrderCreatePage } from '../pages/management/POSOrderCreatePage'
+import { OrderDetailPage } from '../pages/management/OrderDetailPage'
 import { PurchaseOrdersPage } from '../pages/management/PurchaseOrdersPage'
 import { PurchaseOrderCreatePage } from '../pages/management/PurchaseOrderCreatePage'
 import { PurchaseOrderEditPage } from '../pages/management/PurchaseOrderEditPage'
@@ -112,6 +115,18 @@ export const routeConfig: RouteObject[] = [
           {
             path: 'purchase-orders/:id/edit',
             element: <PurchaseOrderEditPage />,
+          },
+          {
+            path: 'orders',
+            element: <OrdersPage />,
+          },
+          {
+            path: 'orders/pos',
+            element: <POSOrderCreatePage />,
+          },
+          {
+            path: 'orders/:id',
+            element: <OrderDetailPage />,
           },
           {
             path: 'system-info',

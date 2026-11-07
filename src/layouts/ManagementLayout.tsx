@@ -16,7 +16,8 @@ import {
   UsersRound,
   KeyRound,
   FileSpreadsheet,
-  Truck,
+  ShoppingCart,
+    Truck,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -66,6 +67,11 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
   {
     group: 'Bán hàng & Đơn hàng',
     items: [
+      {
+        name: 'Đơn hàng',
+        to: '/app/orders',
+        icon: ShoppingCart,
+      },
       {
         name: 'Báo giá',
         to: '/app/quotations',
