@@ -34,6 +34,8 @@ export interface OrderPaymentResponse {
   status: OrderPaymentTxnStatus
   referenceNo?: string | null
   description?: string | null
+  /** Lý do từ chối (chỉ có khi status = REJECTED, do UC-70 ghi). */
+  rejectReason?: string | null
   transactionDate: string
   createdBy?: string | null
 }

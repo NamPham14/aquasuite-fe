@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { CreditCard, Plus, Paperclip, Eye, Wallet, Clock, CheckCircle2 } from 'lucide-react'
+import { CreditCard, Plus, Paperclip, Eye, Wallet, Clock, CheckCircle2, Info } from 'lucide-react'
 import { formatVnd, formatDateTime } from '../../../shared/lib/money.ts'
 import { normalizeApiError } from '../../../shared/api/apiError.ts'
 import {
@@ -291,6 +291,15 @@ function PaymentRow({
         <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${status.className}`}>
           {status.label}
         </span>
+        {txn.status === 'REJECTED' && txn.rejectReason && (
+          <div
+            className="mt-1 flex max-w-[220px] items-start gap-1 text-[10px] leading-snug text-slate-400"
+            title={txn.rejectReason}
+          >
+            <Info className="mt-px h-2.5 w-2.5 shrink-0" />
+            <span className="truncate italic">{txn.rejectReason}</span>
+          </div>
+        )}
       </td>
       <td className="py-2 pr-3 text-slate-500">{formatDateTime(txn.transactionDate)}</td>
       <td className="py-2">
