@@ -1,3 +1,7 @@
 export * from './api/customerDebtApi.ts'
+export * from './api/orderPaymentApi.ts'
 export type * from './types/customerDebt.types.ts'
+export type * from './types/orderPayment.types.ts'
 export { CustomerDebtDetailDialog } from './components/CustomerDebtDetailDialog.tsx'
+export { OrderPaymentPanel } from './components/OrderPaymentPanel.tsx'
+export { RecordPaymentDialog } from './components/RecordPaymentDialog.tsx'
