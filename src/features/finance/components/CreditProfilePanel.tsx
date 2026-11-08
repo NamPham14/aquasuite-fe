@@ -3,12 +3,17 @@ import { toast } from 'sonner'
 import { normalizeApiError } from '../../../shared/api/apiError.ts'
 import { managementFieldClass } from '../../../shared/ui/ManagementDialog.tsx'
 import { useSubmitCreditProfileRequestMutation } from '../api/customerDebtApi.ts'
-import type { CustomerDebtProfile } from '../types/customerDebt.types.ts'
+export interface CreditProfileSubject {
+  customerId: string
+  customerType?: string
+  creditLimit?: number
+  creditTermDays?: number
+}
 
 const maxLimit = 500_000_000
 
 /** Submits the policy-governed credit request; no owner password is ever collected. */
-export function CreditProfilePanel({ customer, onDone }: { customer: CustomerDebtProfile; onDone: () => void }) {
+export function CreditProfilePanel({ customer, onDone }: { customer: CreditProfileSubject; onDone: () => void }) {
   const [submitRequest, { isLoading }] = useSubmitCreditProfileRequestMutation()
   const [limit, setLimit] = useState(String(customer.creditLimit ?? ''))
   const [term, setTerm] = useState(String(customer.creditTermDays ?? ''))

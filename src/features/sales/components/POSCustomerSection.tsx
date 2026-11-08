@@ -22,6 +22,7 @@ interface POSCustomerSectionProps {
   deliveryAddress: string
   onChangeDeliveryAddress: (address: string) => void
   isDelivery: boolean
+  onRequestCreditProfile: () => void
 }
 
 export function POSCustomerSection({
@@ -34,6 +35,7 @@ export function POSCustomerSection({
   deliveryAddress,
   onChangeDeliveryAddress,
   isDelivery,
+  onRequestCreditProfile,
 }: POSCustomerSectionProps) {
   const { data: customerOptions = [], isLoading } = useGetCustomerOptionsQuery()
   const [triggerGetDebt, { data: debtData, isFetching: isDebtLoading, isError: isDebtError, error: debtError }] = useLazyGetCustomerCreditSummaryQuery()
@@ -87,7 +89,7 @@ export function POSCustomerSection({
       {selectedCustomer ? (
         /* Đã chọn khách hàng từ CRM */
         <div className="bg-sky-50/60 border border-sky-100 rounded-md p-3 space-y-2">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-2">
             <div>
               <div className="font-semibold text-xs text-slate-900 flex items-center gap-2">
                 <span>{selectedCustomer.customerName}</span>
@@ -108,15 +110,26 @@ export function POSCustomerSection({
             </div>
 
             {/* NÚT 1: TRA CỨU CÔNG NỢ (TÍCH HỢP HÀO - CREDIT CONTROL) */}
-            <button
-              type="button"
-              onClick={handleOpenDebtModal}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded border border-sky-300 bg-white text-sky-700 hover:bg-sky-50 hover:border-sky-400 transition shadow-2xs"
-              title="Tra cứu hồ sơ công nợ của khách hàng này từ phân hệ Tài chính"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
-              <span>Tra cứu công nợ</span>
-            </button>
+            <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleOpenDebtModal}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded border border-sky-300 bg-white text-sky-700 hover:bg-sky-50 hover:border-sky-400 transition shadow-2xs"
+                title="Tra cứu hồ sơ công nợ của khách hàng này từ phân hệ Tài chính"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
+                <span>Tra cứu công nợ</span>
+              </button>
+              <button
+                type="button"
+                onClick={onRequestCreditProfile}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded border border-indigo-300 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-400 transition shadow-2xs"
+                title="Thiết lập hoặc đề nghị cập nhật hồ sơ tín dụng cho khách CRM"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Hồ sơ tín dụng</span>
+              </button>
+            </div>
           </div>
         </div>
       ) : (
