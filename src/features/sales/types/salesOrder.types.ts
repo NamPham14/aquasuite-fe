@@ -155,16 +155,18 @@ export interface SalesOrderSummaryResponse {
 
 // =================== CREDIT CONTROL (HÀO) INTEGRATION DTOS ===================
 
-export interface CustomerDebtDetailResponse {
+/** Minimal Finance projection exposed to POS; it does not contain invoices, receipts or audit history. */
+export interface CustomerCreditSummaryResponse {
   customerId: string
+  customerCode: string
   customerName: string
-  customerPhone?: string
+  customerStatus: string
+  creditTermDays?: number | null
   creditLimit: number
   outstandingBalance: number
   overdueBalance: number
   availableCredit: number
   debtStatus: string
-  isBlocked?: boolean
 }
 
 export interface CreditCheckRequest {

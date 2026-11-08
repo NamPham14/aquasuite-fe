@@ -4,7 +4,7 @@ import type {
   CreateSalesOrderRequest,
   CreditCheckRequest,
   CreditCheckResponse,
-  CustomerDebtDetailResponse,
+  CustomerCreditSummaryResponse,
   OrderPaymentSummaryResponse,
   SalesOrderDetailResponse,
   SalesOrderFilterParams,
@@ -78,8 +78,8 @@ export const salesOrderApi = baseApi.injectEndpoints({
     }),
 
     // ========== TÍCH HỢP HÀO (CREDIT CONTROL) ==========
-    getCustomerDebtDetail: builder.query<CustomerDebtDetailResponse, string>({
-      query: (customerId) => `/finance/customer-debts/${customerId}`,
+    getCustomerCreditSummary: builder.query<CustomerCreditSummaryResponse, string>({
+      query: (customerId) => `/finance/credit-control/customers/${customerId}/summary`,
       transformResponse: (res: any) => res?.data ?? res,
     }),
 
@@ -106,8 +106,8 @@ export const {
   useGetSalesOrdersQuery,
   useGetSalesOrderByIdQuery,
   useCreateSalesOrderMutation,
-  useGetCustomerDebtDetailQuery,
-  useLazyGetCustomerDebtDetailQuery,
+  useGetCustomerCreditSummaryQuery,
+  useLazyGetCustomerCreditSummaryQuery,
   useCheckCustomerCreditMutation,
   useGetOrderPaymentSummaryQuery,
 } = salesOrderApi

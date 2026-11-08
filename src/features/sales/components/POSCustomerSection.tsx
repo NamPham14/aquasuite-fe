@@ -14,7 +14,7 @@ import {
   Filter,
 } from 'lucide-react'
 import { useGetCustomerOptionsQuery, type CustomerOption } from '../api/customerApi'
-import { useLazyGetCustomerDebtDetailQuery } from '../api/salesOrderApi'
+import { useLazyGetCustomerCreditSummaryQuery } from '../api/salesOrderApi'
 import { QuickCreateCustomerModal } from './QuickCreateCustomerModal'
 
 interface POSCustomerSectionProps {
@@ -27,6 +27,7 @@ interface POSCustomerSectionProps {
   deliveryAddress: string
   onChangeDeliveryAddress: (address: string) => void
   isDelivery: boolean
+  onRequestCreditProfile: () => void
 }
 
 export function POSCustomerSection({
@@ -39,9 +40,10 @@ export function POSCustomerSection({
   deliveryAddress,
   onChangeDeliveryAddress,
   isDelivery,
+  onRequestCreditProfile,
 }: POSCustomerSectionProps) {
   const { data: customerOptions = [], isLoading } = useGetCustomerOptionsQuery()
-  const [triggerGetDebt, { data: debtData, isFetching: isDebtLoading }] = useLazyGetCustomerDebtDetailQuery()
+  const [triggerGetDebt, { data: debtData, isFetching: isDebtLoading, isError: isDebtError, error: debtError }] = useLazyGetCustomerCreditSummaryQuery()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -205,16 +207,27 @@ export function POSCustomerSection({
               )}
             </div>
 
-            {/* NÚT TRA CỨU CÔNG NỢ */}
-            <button
-              type="button"
-              onClick={handleOpenDebtModal}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded border border-sky-300 bg-white text-sky-700 hover:bg-sky-50 hover:border-sky-400 transition shadow-2xs shrink-0"
-              title="Tra cứu hồ sơ công nợ của khách hàng này từ phân hệ Tài chính"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
-              <span>Tra cứu công nợ</span>
-            </button>
+            {/* NÚT 1: TRA CỨU CÔNG NỢ (TÍCH HỢP HÀO - CREDIT CONTROL) */}
+            <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleOpenDebtModal}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded border border-sky-300 bg-white text-sky-700 hover:bg-sky-50 hover:border-sky-400 transition shadow-2xs"
+                title="Tra cứu hồ sơ công nợ của khách hàng này từ phân hệ Tài chính"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-600" />
+                <span>Tra cứu công nợ</span>
+              </button>
+              <button
+                type="button"
+                onClick={onRequestCreditProfile}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded border border-indigo-300 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-400 transition shadow-2xs"
+                title="Thiết lập hoặc đề nghị cập nhật hồ sơ tín dụng cho khách CRM"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Hồ sơ tín dụng</span>
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -549,7 +562,7 @@ export function POSCustomerSection({
                     <span className="text-slate-600">Trạng thái nợ:</span>
                     <span
                       className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                        debtData.debtStatus === 'OVERDUE' || debtData.debtStatus === 'BAD_DEBT'
+                        ['OVERDUE', 'CREDIT_BLOCKED', 'BLACKLISTED', 'BLOCKED'].includes(debtData.debtStatus)
                           ? 'bg-rose-100 text-rose-800'
                           : 'bg-emerald-100 text-emerald-800'
                       }`}
@@ -566,6 +579,10 @@ export function POSCustomerSection({
                       </span>
                     </div>
                   )}
+                </div>
+              ) : isDebtError ? (
+                <div className="py-4 text-center text-rose-700 text-xs">
+                  Không thể tải snapshot công nợ: {typeof debtError === 'object' && debtError && 'data' in debtError && typeof debtError.data === 'object' && debtError.data && 'message' in debtError.data ? String(debtError.data.message) : 'Vui lòng thử lại.'}
                 </div>
               ) : (
                 <div className="py-4 text-center text-slate-500 text-xs">
