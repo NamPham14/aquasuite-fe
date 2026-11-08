@@ -10,7 +10,7 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import { useGetCustomerOptionsQuery, type CustomerOption } from '../api/customerApi'
-import { useLazyGetCustomerDebtDetailQuery } from '../api/salesOrderApi'
+import { useLazyGetCustomerCreditSummaryQuery } from '../api/salesOrderApi'
 
 interface POSCustomerSectionProps {
   selectedCustomer: CustomerOption | null
@@ -36,7 +36,7 @@ export function POSCustomerSection({
   isDelivery,
 }: POSCustomerSectionProps) {
   const { data: customerOptions = [], isLoading } = useGetCustomerOptionsQuery()
-  const [triggerGetDebt, { data: debtData, isFetching: isDebtLoading }] = useLazyGetCustomerDebtDetailQuery()
+  const [triggerGetDebt, { data: debtData, isFetching: isDebtLoading, isError: isDebtError, error: debtError }] = useLazyGetCustomerCreditSummaryQuery()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -286,7 +286,7 @@ export function POSCustomerSection({
                     <span className="text-slate-600">Trạng thái nợ:</span>
                     <span
                       className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                        debtData.debtStatus === 'OVERDUE' || debtData.debtStatus === 'BAD_DEBT'
+                        ['OVERDUE', 'CREDIT_BLOCKED', 'BLACKLISTED', 'BLOCKED'].includes(debtData.debtStatus)
                           ? 'bg-rose-100 text-rose-800'
                           : 'bg-emerald-100 text-emerald-800'
                       }`}
@@ -303,6 +303,10 @@ export function POSCustomerSection({
                       </span>
                     </div>
                   )}
+                </div>
+              ) : isDebtError ? (
+                <div className="py-4 text-center text-rose-700 text-xs">
+                  Không thể tải snapshot công nợ: {typeof debtError === 'object' && debtError && 'data' in debtError && typeof debtError.data === 'object' && debtError.data && 'message' in debtError.data ? String(debtError.data.message) : 'Vui lòng thử lại.'}
                 </div>
               ) : (
                 <div className="py-4 text-center text-slate-500 text-xs">
