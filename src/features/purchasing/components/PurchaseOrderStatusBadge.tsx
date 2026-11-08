@@ -2,6 +2,7 @@ import type { PurchaseOrderStatus } from '../types/purchaseOrder.types'
 
 interface PurchaseOrderStatusBadgeProps {
   status: PurchaseOrderStatus
+  isShortClosed?: boolean
   className?: string
 }
 
@@ -17,29 +18,49 @@ const statusConfig: Record<PurchaseOrderStatus, StatusStyle> = {
     badgeClass: 'bg-slate-50 text-slate-700 border-slate-300',
     dotClass: 'bg-slate-400',
   },
+  QUOTED: {
+    label: 'Chờ chốt giá',
+    badgeClass: 'bg-blue-50 text-blue-700 border-blue-200 font-medium',
+    dotClass: 'bg-blue-500',
+  },
   CONFIRMED: {
-    label: 'Đã xác nhận',
-    badgeClass: 'bg-sky-50 text-sky-800 border-sky-300',
-    dotClass: 'bg-sky-500',
+    label: 'Đang giao hàng',
+    badgeClass: 'bg-amber-50 text-amber-800 border-amber-300 font-medium',
+    dotClass: 'bg-amber-500',
   },
   PARTIALLY_RECEIVED: {
-    label: 'Nhận một phần',
-    badgeClass: 'bg-amber-50 text-amber-800 border-amber-300',
-    dotClass: 'bg-amber-500 animate-pulse',
+    label: 'Giao một phần',
+    badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200 font-medium',
+    dotClass: 'bg-indigo-500 animate-pulse',
   },
   COMPLETED: {
     label: 'Hoàn thành',
-    badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-400 font-semibold',
+    badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold',
     dotClass: 'bg-emerald-600',
   },
   CANCELLED: {
     label: 'Đã hủy',
-    badgeClass: 'bg-rose-50 text-rose-800 border-rose-300',
+    badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
     dotClass: 'bg-rose-500',
   },
 }
 
-export function PurchaseOrderStatusBadge({ status, className = '' }: PurchaseOrderStatusBadgeProps) {
+export function PurchaseOrderStatusBadge({
+  status,
+  isShortClosed = false,
+  className = '',
+}: PurchaseOrderStatusBadgeProps) {
+  if (status === 'COMPLETED' && isShortClosed) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium border bg-purple-50 text-purple-700 border-purple-200 whitespace-nowrap shadow-2xs ${className}`}
+      >
+        <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-purple-600" />
+        <span>Đóng nhận thiếu</span>
+      </span>
+    )
+  }
+
   const config = statusConfig[status] ?? {
     label: status,
     badgeClass: 'bg-slate-50 text-slate-700 border-slate-300',
@@ -48,7 +69,7 @@ export function PurchaseOrderStatusBadge({ status, className = '' }: PurchaseOrd
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.badgeClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium border whitespace-nowrap shadow-2xs ${config.badgeClass} ${className}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.dotClass}`} />
       <span>{config.label}</span>

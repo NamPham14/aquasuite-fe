@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Loader2,
   ShoppingCart,
-  ExternalLink,
+  ArrowUpRight,
 } from 'lucide-react'
 import { QuotationStatusBadge } from './QuotationStatusBadge'
 import { useGetRevisionHistoryQuery } from '../api/quotationApi'
@@ -224,15 +224,17 @@ function QuotationRevisionSubTable({
                       </span>
                     )}
                     {rev.orderId && (
-                      <div className="mt-1">
+                      <div className="mt-1 flex items-center">
                         <Link
                           to={`/app/orders/${rev.orderId}`}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-[10px] font-bold text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition"
+                          className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-emerald-600 transition-colors group"
                           title="Xem đơn hàng đã tạo"
                         >
-                          <ShoppingCart className="w-2.5 h-2.5 text-emerald-600" />
-                          <span>Đơn: {rev.orderCode || 'SO-...'}</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
+                          <span className="text-[10px]">Đơn:</span>
+                          <span className="font-medium text-emerald-600 group-hover:underline">
+                            {rev.orderCode || 'SO-...'}
+                          </span>
+                          <ArrowUpRight className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 transition-colors" />
                         </Link>
                       </div>
                     )}
@@ -547,19 +549,19 @@ export function QuotationTable({
                         <div className="w-5 h-4 shrink-0" aria-hidden="true" />
                       )}
 
-                      <div className="flex flex-col gap-0.5">
+                      <div className="flex flex-col gap-0.5 py-0.5">
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold text-sky-800 text-xs tracking-tight">
                             {row.quotationCode}
                           </span>
-                          <span className="inline-block px-1.5 py-0.2 rounded bg-sky-50 text-[10px] font-semibold text-sky-700 border border-sky-200">
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-sky-50 text-[10px] font-semibold text-sky-700 border border-sky-200">
                             rev.{row.revisionNo}
                           </span>
                           {group.hasMultipleRevisions && (
                             <button
                               type="button"
                               onClick={() => toggleExpand(group.quotationCode)}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-purple-50 text-[10px] font-semibold text-purple-700 border border-purple-200 hover:bg-purple-100 transition cursor-pointer"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-50 text-[10px] font-semibold text-purple-700 border border-purple-200 hover:bg-purple-100 transition cursor-pointer"
                               title="Bấm để xổ danh sách các phiên bản"
                             >
                               <GitBranch className="w-2.5 h-2.5" />
@@ -568,15 +570,17 @@ export function QuotationTable({
                           )}
                         </div>
                         {row.orderId && (
-                          <div className="mt-0.5">
+                          <div className="flex items-center">
                             <Link
                               to={`/app/orders/${row.orderId}`}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-[10px] font-bold text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition"
+                              className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-emerald-600 transition-colors group"
                               title="Xem chi tiết đơn hàng đã tạo"
                             >
-                              <ShoppingCart className="w-2.5 h-2.5 text-emerald-600" />
-                              <span>Đơn: {row.orderCode || 'SO-...'}</span>
-                              <ExternalLink className="w-2.5 h-2.5" />
+                              <span className="text-[10px]">Đơn:</span>
+                              <span className="font-medium text-emerald-600 group-hover:underline">
+                                {row.orderCode || 'SO-...'}
+                              </span>
+                              <ArrowUpRight className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 transition-colors" />
                             </Link>
                           </div>
                         )}
