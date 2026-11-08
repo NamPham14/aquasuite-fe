@@ -1,3 +1,4 @@
+import { OrderComboRow } from '../../features/sales/components/OrderComboRow'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -78,6 +79,12 @@ export function OrderDetailPage() {
   }
 
   const isProject = order.orderType === 'PROJECT'
+  const displayItems = order.displayItems?.length ? order.displayItems : order.items.map((item) => ({
+    itemType: 'SINGLE' as const, comboId: null, productName: item.productName,
+    quantity: item.quantity, lineTotal: item.lineTotal, sku: item.sku,
+    unitPrice: item.unitPrice, discountAmount: item.discountAmount, item, components: [],
+  }))
+
 
   return (
     <div className="space-y-4 text-xs">
@@ -192,7 +199,7 @@ export function OrderDetailPage() {
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xs">
         <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <h4 className="font-semibold text-slate-900 uppercase text-[11px] tracking-wider">
-            Chi tiết mặt hàng ({order.items.length})
+            Chi tiết mặt hàng ({displayItems.length})
           </h4>
         </div>
 
@@ -209,7 +216,13 @@ export function OrderDetailPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {order.items.map((it) => (
+              {displayItems.map((row, index) => {
+                if (row.itemType === 'COMBO') return (
+                  <OrderComboRow key={row.components[0]?.orderItemId ?? `combo-${index}`} row={row} formatMoney={formatMoney} />
+                )
+                const it = row.item
+                if (!it) return null
+                return (
                 <tr key={it.orderItemId} className="hover:bg-slate-50/50">
                   <td className="px-4 py-2.5">
                     <div className="font-semibold text-slate-900">{it.productName}</div>
@@ -230,7 +243,8 @@ export function OrderDetailPage() {
                     {formatMoney(it.lineTotal)}
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

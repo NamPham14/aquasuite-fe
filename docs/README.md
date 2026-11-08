@@ -1,8 +1,8 @@
-# Bản đồ tài liệu AquaSuite Frontend
+﻿# Bản đồ tài liệu AquaSuite Frontend
 
 ## Tài liệu
 
-- [UC 29 FE demo](specifications/FE-UC29-DEMO.md): giao diện đặt cọc/giữ hàng bằng dữ liệu demo và [wireframe draw.io](specifications/FE-UC29-DEMO.drawio).
+- [UC29 API thật](specifications/FE-UC29-API.md): chọn đơn đã có, chốt giữ hàng và theo dõi/ghi nhận thanh toán qua Finance. [Spec demo cũ](specifications/FE-UC29-DEMO.md) và [wireframe](specifications/FE-UC29-DEMO.drawio) được giữ làm tham khảo lịch sử.
 
 - [Manage Combo FE](specifications/FE-MANAGE-COMBO.md): phạm vi UC-13, contract backend, cấu trúc triển khai và phần SRS chưa được hỗ trợ.
 
@@ -22,3 +22,6 @@ Repo BE là repo riêng. Khi tích hợp, tham khảo contract, spec và impleme
 `.agent/work/` là ghi chú cục bộ, không đồng bộ qua Git. Quyết định và đặc tả cần cả nhóm sử dụng phải được ghi vào tài liệu chia sẻ hoặc PR phù hợp.
 
 - [Customer login FE](specifications/FE-CUSTOMER-LOGIN.md): /login-customer, API contract và [wireframe draw.io](specifications/FE-CUSTOMER-LOGIN.drawio).
+
+- [Customer registration FE](specifications/FE-CUSTOMER-REGISTER.md): /register-customer, email OTP verification and resend contract.
+

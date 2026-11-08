@@ -2,6 +2,7 @@ import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } f
 import { AuthLayout, ManagementLayout } from '../layouts'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { CustomerLoginPage } from '../pages/auth/CustomerLoginPage'
+import { CustomerRegisterPage } from '../pages/auth/CustomerRegisterPage'
 import { DashboardPage } from '../pages/management/DashboardPage'
 import { ProductsPage } from '../pages/management/ProductsPage'
 import { ProductVariantsPage } from '../pages/management/ProductVariantsPage'
@@ -39,10 +40,11 @@ export const routeConfig: RouteObject[] = [
   {
     element: <PublicOnlyRoute />,
     children: [
-      { path: '/login-customer', element: <CustomerLoginPage /> },
       {
         element: <AuthLayout />,
         children: [
+          { path: '/login-customer', element: <CustomerLoginPage /> },
+          { path: '/register-customer', element: <CustomerRegisterPage /> },
           {
             path: '/login',
             element: <LoginPage />,

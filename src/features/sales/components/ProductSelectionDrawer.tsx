@@ -85,17 +85,15 @@ export function ProductSelectionDrawer({
   const formatMoney = (val: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
 
-  const { data: apiCatalogItems } = useGetSalesCatalogItemsQuery(undefined, {
+  const { currentData: apiCatalogItems, isFetching, isError, refetch } = useGetSalesCatalogItemsQuery(undefined, {
     skip: !isOpen,
+    refetchOnMountOrArgChange: true,
   })
 
   const catalogSource = useMemo(() => {
-    const list = Array.isArray(apiCatalogItems) ? apiCatalogItems : (apiCatalogItems as any)?.data
-    if (list && Array.isArray(list) && list.length > 0) {
-      return list
-    }
-    return CATALOG_PRODUCTS
-  }, [apiCatalogItems])
+    if (activeTab === 'combo') return isError || isFetching ? [] : apiCatalogItems ?? []
+    return apiCatalogItems?.length ? apiCatalogItems : CATALOG_PRODUCTS.filter((item) => !item.isCombo)
+  }, [apiCatalogItems, activeTab, isError, isFetching])
 
   // Lọc sản phẩm
   const filteredList = useMemo(() => {
@@ -103,7 +101,7 @@ export function ProductSelectionDrawer({
       if (activeTab === 'product' && item.isCombo) return false
       if (activeTab === 'combo' && !item.isCombo) return false
 
-      if (selectedBrand !== 'Tất cả' && item.brand !== selectedBrand) {
+      if (activeTab === 'product' && selectedBrand !== 'Tất cả' && item.brand !== selectedBrand) {
         return false
       }
 
@@ -279,14 +277,21 @@ export function ProductSelectionDrawer({
 
             {/* List Content */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50/40">
-              {filteredList.length === 0 ? (
+              {activeTab === 'combo' && isFetching ? (
+                <p role="status" className="p-4 text-center text-sm text-slate-600">Đang tải combo...</p>
+              ) : activeTab === 'combo' && isError ? (
+                <div role="alert" className="p-4 text-sm text-rose-700">
+                  <p>Không tải được danh sách combo.</p>
+                  <button type="button" onClick={() => void refetch()} className="mt-2 underline">Thử lại</button>
+                </div>
+              ) : filteredList.length === 0 ? (
                 <div className="text-center py-12 px-4">
                   <Package className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
                   <p className="text-xs font-medium text-slate-700">
-                    Không tìm thấy sản phẩm phù hợp
+                    {activeTab === 'combo' ? 'Không tìm thấy combo phù hợp' : 'Không tìm thấy sản phẩm phù hợp'}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    Thử tìm với từ khóa hoặc đổi hãng khác
+                    {activeTab === 'combo' ? 'Kiểm tra combo đang hoạt động hoặc thử từ khóa khác' : 'Thử tìm với từ khóa hoặc đổi hãng khác'}
                   </p>
                 </div>
               ) : (

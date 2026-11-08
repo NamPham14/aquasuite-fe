@@ -40,3 +40,15 @@ Final design correction, per owner: removed the wireframe presentation and verif
 Classification UI verification: FE lint/build and eight targeted Combo tests previously passed with mocked API. The subsequent BE system-category implementation is verified separately on isolated PostgreSQL; no live integration is claimed. Historical classification-nullability patches and their test results are superseded.
 
 System-category verification (04/11/2026): 88 Combo backend tests and eight targeted frontend tests pass. Full BE suite not claimed: shared FlywayMigrationIT has a hardcoded migration count of six and fails with actual seven after adding V7. That pre-existing modified file remains untouched per owner instruction; its owner needs to update the assertion. Product and 63 unrelated baseline files verified unchanged. No live deployment/migration performed.
+
+## Date-only validity (07/11/2026)
+Theo yêu cầu người dùng, form tạo/sửa và chi tiết combo chỉ chọn/hiển thị ngày, không có giờ/phút. Giữ múi giờ trình duyệt hiện có. Khoảng ngày bao gồm cả ngày kết thúc và cho phép hiệu lực trong một ngày. API BE vẫn dùng Instant với mốc kết thúc loại trừ: gửi đầu ngày bắt đầu và đầu ngày kế tiếp sau ngày kết thúc, chuyển sang UTC. Khi mở sửa/chi tiết, mốc kết thúc đúng nửa đêm được đổi về ngày trước để không tăng thêm ngày mỗi lần lưu. Các timestamp cũ nằm giữa ngày hiển thị theo ngày tương ứng; lưu lại sẽ chuẩn hóa thành hiệu lực trọn ngày. Bản nháp vẫn cho để trống cả hai ngày.
+
+Verification: 8/8 focused Combo tests pass, including date validation, same-day validity, year rollover and edit round-trip. Lint passes with existing quotation warnings. No backend changes or live API writes.
+
+## Combo editor sidebar (07/11/2026)
+Theo yêu cầu tham khảo màn tạo đơn hàng POS, tạo/sửa combo dùng hai cột trên desktop: thông tin và bảng thành phần ở trái, giá và hiệu lực ở sidebar phải; mobile xếp dọc. Giữ dialog và API hiện tại. Nút Chọn SKU thành phần mở drawer bên phải với tìm kiếm, danh sách biến thể, giá bán, phân trang và trạng thái đã chọn. Dữ liệu chỉ lấy từ `/catalog/bundle/admin/skus`, không dùng danh mục mock/fallback của Sales. Chọn nhiều SKU liên tiếp, tối đa 100, giữ nguyên bảng đã chọn khi đóng drawer. Enter trong ô tìm không gửi form; Escape chỉ đóng drawer và trả focus về nút mở. Dialog lồng có tên accessibility riêng. Các hành vi validation, ngày-only, chống lưu lặp, expectedVersion và lịch công bố được giữ nguyên.
+
+## Publication-only controls (08/11/2026)
+Theo yêu cầu người dùng, quản lý Combo chỉ có thao tác Công bố/Ngừng công bố về vòng đời hiển thị; bỏ Kích hoạt/Ngừng hoạt động, bộ lọc hoạt động và nhãn hoạt động trong danh sách desktop/mobile, chi tiết. Giữ tạo/sửa/xem/xóa và bản nháp. productStatus vẫn thuộc response và được kiểm tra điều kiện công bố theo BE hiện tại; không tự đổi trạng thái hoặc sửa BE.
+

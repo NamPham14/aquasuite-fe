@@ -3,9 +3,9 @@ import { test } from 'node:test'
 import { createDemoDepositRepository } from '../src/features/sales/api/demoDepositRepository.ts'
 import { demoCustomers, totals } from '../src/features/sales/lib/deposit.ts'
 
-const input = { customer: demoCustomers[2], warehouse: 'Kho chính', deliveryDate: '', note: '', lines: [{ skuId: 'basin', quantity: 10, requested: 4, held: 999 }] }
+const input = { depositRequired: 2000000, customer: demoCustomers[2], warehouse: 'Kho chính', deliveryDate: '', note: '', lines: [{ skuId: 'basin', quantity: 10, requested: 4, held: 999 }] }
 
-test('new order starts unpaid; 20% uses selected quantity, pending funds never reserve stock', async () => {
+test('new order starts unpaid; agreed deposit is independent of selected quantity, pending funds never reserve stock', async () => {
   const port = createDemoDepositRepository()
   const order = await port.create(input)
   assert.equal(totals(order).total, 25000000)
@@ -13,7 +13,7 @@ test('new order starts unpaid; 20% uses selected quantity, pending funds never r
   assert.equal(totals(order).verified, 0)
   assert.equal(order.lines[0].held, 0)
   await port.pay(order.id, { amount: 2000000, method: 'CASH', reference: '' })
-  await assert.rejects(port.synchronize(order.id), /chưa đạt/)
+  await assert.rejects(port.synchronize(order.id), /Chưa đủ cọc/)
   const pending = (await port.list()).find((row) => row.id === order.id)!
   await port.verify(order.id, pending.payments[0].id, 'VERIFIED')
   assert.equal((await port.list()).find((row) => row.id === order.id)!.lines[0].held, 0)
@@ -25,7 +25,7 @@ test('new order starts unpaid; 20% uses selected quantity, pending funds never r
 test('shared finite stock produces waiting quantity without duplicate allocations', async () => {
   const port = createDemoDepositRepository()
   async function paidOrder() {
-    const order = await port.create({ ...input, lines: [{ skuId: 'basin', quantity: 10, requested: 10, held: 0 }] })
+    const order = await port.create({ ...input, depositRequired: 5000000, lines: [{ skuId: 'basin', quantity: 10, requested: 10, held: 0 }] })
     await port.pay(order.id, { amount: 5000000, method: 'CASH', reference: '' })
     const payment = (await port.list()).find((row) => row.id === order.id)!.payments[0]
     await port.verify(order.id, payment.id, 'VERIFIED')
@@ -41,7 +41,7 @@ test('shared finite stock produces waiting quantity without duplicate allocation
 
 test('invalid quantity, past date, duplicate reference and overcollection are rejected', async () => {
   const port = createDemoDepositRepository()
-  await assert.rejects(port.create({ ...input, lines: [{ ...input.lines[0], requested: 11 }] }))
+  await assert.rejects(port.create({ ...input, depositRequired: 5000000, lines: [{ ...input.lines[0], requested: 11 }] }))
   await assert.rejects(port.create({ ...input, deliveryDate: '2020-01-01' }))
   const order = await port.create(input)
   await assert.rejects(port.pay(order.id, { amount: 1, method: 'BANK_TRANSFER', reference: 'DEMO-001' }), /đã được sử dụng/)
@@ -52,5 +52,5 @@ test('invalid quantity, past date, duplicate reference and overcollection are re
   await port.verify(order.id, payment.id, 'REJECTED')
   await assert.rejects(port.verify(order.id, payment.id, 'VERIFIED'), /đã xử lý/)
   await port.pay(order.id, { amount: 1, method: 'CASH', reference: '' })
-  await assert.rejects(port.synchronize(order.id), /chưa đạt/)
+  await assert.rejects(port.synchronize(order.id), /Chưa đủ cọc/)
 })

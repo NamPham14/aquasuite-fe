@@ -53,6 +53,37 @@ function defaultRead(request: Request) {
   return json({ items: [bundle], page: 0, size: 20, totalPages: 1, totalElements: 1 })
 }
 
+test('combo SKU drawer adds real variants without submitting and Escape closes only the drawer', async () => {
+  let writes = 0
+  const h = await harness(async (input) => {
+    const request = input as Request
+    if (request.method !== 'GET') writes++
+    return defaultRead(request)
+  })
+  try {
+    await h.run(() => h.state.createNew())
+    const trigger = h.dom.window.document.getElementById('combo-sku-search') as HTMLButtonElement
+    await h.run(() => { trigger.focus(); trigger.click() })
+    for (let i = 0; i < 10 && !h.dom.window.document.querySelector('[aria-label="Thêm SKU SKU-01"]'); i++) await h.run(() => {})
+    const dialogs = h.dom.window.document.querySelectorAll('dialog')
+    assert.equal(dialogs.length, 2)
+    assert.notEqual(dialogs[0].getAttribute('aria-labelledby'), dialogs[1].getAttribute('aria-labelledby'))
+    const enter = new h.dom.window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+    await h.run(() => h.dom.window.document.getElementById('combo-drawer-search')!.dispatchEvent(enter))
+    assert.equal(enter.defaultPrevented, true, 'search Enter must not submit the parent combo form')
+    await h.run(() => (h.dom.window.document.querySelector('[aria-label="Thêm SKU SKU-01"]') as HTMLButtonElement).click())
+    assert.equal((h.dom.window.document.querySelector('[aria-label="Đã chọn SKU-01"]') as HTMLButtonElement).disabled, true)
+    assert.equal(h.dom.window.document.querySelectorAll('#combo-qty-' + sku).length, 1)
+    assert.equal(writes, 0)
+    await h.run(() => dialogs[1].dispatchEvent(new h.dom.window.Event('cancel', { bubbles: true, cancelable: true })))
+    assert.equal(h.dom.window.document.querySelectorAll('dialog').length, 1)
+    assert.equal(h.state.dialog?.mode, 'create')
+    assert.equal(h.dom.window.document.activeElement, trigger)
+    assert.ok(h.dom.window.document.querySelector('aside[aria-label="Giá và hiệu lực combo"]'))
+    assert.equal(h.dom.window.document.querySelectorAll('#combo-qty-' + sku).length, 1)
+  } finally { await h.cleanup() }
+})
+
 test('cancel does not mutate; confirmation uses fresh version and suppresses duplicate clicks', async () => {
   let writes = 0
   let release!: (value: Response) => void

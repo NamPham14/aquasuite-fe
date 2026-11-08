@@ -5,7 +5,7 @@ import { bundleButtonClass, bundleDangerClass, bundlePrimaryClass } from '../lib
 import { BundleForm } from './BundleForm'
 import { BundleDetails } from './BundleDetails'
 
-const labels = { create: 'Tạo combo', edit: 'Sửa combo', view: 'Chi tiết combo', delete: 'Xóa combo', publish: 'Công bố combo', unpublish: 'Ngừng công bố combo', activate: 'Kích hoạt combo', deactivate: 'Ngừng hoạt động combo' }
+const labels = { create: 'Tạo combo', edit: 'Sửa combo', view: 'Chi tiết combo', delete: 'Xóa combo', publish: 'Công bố combo', unpublish: 'Ngừng công bố combo' }
 export function BundleDialog({ management: m }: { management: ReturnType<typeof useBundleManagement> }) {
   const [openedAt] = useState(() => Date.now())
   const dialog = m.dialog
@@ -27,7 +27,6 @@ export function BundleDialog({ management: m }: { management: ReturnType<typeof 
       {dialog.mode === 'delete' && <p className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">Xác nhận xóa combo này? Combo sẽ bị ẩn; mã không thể tái sử dụng. Dữ liệu giao dịch cũ được giữ nguyên.</p>}
       {dialog.mode === 'publish' && !invalidPublish && <p className="text-sm text-slate-700">Công bố combo theo lịch đã đặt? Máy chủ sẽ kiểm tra lại giá, thành phần và phiên bản.</p>}
       {dialog.mode === 'unpublish' && <p className="text-sm">Ngừng hiển thị combo ở các kênh đọc combo đã công bố?</p>}
-      {(dialog.mode === 'activate' || dialog.mode === 'deactivate') && <p className="text-sm">Đổi trạng thái hoạt động không thay đổi trạng thái công bố hoặc tồn kho.</p>}
       <div className="flex flex-wrap justify-end gap-2">
         <button type="button" className={bundleButtonClass} disabled={m.pending || m.loadingDetail} onClick={m.close}>Đóng</button>
         {m.blocked && bundle && <button type="button" className={bundleButtonClass} disabled={m.loadingDetail} onClick={() => void m.reloadDialog()}>Tải lại dữ liệu</button>}

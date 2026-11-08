@@ -3,14 +3,14 @@ import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'sonner'
 import { tokenStorage } from '../../../shared/lib/tokenStorage.ts'
 import { baseApi } from '../../../shared/api/baseApi.ts'
-import { authApi, customerLoginApi, loginApi, logoutApi } from '../api/authApi.ts'
+import { authApi, loginApi, logoutApi, verifyRegistrationApi, type RegistrationVerification } from '../api/authApi.ts'
 import {
   clearAuthLocal,
   setCredentials,
   startSession,
   updateAccessToken,
 } from '../model/authSlice.ts'
-import type { AuthState, CustomerLoginRequest, LoginRequest } from '../types/auth.types.ts'
+import type { AuthState, LoginRequest } from '../types/auth.types.ts'
 
 interface RootAuthState {
   auth: AuthState
@@ -31,7 +31,7 @@ export function useAuth() {
   // Mở generation mới, login, lưu refresh token, lấy /me rồi mới xác nhận đăng nhập.
   // Bỏ kết quả async nếu generation đã đổi; lỗi /me chỉ xóa phiên vẫn thuộc generation này.
   const login = useCallback(
-    async (credentials: LoginRequest | CustomerLoginRequest) => {
+    async (credentials: LoginRequest | RegistrationVerification) => {
       // 1. Tăng generation và xóa cache để dữ liệu phiên cũ không ảnh hưởng phiên mới.
       dispatch(startSession())
       dispatch(baseApi.util.resetApiState())
@@ -43,9 +43,7 @@ export function useAuth() {
       )
 
       // 2. Gọi login trực tiếp để không đưa credential vào cache mutation của RTK Query.
-      const loginResponse = await ('phone' in credentials
-        ? customerLoginApi(credentials)
-        : loginApi(credentials))
+      const loginResponse = await ('otp' in credentials ? verifyRegistrationApi(credentials) : loginApi(credentials))
 
       // 3. Bỏ phản hồi nếu generation đã đổi trong lúc request đang chạy.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

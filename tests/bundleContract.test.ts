@@ -25,14 +25,19 @@ test('combo validation follows its own BE limits, fixed SKU rules and decimal pr
   }
 })
 
-test('draft dates are paired and ordered; local conversion preserves UTC milliseconds', () => {
-  assert.equal(bundleSchema.safeParse({ ...valid, validFrom: '2026-11-01T12:00' }).success, false)
-  assert.equal(bundleSchema.safeParse({ ...valid, validFrom: '2026-11-01T12:00', validUntil: '2026-11-01T11:00' }).success, false)
-  const from = '2026-11-01T12:34:56.789Z'
-  const until = '2026-12-01T12:34:56.789Z'
-  const body = bundleDefinition(bundleSchema.parse({ ...valid, validFrom: localDateInput(from), validUntil: localDateInput(until) }))
-  assert.equal(body.validFrom, from)
-  assert.equal(body.validUntil, until)
+test('date-only validity covers whole local days and round-trips the inclusive end date', () => {
+  assert.equal(bundleSchema.safeParse({ ...valid, validFrom: '2026-11-01' }).success, false)
+  assert.equal(bundleSchema.safeParse({ ...valid, validFrom: '2026-11-02', validUntil: '2026-11-01' }).success, false)
+  assert.equal(bundleSchema.safeParse({ ...valid, validFrom: '2026-02-30', validUntil: '2026-03-01' }).success, false)
+  assert.equal(bundleSchema.safeParse({ ...valid, validFrom: '2026-11-01T12:00', validUntil: '2026-11-02' }).success, false)
+  const body = bundleDefinition(bundleSchema.parse({ ...valid, validFrom: '2026-11-01', validUntil: '2026-11-01' }))
+  assert.equal(body.validFrom, new Date(2026, 10, 1).toISOString())
+  assert.equal(body.validUntil, new Date(2026, 10, 2).toISOString())
+  assert.equal(localDateInput(body.validFrom), '2026-11-01')
+  assert.equal(localDateInput(body.validUntil, true), '2026-11-01')
+  const monthEnd = bundleDefinition(bundleSchema.parse({ ...valid, validFrom: '2026-12-31', validUntil: '2026-12-31' }))
+  assert.equal(monthEnd.validUntil, new Date(2027, 0, 1).toISOString())
+  assert.equal(localDateInput(new Date(2026, 10, 1, 12, 30).toISOString(), true), '2026-11-01')
   assert.equal('brandId' in body, false)
   assert.equal('categoryId' in body, false)
   assert.equal(body.description, null)

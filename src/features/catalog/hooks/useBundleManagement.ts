@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from 'react-redux'
 import { toast } from 'sonner'
-import { useChangeBundlePublicationMutation, useChangeBundleStatusMutation, useCreateBundleMutation, useDeleteBundleMutation, useGetBundlesQuery, useLazyGetBundleQuery, useUpdateBundleMutation } from '../api/bundleApi'
+import { useChangeBundlePublicationMutation, useCreateBundleMutation, useDeleteBundleMutation, useGetBundlesQuery, useLazyGetBundleQuery, useUpdateBundleMutation } from '../api/bundleApi'
 import type { Bundle, BundleDefinition, BundleListParams } from '../types/bundle.types'
 import { bundleError } from '../lib/bundle'
 
-export type BundleAction = 'view' | 'edit' | 'delete' | 'publish' | 'unpublish' | 'activate' | 'deactivate'
+export type BundleAction = 'view' | 'edit' | 'delete' | 'publish' | 'unpublish'
 type Dialog = { mode: 'create' } | { mode: BundleAction; bundle: Bundle }
 type SessionStore = { auth: { sessionGeneration: number } }
 
@@ -18,7 +18,6 @@ export function useBundleManagement() {
   const [create] = useCreateBundleMutation()
   const [update] = useUpdateBundleMutation()
   const [publication] = useChangeBundlePublicationMutation()
-  const [status] = useChangeBundleStatusMutation()
   const [remove] = useDeleteBundleMutation()
   const [dialog, setDialog] = useState<Dialog | null>(null)
   const [pending, setPending] = useState(false)
@@ -90,7 +89,6 @@ export function useBundleManagement() {
     const versioned = { id: bundle.bundleId, expectedVersion: bundle.version }
     if (mode === 'delete') await write(() => remove(versioned).unwrap(), 'Đã xóa combo.')
     if (mode === 'publish' || mode === 'unpublish') await write(() => publication({ ...versioned, publicationStatus: mode === 'publish' ? 'PUBLISHED' : 'UNPUBLISHED' }).unwrap(), mode === 'publish' ? 'Đã công bố combo.' : 'Đã ngừng công bố combo.')
-    if (mode === 'activate' || mode === 'deactivate') await write(() => status({ ...versioned, productStatus: mode === 'activate' ? 'ACTIVE' : 'INACTIVE' }).unwrap(), 'Đã đổi trạng thái hoạt động của combo.')
   }
   async function retry() {
     if (busy.current) return

@@ -8,10 +8,11 @@ export const publicationLabels = { DRAFT: 'Bản nháp', PUBLISHED: 'Đã công 
 export function bundleMoney(value: number | null | undefined): string {
   return value == null ? 'Chưa xác định' : `${value.toLocaleString('vi-VN', { maximumFractionDigits: 2 })} ₫`
 }
-export function localDateInput(iso?: string | null): string {
+export function localDateInput(iso?: string | null, exclusiveEnd = false): string {
   if (!iso) return ''
   const date = new Date(iso)
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 23)
+  if (exclusiveEnd && date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0) date.setDate(date.getDate() - 1)
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
 }
 export function bundleError(error: unknown) {
   const result = normalizeApiError(error)

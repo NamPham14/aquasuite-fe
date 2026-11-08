@@ -10,15 +10,13 @@ export const money = (value: number) => new Intl.NumberFormat('vi-VN', { style: 
 export const secondaryButton = 'inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:opacity-50'
 export const primaryButton = 'inline-flex min-h-10 items-center justify-center rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:opacity-50'
 export function totals(order: DepositOrder) {
-  const total = order.lines.reduce((sum, line) => sum + demoSkus.find((sku) => sku.id === line.skuId)!.price * line.quantity, 0)
   const requested = order.lines.reduce((sum, line) => sum + demoSkus.find((sku) => sku.id === line.skuId)!.price * line.requested, 0)
-  const verified = order.payments.filter((payment) => payment.status === 'VERIFIED').reduce((sum, payment) => sum + payment.amount, 0)
-  const pending = order.payments.filter((payment) => payment.status === 'PENDING').reduce((sum, payment) => sum + payment.amount, 0)
-  return { total, requested, required: Math.ceil(requested * 20 / 100), verified, pending, outstanding: Math.max(0, total - verified) }
+  const p = order.payment
+  return { total: p.totalAmount, requested, required: p.depositRequired, verified: p.verifiedPaid, pending: p.pendingAmount, outstanding: p.remaining }
 }
 export function orderStatus(order: DepositOrder) {
   const t = totals(order)
-  if (t.verified < t.required) return t.pending ? 'Chờ xác minh' : t.verified ? 'Chưa đủ cọc' : 'Chờ đặt cọc'
+  if (!order.payment.depositSatisfied) return t.pending ? 'Chờ xác minh' : t.verified ? 'Chưa đủ cọc' : 'Chờ đặt cọc'
   if (order.lines.some((line) => line.held < line.requested)) return 'Chờ bổ sung hàng'
   return 'Đã giữ đủ hàng'
 }
