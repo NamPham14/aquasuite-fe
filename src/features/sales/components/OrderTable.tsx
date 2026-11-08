@@ -142,8 +142,18 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
                     >
                       {order.orderCode}
                     </Link>
-                    <div className="text-[11px] text-slate-400 mt-0.5">
-                      {formatDate(order.orderDate || order.createdAt)}
+                    <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <span>{formatDate(order.orderDate || order.createdAt)}</span>
+                      {order.quotationCode && (
+                        <Link
+                          to={order.quotationId ? `/app/quotations/${order.quotationId}` : '/app/quotations'}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-sky-50 border border-sky-200 text-sky-700 font-bold text-[10px] hover:bg-sky-100"
+                          title="Bấm để xem Báo giá gốc"
+                        >
+                          <span>BG: {order.quotationCode}</span>
+                        </Link>
+                      )}
                     </div>
                   </td>
 

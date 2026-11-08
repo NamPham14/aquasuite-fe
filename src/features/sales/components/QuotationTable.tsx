@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import {
   Eye,
   Pencil,
@@ -13,6 +14,8 @@ import {
   MoreHorizontal,
   ChevronRight,
   Loader2,
+  ShoppingCart,
+  ExternalLink,
 } from 'lucide-react'
 import { QuotationStatusBadge } from './QuotationStatusBadge'
 import { useGetRevisionHistoryQuery } from '../api/quotationApi'
@@ -219,6 +222,19 @@ function QuotationRevisionSubTable({
                         <span className="text-slate-400">└─</span>
                         rev.{rev.revisionNo} (Bản cũ)
                       </span>
+                    )}
+                    {rev.orderId && (
+                      <div className="mt-1">
+                        <Link
+                          to={`/app/orders/${rev.orderId}`}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-[10px] font-bold text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition"
+                          title="Xem đơn hàng đã tạo"
+                        >
+                          <ShoppingCart className="w-2.5 h-2.5 text-emerald-600" />
+                          <span>Đơn: {rev.orderCode || 'SO-...'}</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </Link>
+                      </div>
                     )}
                   </td>
                   <td className="py-2 px-3">
@@ -490,6 +506,16 @@ export function QuotationTable({
               }
             }
 
+            if (row.orderId) {
+              moreItems.unshift({
+                icon: ShoppingCart,
+                label: `Xem đơn hàng (${row.orderCode || 'SO-...'})`,
+                onClick: () => {
+                  window.location.href = `/app/orders/${row.orderId}`
+                },
+              })
+            }
+
             if (onRevisionHistory) {
               moreItems.push({
                 icon: History,
@@ -541,6 +567,19 @@ export function QuotationTable({
                             </button>
                           )}
                         </div>
+                        {row.orderId && (
+                          <div className="mt-0.5">
+                            <Link
+                              to={`/app/orders/${row.orderId}`}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-[10px] font-bold text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition"
+                              title="Xem chi tiết đơn hàng đã tạo"
+                            >
+                              <ShoppingCart className="w-2.5 h-2.5 text-emerald-600" />
+                              <span>Đơn: {row.orderCode || 'SO-...'}</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>

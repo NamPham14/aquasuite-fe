@@ -151,6 +151,8 @@ export interface QuotationListItemResponse {
   totalAmount: number
   createdByName?: string
   requiresApproval?: boolean
+  orderId?: string
+  orderCode?: string
 }
 
 export interface QuotationFilterParams extends PageParams {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft,
   Calendar,
@@ -23,6 +23,8 @@ import {
   AlertCircle,
   CreditCard,
   ShoppingCart,
+  ExternalLink,
+  ArrowRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -71,13 +73,43 @@ export function QuotationDetailPage() {
   const [isRevisionDrawerOpen, setIsRevisionDrawerOpen] = useState(false)
   const [actionDialog, setActionDialog] = useState<QuotationActionType | null>(null)
 
-  const handleConvertToOrder = async () => {
+  // Trạng thái cho luồng chuyển đổi sang Đơn hàng
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false)
+  const [convertAddress, setConvertAddress] = useState('')
+  const [convertNote, setConvertNote] = useState('')
+  const [createdOrderModal, setCreatedOrderModal] = useState<{ orderId: string; orderCode: string } | null>(null)
+
+  const handleOpenConvertModal = () => {
+    if (!quotation) return
+    setConvertAddress(quotation.deliveryAddress || '')
+    setConvertNote(quotation.note || '')
+    setIsConvertModalOpen(true)
+  }
+
+  const handleConfirmConvertToOrder = async () => {
     if (!id) return
     try {
-      const res = await convertToOrder({ id }).unwrap()
+      const res = await convertToOrder({
+        id,
+        body: {
+          deliveryAddress: convertAddress.trim() || undefined,
+          note: convertNote.trim() || undefined,
+        },
+      }).unwrap()
+
       const createdOrderCode = res?.data?.orderCode || res?.orderCode
+      const createdOrderId = res?.data?.orderId || res?.orderId
+
+      setIsConvertModalOpen(false)
       toast.success(`Chuyển đổi thành công đơn hàng ${createdOrderCode || ''}!`)
       refetch()
+
+      if (createdOrderId) {
+        setCreatedOrderModal({
+          orderId: createdOrderId,
+          orderCode: createdOrderCode || 'SO-PROJ',
+        })
+      }
     } catch (err: any) {
       toast.error(err?.data?.message || 'Không thể chuyển đổi báo giá thành đơn hàng.')
     }
@@ -313,19 +345,24 @@ export function QuotationDetailPage() {
             </button>
           )}
 
-          {/* Đã chuyển thành đơn hàng */}
+          {/* Đã chuyển thành đơn hàng -> Link click được mở thẳng sang Đơn hàng */}
           {quotation.orderId && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold shadow-2xs">
+            <Link
+              to={`/app/orders/${quotation.orderId}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold hover:bg-emerald-100 hover:border-emerald-400 transition shadow-2xs group"
+              title="Nhấn để xem chi tiết đơn hàng này"
+            >
               <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
               <span>Đã tạo đơn: {quotation.orderCode || 'SO-...'}</span>
-            </span>
+              <ExternalLink className="w-3.5 h-3.5 text-emerald-600 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
           )}
 
           {/* Nút Chuyển thành Đơn hàng (Convert Quotation to Project Order) */}
           {!quotation.orderId && (quotation.status === 'ACCEPTED' || quotation.status === 'APPROVED') && (
             <button
               type="button"
-              onClick={handleConvertToOrder}
+              onClick={handleOpenConvertModal}
               disabled={isConverting}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-800 text-white text-xs font-bold hover:bg-sky-900 transition shadow-2xs disabled:opacity-50"
             >
@@ -735,6 +772,145 @@ export function QuotationDetailPage() {
             isLosing
           }
         />
+      )}
+
+      {/* Modal Xác nhận Chuyển đổi Báo giá sang Đơn hàng dự án */}
+      {isConvertModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-sky-100 flex items-center justify-center text-sky-700 shrink-0">
+                <ShoppingCart className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Chuyển Báo Giá Thành Đơn Hàng Dự Án</h3>
+                <p className="text-[11px] text-slate-500">
+                  Khởi tạo đơn hàng từ báo giá <strong className="text-slate-700">{quotation.quotationCode}</strong> (rev.{quotation.revisionNo})
+                </p>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4 text-xs">
+              {/* Tóm tắt thông tin */}
+              <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 grid grid-cols-2 gap-2.5">
+                <div>
+                  <span className="text-[11px] text-slate-500 block">Khách hàng:</span>
+                  <span className="font-semibold text-slate-800">{quotation.customerName || 'Khách hàng dự án'}</span>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-500 block">Dự án:</span>
+                  <span className="font-semibold text-slate-800">{quotation.projectName || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-500 block">Tổng thanh toán:</span>
+                  <span className="font-bold text-sky-800 text-sm">{formatMoney(quotation.summary?.netAmount)}</span>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-500 block">Thỏa thuận cọc & nợ:</span>
+                  <span className="font-medium text-slate-800">
+                    Cọc {quotation.depositPercent || 0}% | Nợ {quotation.creditTermDays || 0} ngày
+                  </span>
+                </div>
+              </div>
+
+              {/* Form tùy chỉnh thông tin giao hàng */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                    Địa chỉ giao hàng thực tế
+                  </label>
+                  <input
+                    type="text"
+                    value={convertAddress}
+                    onChange={(e) => setConvertAddress(e.target.value)}
+                    placeholder="Nhập địa chỉ giao hàng đến công trình..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                    Ghi chú đơn hàng bổ sung
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={convertNote}
+                    onChange={(e) => setConvertNote(e.target.value)}
+                    placeholder="Ghi chú điều khoản, yêu cầu đóng gói, giao hàng..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setIsConvertModalOpen(false)}
+                disabled={isConverting}
+                className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmConvertToOrder}
+                disabled={isConverting}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-sky-800 hover:bg-sky-900 text-white font-bold transition shadow-2xs disabled:opacity-50"
+              >
+                {isConverting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Đang tạo đơn...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    <span>Xác nhận tạo Đơn hàng</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Thông báo Chuyển đổi thành công có nút Xem Đơn hàng ngay */}
+      {createdOrderModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6 text-center space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mx-auto">
+              <CheckCircle className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-slate-900">Tạo Đơn Hàng Thành Công!</h3>
+              <p className="text-xs text-slate-600">
+                Đơn hàng <strong className="font-mono text-emerald-700">{createdOrderModal.orderCode}</strong> đã được khởi tạo thành công và liên kết trực tiếp với báo giá.
+              </p>
+            </div>
+
+            <div className="pt-2 flex items-center justify-center gap-2.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setCreatedOrderModal(null)}
+                className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition"
+              >
+                Ở lại xem Báo giá
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/app/orders/${createdOrderModal.orderId}`)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-800 hover:bg-sky-900 text-white font-bold transition shadow-2xs"
+              >
+                <span>Xem Đơn hàng ngay</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
