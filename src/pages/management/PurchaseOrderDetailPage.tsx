@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Clock,
   Layers,
+  PackageCheck,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -25,18 +26,24 @@ import {
   PurchaseOrderActionDialog,
   type POActionType,
 } from '../../features/purchasing/components/PurchaseOrderActionDialog'
+import { GoodsReceiptDialog } from '../../features/inventory/components/GoodsReceiptDialog'
+import { useAuth } from '../../features/iam/hooks/useAuth'
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const { data: po, isLoading, error } = useGetPurchaseOrderQuery(id!, { skip: !id })
+  const { data: po, isLoading, error, refetch } = useGetPurchaseOrderQuery(id!, { skip: !id })
   const [confirmPo] = useConfirmPurchaseOrderMutation()
   const [cancelPo] = useCancelPurchaseOrderMutation()
   const [closePo] = useClosePurchaseOrderMutation()
 
+  const { user } = useAuth()
+  const canReceiveStock = (user?.roles ?? []).some((r) => r === 'SHOP_OWNER' || r === 'ACCOUNTANT')
+
   const [dialogAction, setDialogAction] = useState<POActionType | null>(null)
   const [isSubmittingAction, setIsSubmittingAction] = useState(false)
+  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false)
 
   const formatCurrency = (val?: number | null) => {
     if (val === undefined || val === null) return '—'
@@ -207,6 +214,17 @@ export function PurchaseOrderDetailPage() {
             >
               <XCircle className="w-4 h-4 text-rose-600" />
               Hủy PO
+            </button>
+          )}
+
+          {(isConfirmed || isPartiallyReceived) && canReceiveStock && (
+            <button
+              type="button"
+              onClick={() => setIsReceiptDialogOpen(true)}
+              className="px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+            >
+              <PackageCheck className="w-4 h-4" />
+              Nhập kho
             </button>
           )}
 
@@ -409,6 +427,17 @@ export function PurchaseOrderDetailPage() {
         onClose={() => setDialogAction(null)}
         onConfirm={handleExecuteAction}
       />
+
+      {/* UC-32: Dialog lập & xác nhận phiếu nhập kho */}
+      {isReceiptDialogOpen && (
+        <GoodsReceiptDialog
+          isOpen={isReceiptDialogOpen}
+          purchaseOrderId={po.purchaseOrderId}
+          poCode={po.poCode}
+          onClose={() => setIsReceiptDialogOpen(false)}
+          onSuccess={() => refetch()}
+        />
+      )}
     </div>
   )
 }
