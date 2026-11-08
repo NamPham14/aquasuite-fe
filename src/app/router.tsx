@@ -3,6 +3,7 @@ import { AuthLayout, ManagementLayout } from '../layouts'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { DashboardPage } from '../pages/management/DashboardPage'
 import { ProductsPage } from '../pages/management/ProductsPage'
+import { ProductVariantsPage } from '../pages/management/ProductVariantsPage'
 import { CategoriesPage } from '../pages/management/CategoriesPage'
 import { BrandsPage } from '../pages/management/BrandsPage'
 import { InventoryPage } from '../pages/management/InventoryPage'
@@ -10,6 +11,8 @@ import { SystemInfoPage } from '../pages/management/SystemInfoPage'
 import { RolesPage } from '../pages/management/RolesPage'
 import { PermissionsPage } from '../pages/management/PermissionsPage'
 import { UsersPage } from '../pages/management/UsersPage'
+import { CustomerDebtsPage } from '../pages/management/CustomerDebtsPage'
+import { PaymentVerificationsPage } from '../pages/management/PaymentVerificationsPage'
 import { QuotationsPage } from '../pages/management/QuotationsPage'
 import { QuotationCreatePage } from '../pages/management/QuotationCreatePage'
 import { QuotationEditPage } from '../pages/management/QuotationEditPage'
@@ -68,6 +71,10 @@ export const routeConfig: RouteObject[] = [
             element: <ProductsPage />,
           },
           {
+            path: 'products/:productId/variants',
+            element: <ProductVariantsPage />,
+          },
+          {
             path: 'categories',
             element: <CategoriesPage />,
           },
@@ -111,18 +118,18 @@ export const routeConfig: RouteObject[] = [
             path: 'purchase-orders/:id/edit',
             element: <PurchaseOrderEditPage />,
           },
-            {
-                path: 'orders',
-                element: <OrdersPage />,
-            },
-            {
-                path: 'orders/pos',
-                element: <POSOrderCreatePage />,
-            },
-            {
-                path: 'orders/:id',
-                element: <OrderDetailPage />,
-            },
+          {
+            path: 'orders',
+            element: <OrdersPage />,
+          },
+          {
+            path: 'orders/pos',
+            element: <POSOrderCreatePage />,
+          },
+          {
+            path: 'orders/:id',
+            element: <OrderDetailPage />,
+          },
           {
             path: 'system-info',
             element: <SystemInfoPage />,
@@ -130,6 +137,8 @@ export const routeConfig: RouteObject[] = [
           { path: 'roles', element: <RolesPage /> },
           { path: 'permissions', element: <PermissionsPage /> },
           { path: 'users', element: <UsersPage /> },
+          { path: 'customer-debts', element: <CustomerDebtsPage /> },
+          { path: 'payment-verifications', element: <PaymentVerificationsPage /> },
         ],
       },
     ],

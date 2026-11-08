@@ -1,7 +1,9 @@
 import { useDeferredValue, useState } from 'react'
 import { useDispatch } from 'react-redux'
+import { Link } from 'react-router-dom'
 import {
   Download,
+  ExternalLink,
   Eye,
   FileSpreadsheet,
   Package,
@@ -69,6 +71,7 @@ function formatPriceRange(min?: number | null, max?: number | null): string {
   return `Đến ${max!.toLocaleString('vi-VN')} ₫`
 }
 
+/** Product index uses the actual UC-09 backend endpoint; no demonstration rows are retained. */
 export function ProductsPage() {
   const dispatch = useDispatch<AppDispatch>()
 
@@ -375,6 +378,14 @@ export function ProductsPage() {
       align: 'right',
       cell: (item) => (
         <div className="flex items-center justify-end gap-1">
+          <Link
+            to={`/app/products/${item.productId}/variants`}
+            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-sky-600"
+            title="Quản lý biến thể (SKU) & giá bán"
+            aria-label={`Quản lý SKU của ${item.productName}`}
+          >
+            SKU <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
           <button
             type="button"
             onClick={() => openViewDialog(item)}
@@ -723,14 +734,23 @@ export function ProductsPage() {
                     },
                   ]}
                 />
-                <button
-                  type="button"
-                  onClick={() => openStatusDialog(item)}
-                  className="inline-flex min-h-9 items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 text-xs font-medium text-amber-800"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Đổi trạng thái
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={`/app/products/${item.productId}/variants`}
+                    className="inline-flex min-h-9 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700"
+                    aria-label={`Quản lý SKU của ${item.productName}`}
+                  >
+                    SKU <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => openStatusDialog(item)}
+                    className="inline-flex min-h-9 items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 text-xs font-medium text-amber-800"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Đổi trạng thái
+                  </button>
+                </div>
               </div>
             </div>
           )}

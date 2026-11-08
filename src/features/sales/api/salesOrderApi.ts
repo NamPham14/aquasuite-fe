@@ -96,6 +96,8 @@ export const salesOrderApi = baseApi.injectEndpoints({
     getOrderPaymentSummary: builder.query<OrderPaymentSummaryResponse, string>({
       query: (orderId) => `/finance/orders/${orderId}/payment-summary`,
       transformResponse: (res: any) => res?.data ?? res,
+      // Dùng chung tag 'OrderPayment' với các endpoint UC-23 để tự làm mới sau khi ghi nhận.
+      providesTags: (_res, _err, orderId) => [{ type: 'OrderPayment', id: orderId }],
     }),
   }),
 })

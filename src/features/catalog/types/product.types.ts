@@ -49,6 +49,9 @@ export interface ProductSummary {
   createdAt: string
   updatedAt: string
 }
+/** Read model kept from the UC-10 product-list contract. */
+export interface ProductPage { content: ProductSummary[]; number: number; size: number; totalElements: number; totalPages: number }
+export interface ProductListQuery { keyword?: string; categoryId?: string; brandId?: string; status?: ProductStatus; productType?: ProductType; page: number; size: number }
 
 export interface ProductDetail {
   productId: string
@@ -112,4 +115,3 @@ export interface ProductPageResponse {
   totalElements: number
   totalPages: number
 }
-

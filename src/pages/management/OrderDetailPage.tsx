@@ -15,10 +15,15 @@ import {
 } from '../../features/sales/api/salesOrderApi'
 import { OrderStatusBadge } from '../../features/sales/components/OrderStatusBadge'
 import { PaymentStatusBadge } from '../../features/sales/components/PaymentStatusBadge'
+import { OrderPaymentPanel } from '../../features/finance'
+import { useAuth } from '../../features/iam/hooks/useAuth'
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  // Chỉ Sales Staff / Shop Owner được ghi nhận thanh toán tại quầy (UC-23); BE vẫn thực thi phân quyền.
+  const canRecordPayment = (user?.roles ?? []).some((r) => r === 'SALES_STAFF' || r === 'SHOP_OWNER')
 
   const { data: order, isLoading, error } = useGetSalesOrderByIdQuery(id || '', {
     skip: !id,
@@ -361,6 +366,15 @@ export function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* UC-23: Ghi nhận & theo dõi thanh toán theo tiến độ các mốc của đơn */}
+      {id && (
+        <OrderPaymentPanel
+          orderId={id}
+          canRecord={canRecordPayment}
+          payable={order.orderStatus !== 'CANCELLED'}
+        />
+      )}
 
       {order.note && (
         <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-2xs">
