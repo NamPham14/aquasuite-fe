@@ -649,7 +649,12 @@ export function QuotationDetailPage() {
               <div className="p-3 bg-white rounded-lg border border-purple-100 shadow-2xs">
                 <div className="text-slate-500 text-2xs uppercase font-semibold">Tổng Giá Vốn</div>
                 <div className="text-sm font-bold text-slate-900 tabular-nums">
-                  {formatMoney(quotation.ownerData.totalCost)}
+                  {formatMoney(
+                    quotation.ownerData.totalCost ??
+                      (quotation.ownerData.grossProfit != null && quotation.summary?.netAmount != null
+                        ? Math.max(0, quotation.summary.netAmount - quotation.ownerData.grossProfit)
+                        : 0)
+                  )}
                 </div>
               </div>
               <div className="p-3 bg-white rounded-lg border border-purple-100 shadow-2xs">

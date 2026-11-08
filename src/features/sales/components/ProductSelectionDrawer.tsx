@@ -10,24 +10,18 @@ import {
   ChevronDown,
   Eye,
 } from 'lucide-react'
-import {
-  CATALOG_PRODUCTS,
-  type CatalogItemOption,
-} from '../data/catalogProducts.data'
+import type { CatalogItemOption } from '../data/catalogProducts.data'
 import { useGetSalesCatalogItemsQuery } from '../api/salesCatalogApi'
 import { ProductDetailModal } from './ProductDetailModal'
 
-const ALL_BRANDS = [
-  'Tất cả',
-  'TOTO',
-  'INAX',
-  'KOHLER',
-  'GROHE',
-  'AMERICAN STANDARD',
-  'CAESAR',
-  'VIGLACERA',
-  'AQUA-COMBO',
-]
+function removeVietnameseTones(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+}
 
 interface ProductSelectionDrawerProps {
   isOpen: boolean
@@ -74,47 +68,61 @@ export function ProductSelectionDrawer({
     }
   }, [brandDropdownOpen])
 
-  // Danh sách hãng lọc theo ô tìm kiếm trong dropdown
-  const filteredBrands = useMemo(() => {
-    const list = ALL_BRANDS.filter((b) => (activeTab === 'product' ? b !== 'AQUA-COMBO' : true))
-    if (!brandSearchTerm.trim()) return list
-    return list.filter((b) => b.toLowerCase().includes(brandSearchTerm.toLowerCase().trim()))
-  }, [activeTab, brandSearchTerm])
-
   // Định dạng tiền tệ
   const formatMoney = (val: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
 
-  const { data: apiCatalogItems } = useGetSalesCatalogItemsQuery(undefined, {
+  const { data: apiCatalogItems, isLoading } = useGetSalesCatalogItemsQuery(undefined, {
     skip: !isOpen,
   })
 
-  const catalogSource = useMemo(() => {
+  // Toàn bộ dữ liệu sản phẩm & combo lấy 100% từ Database API
+  const catalogSource = useMemo<CatalogItemOption[]>(() => {
     const list = Array.isArray(apiCatalogItems) ? apiCatalogItems : (apiCatalogItems as any)?.data
-    if (list && Array.isArray(list) && list.length > 0) {
+    if (list && Array.isArray(list)) {
       return list
     }
-    return CATALOG_PRODUCTS
+    return []
   }, [apiCatalogItems])
 
-  // Lọc sản phẩm
+  // Trích xuất danh sách hãng động từ dữ liệu thực tế trong Database
+  const availableBrands = useMemo(() => {
+    const brandsSet = new Set<string>()
+    catalogSource.forEach((item) => {
+      if (item.brand && item.brand.trim()) {
+        brandsSet.add(item.brand.trim())
+      }
+    })
+    return ['Tất cả', ...Array.from(brandsSet).sort()]
+  }, [catalogSource])
+
+  // Danh sách hãng lọc theo ô tìm kiếm trong dropdown
+  const filteredBrands = useMemo(() => {
+    if (!brandSearchTerm.trim()) return availableBrands
+    const term = removeVietnameseTones(brandSearchTerm.trim())
+    return availableBrands.filter((b) => removeVietnameseTones(b).includes(term))
+  }, [availableBrands, brandSearchTerm])
+
+  // Lọc sản phẩm & combo theo tab, hãng và từ khóa không dấu
   const filteredList = useMemo(() => {
     return catalogSource.filter((item) => {
       if (activeTab === 'product' && item.isCombo) return false
       if (activeTab === 'combo' && !item.isCombo) return false
 
-      if (selectedBrand !== 'Tất cả' && item.brand !== selectedBrand) {
-        return false
+      if (selectedBrand !== 'Tất cả') {
+        const itemBrand = removeVietnameseTones(item.brand || '')
+        const targetBrand = removeVietnameseTones(selectedBrand)
+        if (itemBrand !== targetBrand && !itemBrand.includes(targetBrand) && !targetBrand.includes(itemBrand)) {
+          return false
+        }
       }
 
       if (searchTerm.trim()) {
-        const query = searchTerm.toLowerCase().trim()
-        const matchesName = item.name.toLowerCase().includes(query)
-        const matchesSku = item.sku.toLowerCase().includes(query)
-        const matchesBrand = item.brand.toLowerCase().includes(query)
-        const matchesCategory = item.category.toLowerCase().includes(query)
-        const matchesDesc = item.description?.toLowerCase().includes(query)
-        return matchesName || matchesSku || matchesBrand || matchesCategory || matchesDesc
+        const query = removeVietnameseTones(searchTerm.trim())
+        const target = removeVietnameseTones(
+          `${item.name} ${item.sku} ${item.brand || ''} ${item.category || ''} ${item.description || ''} ${(item.components || []).join(' ')}`
+        )
+        if (!target.includes(query)) return false
       }
 
       return true
@@ -279,11 +287,16 @@ export function ProductSelectionDrawer({
 
             {/* List Content */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50/40">
-              {filteredList.length === 0 ? (
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-2">
+                  <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs">Đang tải danh mục từ hệ thống...</p>
+                </div>
+              ) : filteredList.length === 0 ? (
                 <div className="text-center py-12 px-4">
                   <Package className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
                   <p className="text-xs font-medium text-slate-700">
-                    Không tìm thấy sản phẩm phù hợp
+                    Không tìm thấy {activeTab === 'product' ? 'sản phẩm' : 'combo'} phù hợp
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Thử tìm với từ khóa hoặc đổi hãng khác

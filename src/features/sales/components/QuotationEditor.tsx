@@ -28,15 +28,13 @@ import {
   useCreateRevisionMutation,
 } from '../api/quotationApi'
 import { useGetCustomerOptionsQuery } from '../api/customerApi'
+import { useGetSalesCatalogItemsQuery } from '../api/salesCatalogApi'
 import { quotationSchema, type QuotationFormValues } from '../schemas/quotation.schema'
 import type { QuotationResponse, QuotationPaymentMilestone, QuotationStatus } from '../types/quotation.types'
 import { QuotationActionDialog, type QuotationActionType } from './QuotationActionDialog'
 import { ProductSelectionDrawer } from './ProductSelectionDrawer'
 import { ProductDetailModal } from './ProductDetailModal'
-import {
-  CATALOG_PRODUCTS,
-  type CatalogItemOption,
-} from '../data/catalogProducts.data'
+import type { CatalogItemOption } from '../data/catalogProducts.data'
 import { QuotationStatusBadge } from './QuotationStatusBadge'
 import { useAuth } from '../../iam/hooks/useAuth'
 
@@ -196,22 +194,27 @@ export function QuotationEditor({ initialData, isEditMode = false }: QuotationEd
   const [shippingFee, setShippingFee] = useState<number | string>(initialData?.summary?.shippingFee ?? 0)
   const [note, setNote] = useState(initialData?.note || '')
 
+  const { data: apiCatalogItems } = useGetSalesCatalogItemsQuery()
+  const catalogList = useMemo<CatalogItemOption[]>(() => {
+    const list = Array.isArray(apiCatalogItems) ? apiCatalogItems : (apiCatalogItems as any)?.data
+    return Array.isArray(list) ? list : []
+  }, [apiCatalogItems])
+
   // Items State - Bắt đầu bằng mảng rỗng khi tạo mới theo phản hồi của user
   const [items, setItems] = useState<EditableItemRow[]>(() => {
     if (initialData?.items && initialData.items.length > 0) {
       return initialData.items.map((i) => {
-        const foundCatalog = CATALOG_PRODUCTS.find((p) => p.variantId === i.variantId)
         return {
           variantId: i.variantId,
           quantity: i.quantity,
           discountRate: i.discountRate,
-          customSku: i.sku || foundCatalog?.sku,
-          customName: i.variantName || foundCatalog?.name,
-          brand: foundCatalog?.brand || 'TOTO',
-          unitPrice: i.unitPrice || foundCatalog?.sellingPrice,
-          stock: i.backorderQty && i.backorderQty > 0 ? 0 : foundCatalog?.availableStock || 20,
-          unit: i.unit || foundCatalog?.unit || 'bộ',
-          isCombo: foundCatalog?.isCombo || false,
+          customSku: i.sku,
+          customName: i.variantName,
+          brand: 'TOTO',
+          unitPrice: i.unitPrice,
+          stock: i.backorderQty && i.backorderQty > 0 ? 0 : 50,
+          unit: i.unit || 'bộ',
+          isCombo: false,
         }
       })
     }
@@ -448,9 +451,9 @@ export function QuotationEditor({ initialData, isEditMode = false }: QuotationEd
     })
   }
 
-  // Xem chi tiết sản phẩm / SKU
+  // Xem chi tiết sản phẩm / SKU từ dữ liệu máy chủ
   const viewDetail = (row: EditableItemRow) => {
-    const found = CATALOG_PRODUCTS.find((p) => p.variantId === row.variantId)
+    const found = catalogList.find((p) => p.variantId === row.variantId)
     if (found) {
       setTableDetailProduct(found)
     } else {
@@ -1233,15 +1236,43 @@ export function QuotationEditor({ initialData, isEditMode = false }: QuotationEd
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between text-slate-700">
-                      <span>Số tiền công nợ:</span>
-                      <span className="font-bold text-blue-900 text-sm">
-                        {formatMoney(
-                          remainingDebtAmount !== ''
-                            ? Number(remainingDebtAmount)
-                            : Math.max(0, (displaySummary?.grandTotal || 0) - ((displaySummary?.grandTotal || 0) * (Number(depositPercent) || 0)) / 100)
-                        )}
-                      </span>
+                    <div className="flex items-center justify-between gap-2 text-slate-700">
+                      <div className="flex items-center gap-1.5">
+                        <span>Số tiền công nợ:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const calculatedDefault = Math.max(
+                              0,
+                              (displaySummary?.grandTotal || 0) -
+                                ((displaySummary?.grandTotal || 0) * (Number(depositPercent) || 0)) / 100,
+                            )
+                            setRemainingDebtAmount(calculatedDefault > 0 ? calculatedDefault : '')
+                          }}
+                          className="text-[10px] text-blue-600 hover:text-blue-800 underline font-medium"
+                          title="Tự động tính số tiền còn lại sau cọc"
+                        >
+                          (Tự động tính)
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="0"
+                          step="10000"
+                          value={remainingDebtAmount}
+                          onChange={(e) => setRemainingDebtAmount(e.target.value)}
+                          placeholder={String(
+                            Math.max(
+                              0,
+                              (displaySummary?.grandTotal || 0) -
+                                ((displaySummary?.grandTotal || 0) * (Number(depositPercent) || 0)) / 100,
+                            ),
+                          )}
+                          className="w-32 rounded border border-blue-300 bg-white px-2 py-1 text-xs font-bold text-right text-blue-900 focus:outline-none focus:border-blue-500"
+                        />
+                        <span className="text-[11px] font-semibold text-slate-500">đ</span>
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1.5 text-slate-700">
