@@ -76,7 +76,7 @@ export function POSOrderCreatePage() {
     }
 
     if (cart.fulfillmentMethod === 'SCHEDULED_DELIVERY' && !cart.deliveryAddress.trim() && !cart.selectedCustomer?.address) {
-      toast.error('Vui lòng nhập địa chỉ nhận hàng khi chọn giao hàng theo lịch.')
+      toast.error('Vui lòng nhập địa chỉ nhận hàng khi chọn giao hàng tận nơi.')
       return
     }
 
@@ -263,7 +263,7 @@ export function POSOrderCreatePage() {
                   className="sr-only"
                 />
                 <Truck className="w-4 h-4 text-sky-600" />
-                <span>Giao theo lịch</span>
+                <span>Giao hàng tận nơi</span>
               </label>
             </div>
           </div>

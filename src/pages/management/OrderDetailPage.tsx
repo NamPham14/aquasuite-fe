@@ -123,9 +123,11 @@ export function OrderDetailPage() {
             <span>Khách hàng</span>
           </h4>
           <div className="font-semibold text-slate-900 text-sm">
-            {order.customerName || 'Khách vãng lai tại quầy'}
+            {order.customerName && order.customerName !== 'Walk-in Retail Customer'
+              ? order.customerName
+              : 'Khách lẻ tại quầy'}
           </div>
-          {order.customerPhone && (
+          {order.customerPhone && order.customerPhone !== '0000000000' && (
             <div className="text-slate-600">SĐT: {order.customerPhone}</div>
           )}
           {order.deliveryAddress && (

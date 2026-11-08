@@ -42,7 +42,7 @@ export const createSalesOrderSchema = z
       return true
     },
     {
-      message: 'Vui lòng nhập địa chỉ nhận hàng khi chọn giao hàng theo lịch',
+      message: 'Vui lòng nhập địa chỉ nhận hàng khi chọn giao hàng tận nơi',
       path: ['deliveryAddress'],
     },
   )

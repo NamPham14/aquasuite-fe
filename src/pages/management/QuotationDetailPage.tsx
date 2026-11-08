@@ -375,7 +375,11 @@ export function QuotationDetailPage() {
             </h3>
             <div className="space-y-1.5 text-sm">
               <div className="font-bold text-slate-900 text-base">{quotation.projectName}</div>
-              <div className="text-slate-700 font-medium">Đối tác: {quotation.customerName || 'Chưa định danh'}</div>
+              <div className="text-slate-700 font-medium">
+                Đối tác: {quotation.customerName && quotation.customerName !== 'Walk-in Retail Customer'
+                  ? quotation.customerName
+                  : 'Khách lẻ tại quầy'}
+              </div>
               {quotation.deliveryAddress && (
                 <div className="text-xs text-slate-500 flex items-start gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />

@@ -68,6 +68,25 @@ export function ProductSelectionDrawer({
     }
   }, [brandDropdownOpen])
 
+  // Đóng Drawer khi bấm phím Escape (khi không mở modal chi tiết sản phẩm)
+  useEffect(() => {
+    if (!isOpen) return
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !detailProduct) {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, detailProduct, onClose])
+
+  // Danh sách hãng lọc theo ô tìm kiếm trong dropdown
+  // const filteredBrands = useMemo(() => {
+  //   const list = ALL_BRANDS.filter((b) => (activeTab === 'product' ? b !== 'AQUA-COMBO' : true))
+  //   if (!brandSearchTerm.trim()) return list
+  //   return list.filter((b) => b.toLowerCase().includes(brandSearchTerm.toLowerCase().trim()))
+  // }, [activeTab, brandSearchTerm])
+
   // Định dạng tiền tệ
   const formatMoney = (val: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
@@ -133,9 +152,15 @@ export function ProductSelectionDrawer({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/30 backdrop-blur-[1px] transition-opacity">
-        <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-          <div className="w-screen max-w-md bg-white shadow-xl flex flex-col border-l border-slate-200">
+      <div
+        className="fixed inset-0 z-50 overflow-hidden bg-slate-900/30 backdrop-blur-[1px] transition-opacity cursor-pointer"
+        onClick={onClose}
+      >
+        <div className="absolute inset-y-0 right-0 max-w-full flex pl-10 h-full">
+          <div
+            className="w-screen max-w-md bg-white shadow-xl flex flex-col border-l border-slate-200 cursor-default h-full"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header gọn gàng */}
             <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/60">
               <div>

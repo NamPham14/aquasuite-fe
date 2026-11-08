@@ -23,6 +23,16 @@ export interface CustomerFilterParams {
   size?: number
 }
 
+export interface CreateCustomerRequest {
+  customerName: string
+  phone?: string
+  email?: string
+  customerType?: 'RETAIL' | 'PROJECT'
+  taxCode?: string
+  companyName?: string
+  address?: string
+}
+
 export const customerApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getCustomerOptions: builder.query<CustomerOption[], void>({
@@ -45,6 +55,19 @@ export const customerApi = baseApi.injectEndpoints({
       transformResponse: (res: any) => res?.data ?? res,
       providesTags: (_res, _err, id) => [{ type: 'Quotation', id: `CUSTOMER_${id}` }],
     }),
+
+    createCustomer: builder.mutation<CustomerOption, CreateCustomerRequest>({
+      query: (body) => ({
+        url: '/crm/customers',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: [
+        { type: 'Quotation', id: 'CUSTOMER_OPTIONS' },
+        { type: 'Quotation', id: 'CUSTOMERS' },
+      ],
+    }),
   }),
 })
 
@@ -52,5 +75,6 @@ export const {
   useGetCustomerOptionsQuery,
   useGetCustomersQuery,
   useGetCustomerByIdQuery,
+  useCreateCustomerMutation,
 } = customerApi
 

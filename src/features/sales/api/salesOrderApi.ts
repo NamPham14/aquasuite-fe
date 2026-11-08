@@ -71,7 +71,10 @@ export const salesOrderApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: [{ type: 'SalesOrder', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'Quotation', id: 'CUSTOMER_OPTIONS' },
+      ],
     }),
 
     // ========== TÍCH HỢP HÀO (CREDIT CONTROL) ==========
