@@ -31,6 +31,7 @@ export interface CreditApprovalGrant { approvalToken: string; expiresAt: string;
 export interface UpdateCreditProfileRequest { creditLimit: number; creditTermDays: number; approvalToken: string; reason: string }
 export interface CustomerCreditProfileResult { customerId: string; creditLimit: number; creditTermDays: number; requestedBy: string; approvedBy: string }
 export type CreditProfileRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
-export interface CreditProfileRequest { requestId: string; customerId: string; requestedCreditLimit: number; requestedCreditTermDays: number; status: CreditProfileRequestStatus; reviewNote?: string; createdAt: string; qualifiedOrderCount: number; identityEvidenceProvided: boolean }
+export interface CreditProfileRequest { requestId: string; customerId: string; requestedCreditLimit: number; requestedCreditTermDays: number; status: CreditProfileRequestStatus; reviewNote?: string; createdAt: string; qualifiedOrderCount: number; identityEvidenceProvided: boolean; appliedImmediately: boolean }
 export interface CreditProfileRequestDetail extends CreditProfileRequest { reason: string; identityDocumentNumber?: string; residentialAddress?: string; worksiteAddress?: string; reviewedAt?: string; updatedAt: string }
 export interface CreditProfileRequestPage { items: CreditProfileRequest[]; page: number; size: number; totalElements: number; totalPages: number }
+export interface SubmitCreditProfileRequest { creditLimit: number; creditTermDays: number; reason: string; identityDocumentNumber?: string; residentialAddress?: string; worksiteAddress?: string }

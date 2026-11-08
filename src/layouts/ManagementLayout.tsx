@@ -86,12 +86,6 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
         icon: WalletCards,
       },
       {
-        name: 'Duyệt hạn mức',
-        to: '/app/customer-debts/credit-approvals',
-        icon: ShieldCheck,
-        roles: ['SHOP_OWNER', 'ROLE_SHOP_OWNER'],
-      },
-      {
         name: 'Xác minh thanh toán',
         to: '/app/payment-verifications',
         icon: ShieldCheck,
