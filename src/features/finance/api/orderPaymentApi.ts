@@ -42,6 +42,9 @@ export const orderPaymentApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { orderId }) => [
         { type: 'OrderPayment', id: orderId },
         { type: 'SalesOrder', id: orderId },
+        // Khoản chuyển khoản vừa ghi nhận ở trạng thái PENDING -> làm mới
+        // danh sách chờ xác minh (UC-70) để kế toán thấy ngay không cần F5.
+        { type: 'PaymentVerification', id: 'LIST' },
       ],
     }),
 
@@ -69,7 +72,10 @@ export const orderPaymentApi = baseApi.injectEndpoints({
           body: form,
         }
       },
-      invalidatesTags: (_res, _err, { orderId }) => [{ type: 'OrderPayment', id: orderId }],
+      invalidatesTags: (_res, _err, { orderId }) => [
+        { type: 'OrderPayment', id: orderId },
+        { type: 'PaymentVerification', id: 'LIST' },
+      ],
     }),
   }),
 })
