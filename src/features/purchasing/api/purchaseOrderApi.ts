@@ -8,12 +8,6 @@ import type {
   UpdatePurchaseOrderRequest,
   CancelPurchaseOrderRequest,
   ClosePurchaseOrderRequest,
-  CloseShortPoRequest,
-  ReopenPoRequest,
-  SettleStageRequest,
-  StageRollbackRequest,
-  ReviewRollbackRequest,
-  StageRollbackRequestResponse,
   LowStockSuggestionResponse,
   SupplierItemOptionResponse,
   SupplierOptionResponse,
@@ -98,102 +92,6 @@ export const purchaseOrderApi = baseApi.injectEndpoints({
       ],
     }),
 
-    reopenPurchaseOrder: builder.mutation<
-      PurchaseOrderResponse,
-      { id: string; body: ReopenPoRequest }
-    >({
-      query: ({ id, body }) => ({
-        url: `/purchasing/purchase-orders/${id}/reopen`,
-        method: 'POST',
-        body,
-      }),
-      transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PurchaseOrder', id },
-        { type: 'PurchaseOrder', id: 'LIST' },
-      ],
-    }),
-
-    settlePurchaseOrderStage: builder.mutation<
-      PurchaseOrderResponse,
-      { id: string; stageId: string; body: SettleStageRequest }
-    >({
-      query: ({ id, stageId, body }) => ({
-        url: `/purchasing/purchase-orders/${id}/stages/${stageId}/settle`,
-        method: 'POST',
-        body,
-      }),
-      transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PurchaseOrder', id },
-        { type: 'PurchaseOrder', id: 'LIST' },
-      ],
-    }),
-
-    requestStageRollback: builder.mutation<
-      StageRollbackRequestResponse,
-      { id: string; stageId: string; body: StageRollbackRequest }
-    >({
-      query: ({ id, stageId, body }) => ({
-        url: `/purchasing/purchase-orders/${id}/stages/${stageId}/rollback-request`,
-        method: 'POST',
-        body,
-      }),
-      transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PurchaseOrder', id },
-        { type: 'PurchaseOrder', id: 'LIST' },
-      ],
-    }),
-
-    reviewStageRollback: builder.mutation<
-      PurchaseOrderResponse,
-      { id: string; rollbackId: string; body: ReviewRollbackRequest }
-    >({
-      query: ({ id, rollbackId, body }) => ({
-        url: `/purchasing/purchase-orders/${id}/stages/rollback-requests/${rollbackId}/review`,
-        method: 'POST',
-        body,
-      }),
-      transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PurchaseOrder', id },
-        { type: 'PurchaseOrder', id: 'LIST' },
-      ],
-    }),
-
-    directRollbackStage: builder.mutation<
-      PurchaseOrderResponse,
-      { id: string; stageId: string; body: StageRollbackRequest }
-    >({
-      query: ({ id, stageId, body }) => ({
-        url: `/purchasing/purchase-orders/${id}/stages/${stageId}/rollback-direct`,
-        method: 'POST',
-        body,
-      }),
-      transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PurchaseOrder', id },
-        { type: 'PurchaseOrder', id: 'LIST' },
-      ],
-    }),
-
-    closeShortPurchaseOrder: builder.mutation<
-      PurchaseOrderResponse,
-      { id: string; body: CloseShortPoRequest }
-    >({
-      query: ({ id, body }) => ({
-        url: `/purchasing/purchase-orders/${id}/close-short`,
-        method: 'POST',
-        body,
-      }),
-      transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { id }) => [
-        { type: 'PurchaseOrder', id },
-        { type: 'PurchaseOrder', id: 'LIST' },
-      ],
-    }),
-
     cancelPurchaseOrder: builder.mutation<
       PurchaseOrderResponse,
       { id: string; body: CancelPurchaseOrderRequest }
@@ -254,12 +152,6 @@ export const {
   useCreatePurchaseOrderMutation,
   useUpdatePurchaseOrderMutation,
   useConfirmPurchaseOrderMutation,
-  useReopenPurchaseOrderMutation,
-  useSettlePurchaseOrderStageMutation,
-  useRequestStageRollbackMutation,
-  useReviewStageRollbackMutation,
-  useDirectRollbackStageMutation,
-  useCloseShortPurchaseOrderMutation,
   useCancelPurchaseOrderMutation,
   useClosePurchaseOrderMutation,
   useLazyGetLowStockSuggestionsQuery,
