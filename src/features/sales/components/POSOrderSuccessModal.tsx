@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   CheckCircle2,
   Receipt,
@@ -6,6 +7,7 @@ import {
   AlertCircle,
   Copy,
   ExternalLink,
+  X,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -23,6 +25,18 @@ export function POSOrderSuccessModal({
   onCloseAndCreateNew,
 }: POSOrderSuccessModalProps) {
   const navigate = useNavigate()
+
+  // Đóng modal khi bấm phím Escape
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCloseAndCreateNew()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onCloseAndCreateNew])
 
   if (!isOpen || !order) return null
 
@@ -49,8 +63,25 @@ export function POSOrderSuccessModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 cursor-pointer"
+      onClick={onCloseAndCreateNew}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative cursor-default"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Nút đóng modal ở góc trên phải */}
+        <button
+          type="button"
+          onClick={onCloseAndCreateNew}
+          className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition z-10"
+          title="Đóng thông báo"
+          aria-label="Đóng thông báo"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
         {/* Header với icon xanh thành công */}
         <div className="bg-emerald-500/10 p-6 text-center border-b border-emerald-100">
           <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
@@ -86,9 +117,16 @@ export function POSOrderSuccessModal({
 
             <div className="flex justify-between items-center">
               <span className="text-slate-500">Khách hàng:</span>
-              <span className="font-semibold text-slate-800">
-                {order.customerName || 'Khách vãng lai tại quầy'}
-              </span>
+              <div className="text-right">
+                <span className="font-semibold text-slate-800">
+                  {order.customerName && order.customerName !== 'Walk-in Retail Customer'
+                    ? order.customerName
+                    : 'Khách lẻ tại quầy'}
+                </span>
+                {order.customerPhone && order.customerPhone !== '0000000000' && (
+                  <div className="text-xs text-slate-500 mt-0.5">SĐT: {order.customerPhone}</div>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-between items-center">

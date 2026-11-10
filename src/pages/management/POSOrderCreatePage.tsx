@@ -20,6 +20,8 @@ import { POSCustomerSection } from '../../features/sales/components/POSCustomerS
 import { POSPaymentMethodCard } from '../../features/sales/components/POSPaymentMethodCard'
 import { POSOrderSuccessModal } from '../../features/sales/components/POSOrderSuccessModal'
 import { ProductSelectionDrawer } from '../../features/sales/components/ProductSelectionDrawer'
+import { CreditProfilePanel } from '../../features/finance/components/CreditProfilePanel'
+import { ManagementDialog } from '../../shared/ui/ManagementDialog'
 import type { SalesOrderDetailResponse } from '../../features/sales/types/salesOrder.types'
 import type { CatalogItemOption } from '../../features/sales/data/catalogProducts.data'
 
@@ -40,6 +42,7 @@ export function POSOrderCreatePage() {
   const [createdOrder, setCreatedOrder] = useState<SalesOrderDetailResponse | null>(null)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isCreditProfileOpen, setIsCreditProfileOpen] = useState(false)
 
   const formatMoney = (val: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
@@ -76,7 +79,7 @@ export function POSOrderCreatePage() {
     }
 
     if (cart.fulfillmentMethod === 'SCHEDULED_DELIVERY' && !cart.deliveryAddress.trim() && !cart.selectedCustomer?.address) {
-      toast.error('Vui lòng nhập địa chỉ nhận hàng khi chọn giao hàng theo lịch.')
+      toast.error('Vui lòng nhập địa chỉ nhận hàng khi chọn giao hàng tận nơi.')
       return
     }
 
@@ -222,6 +225,7 @@ export function POSOrderCreatePage() {
             deliveryAddress={cart.deliveryAddress}
             onChangeDeliveryAddress={cart.setDeliveryAddress}
             isDelivery={cart.fulfillmentMethod === 'SCHEDULED_DELIVERY'}
+            onRequestCreditProfile={() => setIsCreditProfileOpen(true)}
           />
 
           {/* Phương thức nhận hàng */}
@@ -263,7 +267,7 @@ export function POSOrderCreatePage() {
                   className="sr-only"
                 />
                 <Truck className="w-4 h-4 text-sky-600" />
-                <span>Giao theo lịch</span>
+                <span>Giao hàng tận nơi</span>
               </label>
             </div>
           </div>
@@ -346,6 +350,17 @@ export function POSOrderCreatePage() {
         isOpen={isSuccessModalOpen}
         onCloseAndCreateNew={handleCloseAndCreateNew}
       />
+
+      {isCreditProfileOpen && cart.selectedCustomer && (
+        <ManagementDialog title={`Hồ sơ tín dụng · ${cart.selectedCustomer.customerName}`} onClose={() => setIsCreditProfileOpen(false)}>
+          <div className="p-5 sm:p-6">
+            <CreditProfilePanel
+              customer={cart.selectedCustomer}
+              onDone={() => setIsCreditProfileOpen(false)}
+            />
+          </div>
+        </ManagementDialog>
+      )}
     </div>
   )
 }

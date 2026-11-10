@@ -6,6 +6,8 @@ import {
   MapPin,
   Receipt,
   CreditCard,
+  FileText,
+  ExternalLink,
 } from 'lucide-react'
 import {
   useGetSalesOrderByIdQuery,
@@ -106,6 +108,17 @@ export function OrderDetailPage() {
               >
                 {isProject ? 'Dự án (PROJECT)' : 'Bán lẻ POS (RETAIL)'}
               </span>
+              {order.quotationCode && (
+                <Link
+                  to={order.quotationId ? `/app/quotations/${order.quotationId}` : '/app/quotations'}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-50 border border-sky-300 text-sky-800 text-[10px] font-bold hover:bg-sky-100 transition group shadow-2xs"
+                  title="Nhấn để xem báo giá gốc của đơn hàng này"
+                >
+                  <FileText className="w-3 h-3 text-sky-600" />
+                  <span>Báo giá: {order.quotationCode}</span>
+                  <ExternalLink className="w-2.5 h-2.5 text-sky-500 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              )}
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5">
               Ngày tạo: {formatDate(order.orderDate || order.createdAt)}
@@ -128,9 +141,11 @@ export function OrderDetailPage() {
             <span>Khách hàng</span>
           </h4>
           <div className="font-semibold text-slate-900 text-sm">
-            {order.customerName || 'Khách vãng lai tại quầy'}
+            {order.customerName && order.customerName !== 'Walk-in Retail Customer'
+              ? order.customerName
+              : 'Khách lẻ tại quầy'}
           </div>
-          {order.customerPhone && (
+          {order.customerPhone && order.customerPhone !== '0000000000' && (
             <div className="text-slate-600">SĐT: {order.customerPhone}</div>
           )}
           {order.deliveryAddress && (
@@ -187,6 +202,104 @@ export function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Khối Điều khoản Dự án & Báo giá gốc */}
+      {(order.quotationCode || isProject) && (
+        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <h4 className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-sky-600" />
+              <span>Điều khoản Hợp đồng & Công nợ Dự án</span>
+            </h4>
+            {order.quotationCode && (
+              <Link
+                to={order.quotationId ? `/app/quotations/${order.quotationId}` : '/app/quotations'}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-700 hover:text-sky-800 hover:underline"
+              >
+                <span>Xem hồ sơ Báo giá gốc ({order.quotationCode})</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+              <span className="text-[10px] text-slate-500 uppercase font-semibold block">Tên dự án</span>
+              <span className="font-semibold text-slate-900 mt-0.5 block truncate" title={order.projectName || ''}>
+                {order.projectName || '-'}
+              </span>
+            </div>
+            <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+              <span className="text-[10px] text-slate-500 uppercase font-semibold block">Cam kết Đặt cọc</span>
+              <span className="font-semibold text-slate-900 mt-0.5 block">
+                {order.depositPercent ?? 0}% ({formatMoney(order.depositAmount ?? 0)})
+              </span>
+            </div>
+            <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+              <span className="text-[10px] text-slate-500 uppercase font-semibold block">Thời hạn & Số tiền Nợ</span>
+              <span className="font-semibold text-slate-900 mt-0.5 block">
+                {order.creditTermDays ?? 0} ngày ({formatMoney(order.remainingDebtAmount ?? 0)})
+              </span>
+            </div>
+            <div className="bg-slate-50 p-2.5 rounded border border-slate-100">
+              <span className="text-[10px] text-slate-500 uppercase font-semibold block">Hạn thanh toán (Due Date)</span>
+              <span className="font-semibold text-slate-900 mt-0.5 block">
+                {order.dueDate ? formatDate(order.dueDate) : '-'}
+              </span>
+            </div>
+          </div>
+
+          {(order.deliverySchedule || order.debtCondition) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-[11px] text-slate-600">
+              {order.deliverySchedule && (
+                <div>
+                  <strong className="text-slate-700">Tiến độ giao hàng:</strong> {order.deliverySchedule}
+                </div>
+              )}
+              {order.debtCondition && (
+                <div>
+                  <strong className="text-slate-700">Điều kiện công nợ:</strong> {order.debtCondition}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Bảng Tiến độ thanh toán theo đợt (Milestones) */}
+          {order.milestones && order.milestones.length > 0 && (
+            <div className="pt-2 border-t border-slate-100">
+              <span className="text-[11px] font-semibold text-slate-700 block mb-1.5">
+                Tiến độ thanh toán theo đợt ({order.milestones.length} đợt):
+              </span>
+              <div className="overflow-x-auto rounded border border-slate-200">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-600 text-[10px] uppercase font-semibold border-b border-slate-200">
+                    <tr>
+                      <th className="px-3 py-1.5 w-16 text-center">Đợt</th>
+                      <th className="px-3 py-1.5">Giai đoạn / Điều kiện</th>
+                      <th className="px-3 py-1.5 text-right w-24">Tỷ lệ (%)</th>
+                      <th className="px-3 py-1.5 text-right w-36">Số tiền (VNĐ)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {order.milestones.map((m, idx) => (
+                      <tr key={m.milestoneId || idx} className="hover:bg-slate-50/50">
+                        <td className="px-3 py-1.5 text-center font-bold text-slate-600">
+                          #{m.sortOrder || idx + 1}
+                        </td>
+                        <td className="px-3 py-1.5 font-medium text-slate-900">{m.stageName}</td>
+                        <td className="px-3 py-1.5 text-right font-semibold text-sky-800">{m.percent}%</td>
+                        <td className="px-3 py-1.5 text-right font-bold text-slate-900">
+                          {formatMoney(m.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Danh sách mặt hàng trong đơn */}
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-2xs">

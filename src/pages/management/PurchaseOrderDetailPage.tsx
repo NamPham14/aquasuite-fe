@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -12,6 +13,11 @@ import {
   Clock,
   Layers,
   PackageCheck,
+  RotateCcw,
+  Truck,
+  DollarSign,
+  Check,
+  MoreHorizontal,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -19,6 +25,12 @@ import {
   useConfirmPurchaseOrderMutation,
   useCancelPurchaseOrderMutation,
   useClosePurchaseOrderMutation,
+  useCloseShortPurchaseOrderMutation,
+  useReopenPurchaseOrderMutation,
+  useSettlePurchaseOrderStageMutation,
+  useRequestStageRollbackMutation,
+  useReviewStageRollbackMutation,
+  useDirectRollbackStageMutation,
 } from '../../features/purchasing/api/purchaseOrderApi'
 import { PurchaseOrderStatusBadge } from '../../features/purchasing/components/PurchaseOrderStatusBadge'
 import { ReceiptProgressTable } from '../../features/purchasing/components/ReceiptProgressTable'
@@ -26,24 +38,184 @@ import {
   PurchaseOrderActionDialog,
   type POActionType,
 } from '../../features/purchasing/components/PurchaseOrderActionDialog'
+import { StageSettlementDialog } from '../../features/purchasing/components/StageSettlementDialog'
+import { StageRollbackDialog } from '../../features/purchasing/components/StageRollbackDialog'
 import { GoodsReceiptDialog } from '../../features/inventory/components/GoodsReceiptDialog'
 import { useAuth } from '../../features/iam/hooks/useAuth'
+import type {
+  PurchaseOrderStageResponse,
+  SettleStageRequest,
+  StageRollbackRequestResponse,
+} from '../../features/purchasing/types/purchaseOrder.types'
+
+interface StageDropdownItem {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  sublabel?: string
+  onClick: () => void
+  highlight?: 'default' | 'amber' | 'rose'
+}
+
+function StageActionDropdown({ items }: { items: StageDropdownItem[] }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number } | null>(null)
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        const spaceBelow = window.innerHeight - rect.bottom
+        const openUpward = spaceBelow < 180 && rect.top > 180
+        setMenuPos({
+          top: openUpward ? undefined : rect.bottom + 4,
+          bottom: openUpward ? window.innerHeight - rect.top + 4 : undefined,
+          right: window.innerWidth - rect.right,
+        })
+      }
+      setIsOpen(true)
+    } else {
+      setIsOpen(false)
+    }
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false)
+      }
+    }
+    function handleScrollOrResize() {
+      if (isOpen) setIsOpen(false)
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      window.addEventListener('scroll', handleScrollOrResize, true)
+      window.addEventListener('resize', handleScrollOrResize)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      window.removeEventListener('scroll', handleScrollOrResize, true)
+      window.removeEventListener('resize', handleScrollOrResize)
+    }
+  }, [isOpen])
+
+  if (items.length === 0) return null
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={handleToggle}
+        title="Thao tác đợt"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer shrink-0 shadow-2xs focus:outline-hidden"
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+
+      {isOpen &&
+        menuPos &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: 'fixed',
+              top: menuPos.top !== undefined ? `${menuPos.top}px` : undefined,
+              bottom: menuPos.bottom !== undefined ? `${menuPos.bottom}px` : undefined,
+              right: `${menuPos.right}px`,
+              zIndex: 9999,
+            }}
+            className="w-56 rounded-lg border border-slate-200 bg-white p-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden"
+          >
+            {items.map((item, idx) => {
+              const Icon = item.icon
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false)
+                    item.onClick()
+                  }}
+                  className={`w-full flex items-start gap-2.5 px-3 py-2 text-left rounded-md cursor-pointer transition-colors ${
+                    item.highlight === 'amber'
+                      ? 'hover:bg-amber-50 text-amber-900'
+                      : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <Icon
+                    className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
+                      item.highlight === 'amber' ? 'text-amber-600' : 'text-slate-400'
+                    }`}
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-medium leading-tight">{item.label}</span>
+                    {item.sublabel && (
+                      <span className="text-[10px] text-slate-400 leading-tight mt-0.5">
+                        {item.sublabel}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>,
+          document.body
+        )}
+    </>
+  )
+}
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
   const { data: po, isLoading, error, refetch } = useGetPurchaseOrderQuery(id!, { skip: !id })
+
   const [confirmPo] = useConfirmPurchaseOrderMutation()
   const [cancelPo] = useCancelPurchaseOrderMutation()
   const [closePo] = useClosePurchaseOrderMutation()
+  const [closeShortPo] = useCloseShortPurchaseOrderMutation()
+  const [reopenPo] = useReopenPurchaseOrderMutation()
+  const [settleStage] = useSettlePurchaseOrderStageMutation()
+  const [requestRollback] = useRequestStageRollbackMutation()
+  const [reviewRollback] = useReviewStageRollbackMutation()
+  const [directRollback] = useDirectRollbackStageMutation()
 
   const { user } = useAuth()
   const canReceiveStock = (user?.roles ?? []).some((r) => r === 'SHOP_OWNER' || r === 'ACCOUNTANT')
 
+  // Dialog states
   const [dialogAction, setDialogAction] = useState<POActionType | null>(null)
   const [isSubmittingAction, setIsSubmittingAction] = useState(false)
+
+  // Goods receipt dialog (SCRUM-27)
   const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false)
+
+  // Stage Settle Dialog state (SCRUM-22)
+  const [stageToSettle, setStageToSettle] = useState<PurchaseOrderStageResponse | null>(null)
+  const [isSettling, setIsSettling] = useState(false)
+
+  // Stage Rollback Dialog state (SCRUM-22)
+  const [rollbackDialogState, setRollbackDialogState] = useState<{
+    isOpen: boolean
+    mode: 'request' | 'direct' | 'review'
+    stage: PurchaseOrderStageResponse | null
+    rollbackRequest?: StageRollbackRequestResponse | null
+  }>({
+    isOpen: false,
+    mode: 'request',
+    stage: null,
+    rollbackRequest: null,
+  })
+  const [isSubmittingRollback, setIsSubmittingRollback] = useState(false)
 
   const formatCurrency = (val?: number | null) => {
     if (val === undefined || val === null) return '—'
@@ -87,6 +259,7 @@ export function PurchaseOrderDetailPage() {
     }
   }
 
+  // Header PO Actions (confirm, cancel, close / close short, reopen)
   const handleExecuteAction = async (reason?: string) => {
     if (!po || !dialogAction) return
     setIsSubmittingAction(true)
@@ -101,17 +274,102 @@ export function PurchaseOrderDetailPage() {
         }).unwrap()
         toast.success(`Đã hủy đơn mua hàng ${po.poCode}`)
       } else if (dialogAction === 'close') {
-        await closePo({
+        // SCRUM-27: đóng PO đang nhận thiếu hàng theo luồng nhập kho (goods receipts).
+        // SCRUM-22: đóng nhận thiếu theo luồng chia đợt giao - thanh toán.
+        if (po.status === 'PARTIALLY_RECEIVED') {
+          await closePo({
+            id: po.purchaseOrderId,
+            body: { closeReason: reason || '' },
+          }).unwrap()
+          toast.success(`Đã đóng đơn mua hàng ${po.poCode}`)
+        } else {
+          await closeShortPo({
+            id: po.purchaseOrderId,
+            body: { closeReason: reason || '' },
+          }).unwrap()
+          toast.success(`Đã đóng nhận thiếu đơn mua hàng ${po.poCode}`)
+        }
+      } else if (dialogAction === 'reopen') {
+        await reopenPo({
           id: po.purchaseOrderId,
-          body: { closeReason: reason || '' },
+          body: { reopenReason: reason || '' },
         }).unwrap()
-        toast.success(`Đã đóng đơn mua hàng ${po.poCode}`)
+        toast.success(`Đã mở lại đơn mua hàng ${po.poCode} để chỉnh sửa`)
       }
     } catch (err: any) {
       toast.error(err?.data?.message || err?.message || 'Có lỗi xảy ra khi thực hiện')
       throw err
     } finally {
       setIsSubmittingAction(false)
+    }
+  }
+
+  // Settle Stage Action (SCRUM-22)
+  const handleConfirmSettleStage = async (data: SettleStageRequest) => {
+    if (!po || !stageToSettle) return
+    setIsSettling(true)
+    try {
+      await settleStage({
+        id: po.purchaseOrderId,
+        stageId: stageToSettle.stageId,
+        body: data,
+      }).unwrap()
+      toast.success(`Đã xác nhận nhận hàng & thanh toán cho ${stageToSettle.stageName}`)
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || 'Có lỗi xảy ra khi thanh toán đợt')
+      throw err
+    } finally {
+      setIsSettling(false)
+    }
+  }
+
+  // Rollback Actions (SCRUM-22)
+  const handleRequestRollback = async (reason: string) => {
+    if (!po || !rollbackDialogState.stage) return
+    setIsSubmittingRollback(true)
+    try {
+      await requestRollback({
+        id: po.purchaseOrderId,
+        stageId: rollbackDialogState.stage.stageId,
+        body: { requestReason: reason },
+      }).unwrap()
+      toast.success('Đã gửi yêu cầu hoàn tác đợt tới Chủ cửa hàng phê duyệt')
+    } finally {
+      setIsSubmittingRollback(false)
+    }
+  }
+
+  const handleDirectRollback = async (reason: string) => {
+    if (!po || !rollbackDialogState.stage) return
+    setIsSubmittingRollback(true)
+    try {
+      await directRollback({
+        id: po.purchaseOrderId,
+        stageId: rollbackDialogState.stage.stageId,
+        body: { requestReason: reason },
+      }).unwrap()
+      toast.success('Đã hoàn tác đợt thanh toán thành công')
+    } finally {
+      setIsSubmittingRollback(false)
+    }
+  }
+
+  const handleReviewRollback = async (approved: boolean, note: string) => {
+    if (!po || !rollbackDialogState.rollbackRequest) return
+    setIsSubmittingRollback(true)
+    try {
+      await reviewRollback({
+        id: po.purchaseOrderId,
+        rollbackId: rollbackDialogState.rollbackRequest.rollbackId,
+        body: { approved, reviewNote: note },
+      }).unwrap()
+      if (approved) {
+        toast.success('Đã phê duyệt hoàn tác đợt thanh toán')
+      } else {
+        toast.info('Đã từ chối yêu cầu hoàn tác')
+      }
+    } finally {
+      setIsSubmittingRollback(false)
     }
   }
 
@@ -143,9 +401,14 @@ export function PurchaseOrderDetailPage() {
     )
   }
 
-  const isDraft = po.status === 'DRAFT'
+  const isDraftOrQuoted = po.status === 'DRAFT' || po.status === 'QUOTED'
   const isConfirmed = po.status === 'CONFIRMED'
   const isPartiallyReceived = po.status === 'PARTIALLY_RECEIVED'
+  const isCompleted = po.status === 'COMPLETED'
+
+  const totalStages = po.totalStages ?? (po.stages?.length || 0)
+  const settledStages = po.settledStages ?? (po.stages?.filter((s) => s.status === 'SETTLED').length || 0)
+  const hasSettledStages = settledStages > 0
 
   return (
     <div className="space-y-6 pb-16">
@@ -160,9 +423,17 @@ export function PurchaseOrderDetailPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-xl font-bold font-mono text-slate-900">{po.poCode}</h1>
-              <PurchaseOrderStatusBadge status={po.status} />
+              <PurchaseOrderStatusBadge status={po.status} isShortClosed={po.isShortClosed} />
+
+              {/* Tiến độ đợt giao nhận nếu đã CONFIRMED hoặc COMPLETED */}
+              {(isConfirmed || isCompleted) && totalStages > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <Truck className="w-3.5 h-3.5" />
+                  Đã xong {settledStages}/{totalStages} đợt
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
               <span>Ngày tạo: {po.createdAt ? new Date(po.createdAt).toLocaleDateString('vi-VN') : '—'}</span>
@@ -174,16 +445,17 @@ export function PurchaseOrderDetailPage() {
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons according to business rules */}
         <div className="flex flex-wrap items-center gap-2">
-          {isDraft && (
+          {/* Phase 1 & 2: DRAFT / QUOTED */}
+          {isDraftOrQuoted && (
             <>
               <Link
                 to={`/app/purchase-orders/${po.purchaseOrderId}/edit`}
                 className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
               >
                 <Edit className="w-4 h-4 text-sky-600" />
-                Sửa / Nhập giá
+                Sửa / Chia đợt
               </Link>
 
               <button
@@ -194,29 +466,58 @@ export function PurchaseOrderDetailPage() {
                 <CheckCircle2 className="w-4 h-4" />
                 Xác nhận PO
               </button>
+
+              <button
+                type="button"
+                onClick={() => setDialogAction('cancel')}
+                className="px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <XCircle className="w-4 h-4 text-rose-600" />
+                Hủy PO
+              </button>
             </>
           )}
 
-          <button
-            type="button"
-            onClick={handleExportPdf}
-            className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
-          >
-            <FileDown className="w-4 h-4 text-slate-500" />
-            Xuất PDF
-          </button>
+          {/* Phase 3: CONFIRMED — staged payment controls (SCRUM-22) */}
+          {isConfirmed && (
+            <>
+              {/* Mở lại để sửa: chỉ khi 0 đợt SETTLED */}
+              {!hasSettledStages ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setDialogAction('reopen')}
+                    className="px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-1.5"
+                    title="Mở lại để sửa số lượng, giá hoặc chia đợt (chỉ khi chưa có đợt nào thanh toán)"
+                  >
+                    <RotateCcw className="w-4 h-4 text-indigo-600" />
+                    Mở lại để sửa
+                  </button>
 
-          {(isDraft || isConfirmed) && (
-            <button
-              type="button"
-              onClick={() => setDialogAction('cancel')}
-              className="px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-lg transition-colors flex items-center gap-1.5"
-            >
-              <XCircle className="w-4 h-4 text-rose-600" />
-              Hủy PO
-            </button>
+                  <button
+                    type="button"
+                    onClick={() => setDialogAction('cancel')}
+                    className="px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-lg transition-colors flex items-center gap-1.5"
+                  >
+                    <XCircle className="w-4 h-4 text-rose-600" />
+                    Hủy PO
+                  </button>
+                </>
+              ) : (
+                /* Đã có ít nhất 1 đợt SETTLED -> không được hủy, chỉ được đóng nhận thiếu */
+                <button
+                  type="button"
+                  onClick={() => setDialogAction('close')}
+                  className="px-3 py-2 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-300 hover:bg-amber-100 rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
+                  Đóng PO nhận thiếu
+                </button>
+              )}
+            </>
           )}
 
+          {/* Nhập kho (goods receipts - SCRUM-27) */}
           {(isConfirmed || isPartiallyReceived) && canReceiveStock && (
             <button
               type="button"
@@ -228,6 +529,7 @@ export function PurchaseOrderDetailPage() {
             </button>
           )}
 
+          {/* Đóng PO nhận thiếu theo luồng nhập kho (SCRUM-27) */}
           {isPartiallyReceived && (
             <button
               type="button"
@@ -238,6 +540,16 @@ export function PurchaseOrderDetailPage() {
               Đóng PO nhận thiếu
             </button>
           )}
+
+          {/* Export PDF */}
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            className="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+          >
+            <FileDown className="w-4 h-4 text-slate-500" />
+            Xuất PDF
+          </button>
         </div>
       </div>
 
@@ -263,21 +575,29 @@ export function PurchaseOrderDetailPage() {
           </div>
         </div>
 
-        {/* Warehouse & Delivery Info */}
+        {/* Warehouse, Delivery & Payment Overview */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-slate-800 font-semibold text-sm">
             <Warehouse className="w-4 h-4 text-indigo-600" />
-            Giao hàng & Kho nhận
+            Giao hàng & Thanh toán
           </div>
           <div className="space-y-1.5 text-xs">
             <div className="text-slate-500">Kho nhận hàng:</div>
             <div className="font-semibold text-slate-900 font-mono text-sm">
               {po.warehouseCode || 'WH_MAIN'}
             </div>
+            <div className="text-slate-500 pt-1">Kiểu giao hàng:</div>
+            <div className="font-medium text-slate-800">
+              {po.deliveryPlanType === 'STAGED' ? 'Giao theo nhiều đợt' : 'Giao 1 lần duy nhất'}
+            </div>
             <div className="text-slate-500 pt-1">Ngày lập đơn:</div>
             <div className="text-slate-700 font-medium">{po.orderDate}</div>
             <div className="text-slate-500 pt-1">Ngày giao dự kiến:</div>
             <div className="text-slate-700 font-medium">{po.expectedDate || 'Chưa ấn định'}</div>
+            <div className="text-slate-500 pt-1">Đã thanh toán (thực chi):</div>
+            <div className="font-bold text-emerald-600 text-sm">
+              {formatCurrency(po.paidAmount)} / {formatCurrency(po.totalAmount)}
+            </div>
           </div>
         </div>
 
@@ -297,6 +617,13 @@ export function PurchaseOrderDetailPage() {
                 </span>
               </div>
             )}
+            {po.reopenedBy && (
+              <div className="text-indigo-700 pt-1 border-t border-slate-100">
+                <span className="font-medium">Mở lại bởi: </span>
+                <span>{po.reopenedByName || po.reopenedBy}</span>
+                <div className="text-[11px] text-indigo-600 italic">Lý do: {po.reopenReason}</div>
+              </div>
+            )}
             {po.cancelledBy && (
               <div className="text-rose-700 pt-1">
                 <span className="font-medium">Đã hủy bởi: </span>
@@ -305,10 +632,10 @@ export function PurchaseOrderDetailPage() {
               </div>
             )}
             {po.closedBy && (
-              <div className="text-amber-700 pt-1">
-                <span className="font-medium">Đã đóng nhận thiếu bởi: </span>
+              <div className="text-purple-700 pt-1">
+                <span className="font-medium">Đóng nhận thiếu bởi: </span>
                 <span>{po.closedByName || po.closedBy}</span>
-                <div className="text-[11px] text-amber-600">Lý do: {po.closeReason}</div>
+                <div className="text-[11px] text-purple-600">Lý do: {po.closeReason}</div>
               </div>
             )}
             {!po.confirmedBy && !po.cancelledBy && !po.closedBy && (
@@ -321,8 +648,208 @@ export function PurchaseOrderDetailPage() {
       {/* Note Terms */}
       {po.note && (
         <div className="bg-amber-50/60 rounded-xl border border-amber-200/80 p-4 shadow-sm text-xs text-amber-900 leading-relaxed">
-          <span className="font-bold">Điều khoản & Ghi chú: </span>
+          <span className="font-bold">Điều khoản & Ghi chú (Zalo, thanh toán, giao nhận): </span>
           {po.note}
+        </div>
+      )}
+
+      {/* STAGED DELIVERY & PAYMENT TABLE (Pay-on-delivery workflow - SCRUM-22) */}
+      {po.stages && po.stages.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="flex items-center gap-2">
+              <Truck className="w-5 h-5 text-indigo-600" />
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800">
+                  Kế hoạch & Tiến độ các Đợt Giao hàng - Thanh toán ({po.stages.length} đợt)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Mô hình giao đợt nào trả đợt đó. Bấm "Xác nhận nhận hàng & thanh toán" khi kiểm hàng OK.
+                </p>
+              </div>
+            </div>
+
+            <div className="text-xs font-semibold text-slate-700">
+              Tiến độ: <span className="text-indigo-600">{settledStages}/{totalStages} đợt hoàn tất</span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs min-w-[960px]">
+              <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                  <th className="px-3 py-3 w-10 text-center whitespace-nowrap">STT</th>
+                  <th className="px-3 py-3 w-28 whitespace-nowrap">Tên đợt</th>
+                  <th className="px-4 py-3 min-w-[280px] w-80 whitespace-nowrap">Mô tả hàng giao</th>
+                  <th className="px-3 py-3 w-28 whitespace-nowrap">Ngày dự kiến</th>
+                  <th className="px-3 py-3 text-right w-20 whitespace-nowrap">Tỷ lệ (%)</th>
+                  <th className="px-3 py-3 text-right w-28 whitespace-nowrap">Tiền dự kiến (đ)</th>
+                  <th className="px-3 py-3 text-right w-28 whitespace-nowrap">Thực chi (đ)</th>
+                  <th className="px-3 py-3 text-center w-28 whitespace-nowrap">Trạng thái đợt</th>
+                  <th className="px-3 py-3 w-40 whitespace-nowrap">Thông tin thanh toán</th>
+                  <th className="px-2 py-3 text-center w-24 whitespace-nowrap">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {po.stages.map((st, idx) => {
+                  const isStagePending = st.status === 'PENDING'
+                  const isStageSettled = st.status === 'SETTLED'
+                  const isStageCancelled = st.status === 'CANCELLED'
+
+                  return (
+                    <tr key={st.stageId} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-3 py-3 text-center font-mono text-slate-400 whitespace-nowrap">
+                        {idx + 1}
+                      </td>
+                      <td className="px-3 py-3 font-semibold text-slate-900 whitespace-nowrap">
+                        {st.stageName}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">
+                        <div className="min-w-[260px] max-w-[420px] text-xs text-slate-700 break-words leading-relaxed font-normal">
+                          {st.description || '—'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 font-medium text-slate-800 whitespace-nowrap">
+                        {st.expectedDeliveryDate || '—'}
+                      </td>
+                      <td className="px-3 py-3 text-right text-slate-600 whitespace-nowrap">
+                        {st.percent}%
+                      </td>
+                      <td className="px-3 py-3 text-right font-semibold text-slate-800 whitespace-nowrap">
+                        {formatCurrency(st.amount)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-bold text-emerald-700 whitespace-nowrap">
+                        {st.actualAmount !== null && st.actualAmount !== undefined
+                          ? formatCurrency(st.actualAmount)
+                          : '—'}
+                      </td>
+                      <td className="px-3 py-3 text-center whitespace-nowrap">
+                        {isStagePending && (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                            <span>Chờ nhận & trả</span>
+                          </span>
+                        )}
+                        {isStageSettled && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 whitespace-nowrap shadow-2xs">
+                            <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>Đã nhận & trả</span>
+                          </span>
+                        )}
+                        {isStageCancelled && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-500 border border-slate-200 whitespace-nowrap line-through">
+                            Đã hủy
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-3 text-xs text-slate-600 whitespace-nowrap">
+                        {isStageSettled ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-semibold text-slate-800">{st.paidByName || 'Kế toán'}</span>
+                              <span className="text-slate-300">•</span>
+                              <span className="text-slate-500 text-[11px]">
+                                {st.paidAt ? new Date(st.paidAt).toLocaleDateString('vi-VN') : '—'}
+                              </span>
+                            </div>
+                            {(st.paymentReference || st.settlementNote) && (
+                              <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                                {st.paymentReference && (
+                                  <span className="font-mono text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                                    {st.paymentReference}
+                                  </span>
+                                )}
+                                {st.settlementNote && (
+                                  <span className="italic truncate max-w-[160px] text-slate-600" title={st.settlementNote}>
+                                    "{st.settlementNote}"
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-3 text-center whitespace-nowrap">
+                        {/* PENDING Stage Action: Settle */}
+                        {isConfirmed && isStagePending && (
+                          <button
+                            type="button"
+                            onClick={() => setStageToSettle(st)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
+                          >
+                            <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Xác nhận đợt</span>
+                          </button>
+                        )}
+
+                        {/* SETTLED Stage Action: Rollback */}
+                        {isStageSettled && !po.isShortClosed && (
+                          <div>
+                            {st.hasPendingRollback ? (
+                              <div className="inline-flex items-center gap-1.5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg">
+                                  <Clock className="w-3 h-3 text-amber-600" />
+                                  <span>Chờ duyệt</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setRollbackDialogState({
+                                      isOpen: true,
+                                      mode: 'review',
+                                      stage: st,
+                                      rollbackRequest: st.latestRollbackRequest,
+                                    })
+                                  }
+                                  className="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
+                                >
+                                  Duyệt
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center justify-center">
+                                <StageActionDropdown
+                                  items={[
+                                    {
+                                      icon: RotateCcw,
+                                      label: 'Yêu cầu hoàn tác',
+                                      sublabel: 'Kế toán gửi yêu cầu tới chủ',
+                                      onClick: () =>
+                                        setRollbackDialogState({
+                                          isOpen: true,
+                                          mode: 'request',
+                                          stage: st,
+                                        }),
+                                    },
+                                    {
+                                      icon: RotateCcw,
+                                      label: 'Chủ hoàn tác trực tiếp',
+                                      sublabel: 'Chủ cửa hàng hoàn tác ngay',
+                                      highlight: 'amber',
+                                      onClick: () =>
+                                        setRollbackDialogState({
+                                          isOpen: true,
+                                          mode: 'direct',
+                                          stage: st,
+                                        }),
+                                    },
+                                  ]}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {isStageCancelled && <span className="text-slate-400 text-xs">—</span>}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -335,9 +862,9 @@ export function PurchaseOrderDetailPage() {
               Chi tiết mặt hàng ({po.items?.length ?? 0})
             </h3>
           </div>
-          {isDraft && (
+          {isDraftOrQuoted && (
             <span className="text-xs text-amber-600 font-medium">
-              * PO nháp: Đơn giá có thể để trống khi chưa chốt thương lượng
+              * PO đang ở vòng deal giá: Đơn giá có thể chỉnh sửa trước khi xác nhận đơn
             </span>
           )}
         </div>
@@ -407,15 +934,15 @@ export function PurchaseOrderDetailPage() {
         </div>
       </div>
 
-      {/* Progress & Receipts Section for confirmed/ongoing orders */}
-      {po.status !== 'DRAFT' && po.status !== 'CANCELLED' && (
+      {/* Progress & Receipts Section for confirmed/ongoing orders (SCRUM-27) */}
+      {po.status !== 'DRAFT' && po.status !== 'QUOTED' && po.status !== 'CANCELLED' && (
         <ReceiptProgressTable
           items={po.items || []}
           receipts={po.receipts || []}
         />
       )}
 
-      {/* Dialog for Actions */}
+      {/* Dialog for PO Header Actions (Confirm, Cancel, Close / Close Short, Reopen) */}
       <PurchaseOrderActionDialog
         isOpen={dialogAction !== null}
         action={dialogAction}
@@ -423,12 +950,44 @@ export function PurchaseOrderDetailPage() {
         poCode={po.poCode}
         totalAmount={po.totalAmount}
         itemCount={po.items?.length ?? 0}
+        expectedDate={po.expectedDate}
         isLoading={isSubmittingAction}
         onClose={() => setDialogAction(null)}
         onConfirm={handleExecuteAction}
       />
 
-      {/* UC-32: Dialog lập & xác nhận phiếu nhập kho */}
+      {/* Dialog for Settle Stage (SCRUM-22) */}
+      <StageSettlementDialog
+        isOpen={stageToSettle !== null}
+        stage={stageToSettle}
+        poCode={po.poCode}
+        isLoading={isSettling}
+        onClose={() => setStageToSettle(null)}
+        onConfirm={handleConfirmSettleStage}
+      />
+
+      {/* Dialog for Stage Rollback Workflow (SCRUM-22) */}
+      <StageRollbackDialog
+        isOpen={rollbackDialogState.isOpen}
+        mode={rollbackDialogState.mode}
+        stage={rollbackDialogState.stage}
+        rollbackRequest={rollbackDialogState.rollbackRequest}
+        poCode={po.poCode}
+        isLoading={isSubmittingRollback}
+        onClose={() =>
+          setRollbackDialogState({
+            isOpen: false,
+            mode: 'request',
+            stage: null,
+            rollbackRequest: null,
+          })
+        }
+        onRequestRollback={handleRequestRollback}
+        onDirectRollback={handleDirectRollback}
+        onReviewRollback={handleReviewRollback}
+      />
+
+      {/* UC-32: Dialog lập & xác nhận phiếu nhập kho (SCRUM-27) */}
       {isReceiptDialogOpen && (
         <GoodsReceiptDialog
           isOpen={isReceiptDialogOpen}

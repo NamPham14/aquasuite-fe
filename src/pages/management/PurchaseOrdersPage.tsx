@@ -14,7 +14,7 @@ import {
   useGetActiveSuppliersQuery,
   useConfirmPurchaseOrderMutation,
   useCancelPurchaseOrderMutation,
-  useClosePurchaseOrderMutation,
+  useCloseShortPurchaseOrderMutation,
 } from '../../features/purchasing/api/purchaseOrderApi'
 import { usePurchaseOrderFilters } from '../../features/purchasing/hooks/usePurchaseOrderFilters'
 import { PurchaseOrderTable } from '../../features/purchasing/components/PurchaseOrderTable'
@@ -50,7 +50,7 @@ export function PurchaseOrdersPage() {
 
   const [confirmPo] = useConfirmPurchaseOrderMutation()
   const [cancelPo] = useCancelPurchaseOrderMutation()
-  const [closePo] = useClosePurchaseOrderMutation()
+  const [closeShortPo] = useCloseShortPurchaseOrderMutation()
 
   // Dialog State
   const [dialogAction, setDialogAction] = useState<POActionType | null>(null)
@@ -86,11 +86,11 @@ export function PurchaseOrdersPage() {
         }).unwrap()
         toast.success(`Đã hủy đơn mua hàng ${selectedPo.poCode}`)
       } else if (dialogAction === 'close') {
-        await closePo({
+        await closeShortPo({
           id: selectedPo.purchaseOrderId,
           body: { closeReason: reason || '' },
         }).unwrap()
-        toast.success(`Đã đóng đơn mua hàng ${selectedPo.poCode}`)
+        toast.success(`Đã đóng nhận thiếu đơn mua hàng ${selectedPo.poCode}`)
       }
     } catch (err: any) {
       toast.error(err?.data?.message || err?.message || 'Có lỗi xảy ra khi thực hiện')
@@ -208,9 +208,9 @@ export function PurchaseOrdersPage() {
             >
               <option value="">Tất cả trạng thái</option>
               <option value="DRAFT">Bản nháp</option>
-              <option value="CONFIRMED">Đã xác nhận</option>
-              <option value="PARTIALLY_RECEIVED">Nhận một phần</option>
-              <option value="COMPLETED">Hoàn thành</option>
+              <option value="QUOTED">Chờ chốt giá</option>
+              <option value="CONFIRMED">Đang giao hàng</option>
+              <option value="COMPLETED">Hoàn thành / Đóng thiếu</option>
               <option value="CANCELLED">Đã hủy</option>
             </select>
           </div>
@@ -302,6 +302,7 @@ export function PurchaseOrdersPage() {
         poCode={selectedPo?.poCode ?? ''}
         totalAmount={selectedPo?.totalAmount ?? 0}
         itemCount={selectedPo?.totalItems ?? 0}
+        expectedDate={selectedPo?.expectedDate}
         isLoading={isSubmittingAction}
         onClose={() => {
           setDialogAction(null)

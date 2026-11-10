@@ -5,7 +5,7 @@ export type OrderType = 'RETAIL' | 'PROJECT'
 export type OrderChannel = 'COUNTER' | 'POS' | 'ONLINE' | 'DIRECT_SALES'
 
 /** Trạng thái đơn hàng (Khớp 100% OrderStatus.java Backend) */
-export type OrderStatus = 'PROCESSING' | 'COMPLETED' | 'CANCELLED'
+export type OrderStatus = 'DRAFT' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED'
 
 /** Trạng thái thanh toán của đơn hàng (Khớp 100% PaymentStatus.java Backend) */
 export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID'
@@ -155,16 +155,18 @@ export interface SalesOrderSummaryResponse {
 
 // =================== CREDIT CONTROL (HÀO) INTEGRATION DTOS ===================
 
-export interface CustomerDebtDetailResponse {
+/** Minimal Finance projection exposed to POS; it does not contain invoices, receipts or audit history. */
+export interface CustomerCreditSummaryResponse {
   customerId: string
+  customerCode: string
   customerName: string
-  customerPhone?: string
+  customerStatus: string
+  creditTermDays?: number | null
   creditLimit: number
   outstandingBalance: number
   overdueBalance: number
   availableCredit: number
   debtStatus: string
-  isBlocked?: boolean
 }
 
 export interface CreditCheckRequest {

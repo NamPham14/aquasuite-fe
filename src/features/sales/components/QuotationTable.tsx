@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import {
   Eye,
   Pencil,
@@ -13,6 +14,8 @@ import {
   MoreHorizontal,
   ChevronRight,
   Loader2,
+  ShoppingCart,
+  ArrowUpRight,
 } from 'lucide-react'
 import { QuotationStatusBadge } from './QuotationStatusBadge'
 import { useGetRevisionHistoryQuery } from '../api/quotationApi'
@@ -219,6 +222,19 @@ function QuotationRevisionSubTable({
                         <span className="text-slate-400">└─</span>
                         rev.{rev.revisionNo} (Bản cũ)
                       </span>
+                    )}
+                    {rev.orderId && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <span className="text-[10px] text-slate-400 font-medium">Đơn:</span>
+                        <Link
+                          to={`/app/orders/${rev.orderId}`}
+                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 hover:text-emerald-800 transition-colors group"
+                          title="Xem đơn hàng đã tạo"
+                        >
+                          <span>{rev.orderCode || 'SO-...'}</span>
+                          <ArrowUpRight className="w-3 h-3 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
+                        </Link>
+                      </div>
                     )}
                   </td>
                   <td className="py-2 px-3">
@@ -490,6 +506,16 @@ export function QuotationTable({
               }
             }
 
+            if (row.orderId) {
+              moreItems.unshift({
+                icon: ShoppingCart,
+                label: `Xem đơn hàng (${row.orderCode || 'SO-...'})`,
+                onClick: () => {
+                  window.location.href = `/app/orders/${row.orderId}`
+                },
+              })
+            }
+
             if (onRevisionHistory) {
               moreItems.push({
                 icon: History,
@@ -521,19 +547,19 @@ export function QuotationTable({
                         <div className="w-5 h-4 shrink-0" aria-hidden="true" />
                       )}
 
-                      <div className="flex flex-col gap-0.5">
+                      <div className="flex flex-col gap-0.5 py-0.5">
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold text-sky-800 text-xs tracking-tight">
                             {row.quotationCode}
                           </span>
-                          <span className="inline-block px-1.5 py-0.2 rounded bg-sky-50 text-[10px] font-semibold text-sky-700 border border-sky-200">
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-sky-50 text-[10px] font-semibold text-sky-700 border border-sky-200">
                             rev.{row.revisionNo}
                           </span>
                           {group.hasMultipleRevisions && (
                             <button
                               type="button"
                               onClick={() => toggleExpand(group.quotationCode)}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-purple-50 text-[10px] font-semibold text-purple-700 border border-purple-200 hover:bg-purple-100 transition cursor-pointer"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-50 text-[10px] font-semibold text-purple-700 border border-purple-200 hover:bg-purple-100 transition cursor-pointer"
                               title="Bấm để xổ danh sách các phiên bản"
                             >
                               <GitBranch className="w-2.5 h-2.5" />
@@ -541,6 +567,19 @@ export function QuotationTable({
                             </button>
                           )}
                         </div>
+                        {row.orderId && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-[10px] text-slate-400 font-medium">Đơn:</span>
+                            <Link
+                              to={`/app/orders/${row.orderId}`}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 hover:text-emerald-800 transition-colors group"
+                              title="Xem chi tiết đơn hàng đã tạo"
+                            >
+                              <span>{row.orderCode || 'SO-...'}</span>
+                              <ArrowUpRight className="w-3 h-3 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -552,7 +591,9 @@ export function QuotationTable({
                         {row.projectName}
                       </span>
                       <span className="text-[11px] text-slate-500 truncate" title={row.customerName}>
-                        {row.customerName || 'Khách vãng lai'}
+                        {row.customerName && row.customerName !== 'Walk-in Retail Customer'
+                          ? row.customerName
+                          : 'Khách lẻ tại quầy'}
                       </span>
                     </div>
                   </td>
