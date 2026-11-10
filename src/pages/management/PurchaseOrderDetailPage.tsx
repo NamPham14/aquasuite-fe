@@ -629,14 +629,14 @@ export function PurchaseOrderDetailPage() {
                 <tr>
                   <th className="px-3 py-3 w-10 text-center whitespace-nowrap">STT</th>
                   <th className="px-3 py-3 w-28 whitespace-nowrap">Tên đợt</th>
-                  <th className="px-4 py-3 min-w-[240px] whitespace-nowrap">Mô tả hàng giao</th>
+                  <th className="px-4 py-3 min-w-[280px] w-80 whitespace-nowrap">Mô tả hàng giao</th>
                   <th className="px-3 py-3 w-28 whitespace-nowrap">Ngày dự kiến</th>
                   <th className="px-3 py-3 text-right w-20 whitespace-nowrap">Tỷ lệ (%)</th>
                   <th className="px-3 py-3 text-right w-28 whitespace-nowrap">Tiền dự kiến (đ)</th>
                   <th className="px-3 py-3 text-right w-28 whitespace-nowrap">Thực chi (đ)</th>
                   <th className="px-3 py-3 text-center w-28 whitespace-nowrap">Trạng thái đợt</th>
                   <th className="px-3 py-3 w-40 whitespace-nowrap">Thông tin thanh toán</th>
-                  <th className="px-3 py-3 text-center w-28 whitespace-nowrap">Thao tác</th>
+                  <th className="px-2 py-3 text-center w-24 whitespace-nowrap">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -653,8 +653,10 @@ export function PurchaseOrderDetailPage() {
                       <td className="px-3 py-3 font-semibold text-slate-900 whitespace-nowrap">
                         {st.stageName}
                       </td>
-                      <td className="px-4 py-3 text-slate-700 min-w-[240px]">
-                        {st.description || '—'}
+                      <td className="px-4 py-3 text-slate-700">
+                        <div className="min-w-[260px] max-w-[420px] text-xs text-slate-700 break-words leading-relaxed font-normal">
+                          {st.description || '—'}
+                        </div>
                       </td>
                       <td className="px-3 py-3 font-medium text-slate-800 whitespace-nowrap">
                         {st.expectedDeliveryDate || '—'}
@@ -718,15 +720,15 @@ export function PurchaseOrderDetailPage() {
                           <span className="text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="px-3 py-3 text-center whitespace-nowrap">
+                      <td className="px-2 py-3 text-center whitespace-nowrap">
                         {/* PENDING Stage Action: Settle */}
                         {isConfirmed && isStagePending && (
                           <button
                             type="button"
                             onClick={() => setStageToSettle(st)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
                           >
-                            <DollarSign className="w-3.5 h-3.5" />
+                            <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Xác nhận đợt</span>
                           </button>
                         )}

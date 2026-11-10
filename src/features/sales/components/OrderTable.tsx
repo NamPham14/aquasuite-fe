@@ -6,6 +6,12 @@ const ORDER_STATUS_CONFIG: Record<
   OrderStatus,
   { label: string; className: string; border: string; dotColor: string }
 > = {
+  DRAFT: {
+    label: 'Nháp (Chờ duyệt nợ)',
+    className: 'bg-amber-50 text-amber-800',
+    border: 'border-amber-300',
+    dotColor: 'bg-amber-500',
+  },
   PROCESSING: {
     label: 'Đang xử lý',
     className: 'bg-sky-50 text-sky-700',

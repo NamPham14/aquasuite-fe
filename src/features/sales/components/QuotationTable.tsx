@@ -224,17 +224,15 @@ function QuotationRevisionSubTable({
                       </span>
                     )}
                     {rev.orderId && (
-                      <div className="mt-1 flex items-center">
+                      <div className="mt-1 flex items-center gap-1">
+                        <span className="text-[10px] text-slate-400 font-medium">Đơn:</span>
                         <Link
                           to={`/app/orders/${rev.orderId}`}
-                          className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-emerald-600 transition-colors group"
+                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 hover:text-emerald-800 transition-colors group"
                           title="Xem đơn hàng đã tạo"
                         >
-                          <span className="text-[10px]">Đơn:</span>
-                          <span className="font-medium text-emerald-600 group-hover:underline">
-                            {rev.orderCode || 'SO-...'}
-                          </span>
-                          <ArrowUpRight className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                          <span>{rev.orderCode || 'SO-...'}</span>
+                          <ArrowUpRight className="w-3 h-3 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                       </div>
                     )}
@@ -570,17 +568,15 @@ export function QuotationTable({
                           )}
                         </div>
                         {row.orderId && (
-                          <div className="flex items-center">
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-[10px] text-slate-400 font-medium">Đơn:</span>
                             <Link
                               to={`/app/orders/${row.orderId}`}
-                              className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-emerald-600 transition-colors group"
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 hover:text-emerald-800 transition-colors group"
                               title="Xem chi tiết đơn hàng đã tạo"
                             >
-                              <span className="text-[10px]">Đơn:</span>
-                              <span className="font-medium text-emerald-600 group-hover:underline">
-                                {row.orderCode || 'SO-...'}
-                              </span>
-                              <ArrowUpRight className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                              <span>{row.orderCode || 'SO-...'}</span>
+                              <ArrowUpRight className="w-3 h-3 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
                             </Link>
                           </div>
                         )}

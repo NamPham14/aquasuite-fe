@@ -45,6 +45,8 @@ import {
   type QuotationResponse,
 } from '../../features/sales'
 import { useAuth } from '../../features/iam/hooks/useAuth'
+import { useCheckCreditMutation } from '../../features/finance/api/customerDebtApi'
+import type { CreditCheckResult } from '../../features/finance/types/customerDebt.types'
 
 export function QuotationDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -77,37 +79,94 @@ export function QuotationDetailPage() {
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false)
   const [convertAddress, setConvertAddress] = useState('')
   const [convertNote, setConvertNote] = useState('')
-  const [createdOrderModal, setCreatedOrderModal] = useState<{ orderId: string; orderCode: string } | null>(null)
+  const [creditIncreaseReason, setCreditIncreaseReason] = useState('')
+  const [creditCheckResult, setCreditCheckResult] = useState<CreditCheckResult | null>(null)
+  const [checkCredit, { isLoading: isCheckingCredit }] = useCheckCreditMutation()
+  const [createdOrderModal, setCreatedOrderModal] = useState<{
+    orderId: string
+    orderCode: string
+    isDraft?: boolean
+  } | null>(null)
 
-  const handleOpenConvertModal = () => {
+  const handleOpenConvertModal = async () => {
     if (!quotation) return
     setConvertAddress(quotation.deliveryAddress || '')
     setConvertNote(quotation.note || '')
+    setCreditIncreaseReason(
+      `Đề xuất cấp thêm hạn mức nợ cho đơn hàng dự án từ báo giá ${quotation.quotationCode}`
+    )
+    setCreditCheckResult(null)
     setIsConvertModalOpen(true)
+
+    // Kiểm tra công nợ nếu báo giá có điều khoản công nợ
+    const netAmount = quotation.summary?.netAmount ?? 0
+    const debtAmount =
+      quotation.remainingDebtAmount ??
+      (quotation.depositPercent && quotation.depositPercent < 100
+        ? (netAmount * (100 - quotation.depositPercent)) / 100
+        : quotation.depositAmount
+          ? netAmount - quotation.depositAmount
+          : 0)
+
+    if (
+      quotation.customerId &&
+      (debtAmount > 0 || (quotation.creditTermDays && quotation.creditTermDays > 0))
+    ) {
+      try {
+        const res = await checkCredit({
+          customerId: quotation.customerId,
+          data: {
+            newOrderAmount: debtAmount > 0 ? debtAmount : 0,
+            orderChannel: 'DIRECT_SALES',
+          },
+        }).unwrap()
+        setCreditCheckResult(res)
+      } catch (err: any) {
+        console.warn('Không thể kiểm tra hạn mức công nợ:', err)
+      }
+    }
   }
 
   const handleConfirmConvertToOrder = async () => {
     if (!id) return
+    const isCreditInsufficient = creditCheckResult && !creditCheckResult.approved
+
+    if (isCreditInsufficient && !creditIncreaseReason.trim()) {
+      toast.error('Vui lòng nhập lý do đề xuất duyệt hạn mức công nợ.')
+      return
+    }
+
     try {
       const res = await convertToOrder({
         id,
         body: {
           deliveryAddress: convertAddress.trim() || undefined,
           note: convertNote.trim() || undefined,
+          requestCreditIncrease: isCreditInsufficient ? true : undefined,
+          creditIncreaseReason: isCreditInsufficient ? creditIncreaseReason.trim() : undefined,
         },
       }).unwrap()
 
       const createdOrderCode = res?.data?.orderCode || res?.orderCode
       const createdOrderId = res?.data?.orderId || res?.orderId
+      const createdOrderStatus = res?.data?.orderStatus || res?.orderStatus
+      const isDraft = createdOrderStatus === 'DRAFT'
 
       setIsConvertModalOpen(false)
-      toast.success(`Chuyển đổi thành công đơn hàng ${createdOrderCode || ''}!`)
+      if (isDraft) {
+        toast.info(
+          `Đơn hàng ${createdOrderCode || ''} đã tạo ở dạng Nháp (Chờ chủ duyệt hạn mức nợ)!`
+        )
+      } else {
+        toast.success(`Chuyển đổi thành công đơn hàng ${createdOrderCode || ''}!`)
+      }
       refetch()
 
       if (createdOrderId) {
         setCreatedOrderModal({
           orderId: createdOrderId,
           orderCode: createdOrderCode || 'SO-PROJ',
+          isDraft,
         })
       }
     } catch (err: any) {
@@ -692,9 +751,9 @@ export function QuotationDetailPage() {
                 <div className="text-sm font-bold text-slate-900 tabular-nums">
                   {formatMoney(
                     quotation.ownerData.totalCost ??
-                      (quotation.ownerData.grossProfit != null && quotation.summary?.netAmount != null
-                        ? Math.max(0, quotation.summary.netAmount - quotation.ownerData.grossProfit)
-                        : 0)
+                    (quotation.ownerData.grossProfit != null && quotation.summary?.netAmount != null
+                      ? Math.max(0, quotation.summary.netAmount - quotation.ownerData.grossProfit)
+                      : 0)
                   )}
                 </div>
               </div>
@@ -777,9 +836,9 @@ export function QuotationDetailPage() {
       {/* Modal Xác nhận Chuyển đổi Báo giá sang Đơn hàng dự án */}
       {isConvertModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Header */}
-            <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
+            <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-3 shrink-0">
               <div className="w-9 h-9 rounded-lg bg-sky-100 flex items-center justify-center text-sky-700 shrink-0">
                 <ShoppingCart className="w-5 h-5" />
               </div>
@@ -792,7 +851,7 @@ export function QuotationDetailPage() {
             </div>
 
             {/* Body */}
-            <div className="p-5 space-y-4 text-xs">
+            <div className="p-5 space-y-4 text-xs overflow-y-auto">
               {/* Tóm tắt thông tin */}
               <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 grid grid-cols-2 gap-2.5">
                 <div>
@@ -814,6 +873,75 @@ export function QuotationDetailPage() {
                   </span>
                 </div>
               </div>
+
+              {/* Phần kiểm tra công nợ khách hàng */}
+              {isCheckingCredit && (
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center gap-2.5 text-slate-600">
+                  <Loader2 className="w-4 h-4 animate-spin text-sky-600 shrink-0" />
+                  <span>Đang kiểm tra hồ sơ hạn mức công nợ của khách hàng...</span>
+                </div>
+              )}
+
+              {!isCheckingCredit && creditCheckResult && (
+                creditCheckResult.approved ? (
+                  <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-800 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-xs text-emerald-800">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Hạn mức công nợ hợp lệ</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-700 leading-relaxed">
+                      Khách hàng đủ điều kiện ghi nợ cho đơn hàng này. Hạn mức khả dụng hiện tại: <strong>{formatMoney(creditCheckResult.availableCredit)}</strong> (Hạn mức cấp: {formatMoney(creditCheckResult.creditLimit)}).
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-3.5 bg-amber-50 rounded-lg border border-amber-300 text-amber-900 space-y-2.5">
+                    <div className="flex items-center gap-2 font-bold text-xs text-amber-900">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>Hạn mức công nợ hiện tại không đủ ({creditCheckResult.debtStatus || 'Chưa đủ điều kiện'})</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px] bg-white/80 p-2.5 rounded border border-amber-200">
+                      <div>
+                        <span className="text-slate-500">Hạn mức được cấp:</span>{' '}
+                        <strong className="text-slate-800">{formatMoney(creditCheckResult.creditLimit)}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Dư nợ hiện tại:</span>{' '}
+                        <strong className="text-rose-700">{formatMoney(creditCheckResult.outstandingBalance)}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Khả dụng còn lại:</span>{' '}
+                        <strong className={creditCheckResult.availableCredit > 0 ? 'text-emerald-700' : 'text-slate-600'}>
+                          {formatMoney(creditCheckResult.availableCredit)}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Tiền nợ đơn này:</span>{' '}
+                        <strong className="text-amber-800">
+                          {formatMoney(quotation.remainingDebtAmount || 0)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      Đơn hàng sẽ được tạo ở trạng thái <strong className="text-amber-900">Nháp (Chờ duyệt nợ)</strong> và hệ thống sẽ gửi phiếu yêu cầu cấp hạn mức nợ tới <strong>Chủ cửa hàng</strong>. Khi Chủ cửa hàng phê duyệt, đơn hàng sẽ tự động chuyển sang <strong>Đang xử lý</strong>.
+                    </p>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-amber-950 mb-1">
+                        Lý do đề xuất duyệt hạn mức công nợ <span className="text-rose-600">*</span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={creditIncreaseReason}
+                        onChange={(e) => setCreditIncreaseReason(e.target.value)}
+                        placeholder="Nhập lý do gửi Chủ cửa hàng phê duyệt (uy tín khách, tiến độ thanh toán...)"
+                        className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-white text-xs focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )
+              )}
 
               {/* Form tùy chỉnh thông tin giao hàng */}
               <div className="space-y-3">
@@ -845,33 +973,54 @@ export function QuotationDetailPage() {
             </div>
 
             {/* Footer Buttons */}
-            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 text-xs">
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 text-xs shrink-0">
               <button
                 type="button"
                 onClick={() => setIsConvertModalOpen(false)}
                 disabled={isConverting}
-                className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition"
+                className="px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition cursor-pointer"
               >
                 Hủy bỏ
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmConvertToOrder}
-                disabled={isConverting}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-sky-800 hover:bg-sky-900 text-white font-bold transition shadow-2xs disabled:opacity-50"
-              >
-                {isConverting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Đang tạo đơn...</span>
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="w-3.5 h-3.5" />
-                    <span>Xác nhận tạo Đơn hàng</span>
-                  </>
-                )}
-              </button>
+              {creditCheckResult && !creditCheckResult.approved ? (
+                <button
+                  type="button"
+                  onClick={handleConfirmConvertToOrder}
+                  disabled={isConverting || !creditIncreaseReason.trim()}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold transition shadow-2xs disabled:opacity-50 cursor-pointer"
+                >
+                  {isConverting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang xử lý...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Tạo Đơn Nháp & Gửi Duyệt Nợ</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleConfirmConvertToOrder}
+                  disabled={isConverting}
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-sky-800 hover:bg-sky-900 text-white font-bold transition shadow-2xs disabled:opacity-50 cursor-pointer"
+                >
+                  {isConverting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang tạo đơn...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-3.5 h-3.5" />
+                      <span>Xác nhận tạo Đơn hàng</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -881,14 +1030,40 @@ export function QuotationDetailPage() {
       {createdOrderModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-6 text-center space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mx-auto">
-              <CheckCircle className="w-7 h-7" />
-            </div>
+            {createdOrderModal.isDraft ? (
+              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 mx-auto">
+                <Clock className="w-7 h-7" />
+              </div>
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mx-auto">
+                <CheckCircle className="w-7 h-7" />
+              </div>
+            )}
 
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-slate-900">Tạo Đơn Hàng Thành Công!</h3>
-              <p className="text-xs text-slate-600">
-                Đơn hàng <strong className="font-mono text-emerald-700">{createdOrderModal.orderCode}</strong> đã được khởi tạo thành công và liên kết trực tiếp với báo giá.
+              <h3 className="text-base font-bold text-slate-900">
+                {createdOrderModal.isDraft
+                  ? 'Đã Khởi Tạo Đơn Hàng Nháp!'
+                  : 'Tạo Đơn Hàng Thành Công!'}
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {createdOrderModal.isDraft ? (
+                  <>
+                    Đơn hàng{' '}
+                    <strong className="font-mono text-amber-800">
+                      {createdOrderModal.orderCode}
+                    </strong>{' '}
+                    đã được tạo ở trạng thái <strong>Nháp (Chờ duyệt nợ)</strong>. Hệ thống đã tự động gửi yêu cầu cấp thêm hạn mức tới <strong>Chủ cửa hàng</strong> để phê duyệt.
+                  </>
+                ) : (
+                  <>
+                    Đơn hàng{' '}
+                    <strong className="font-mono text-emerald-700">
+                      {createdOrderModal.orderCode}
+                    </strong>{' '}
+                    đã được khởi tạo thành công ở trạng thái <strong>Đang xử lý</strong> và liên kết trực tiếp với báo giá.
+                  </>
+                )}
               </p>
             </div>
 
@@ -896,14 +1071,17 @@ export function QuotationDetailPage() {
               <button
                 type="button"
                 onClick={() => setCreatedOrderModal(null)}
-                className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition"
+                className="px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition cursor-pointer"
               >
                 Ở lại xem Báo giá
               </button>
               <button
                 type="button"
                 onClick={() => navigate(`/app/orders/${createdOrderModal.orderId}`)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-800 hover:bg-sky-900 text-white font-bold transition shadow-2xs"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-white font-bold transition shadow-2xs cursor-pointer ${createdOrderModal.isDraft
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-sky-800 hover:bg-sky-900'
+                  }`}
               >
                 <span>Xem Đơn hàng ngay</span>
                 <ArrowRight className="w-3.5 h-3.5" />

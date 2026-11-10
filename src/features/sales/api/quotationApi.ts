@@ -186,7 +186,19 @@ export const quotationApi = baseApi.injectEndpoints({
       transformResponse: (res: any) => res?.data ?? res,
     }),
 
-    convertToOrder: builder.mutation<any, { id: string; body?: { note?: string; deliveryAddress?: string; dueDate?: string } }>({
+    convertToOrder: builder.mutation<
+      any,
+      {
+        id: string
+        body?: {
+          note?: string
+          deliveryAddress?: string
+          dueDate?: string
+          requestCreditIncrease?: boolean
+          creditIncreaseReason?: string
+        }
+      }
+    >({
       query: ({ id, body }) => ({
         url: `/sales/quotations/${id}/convert-to-order`,
         method: 'POST',
