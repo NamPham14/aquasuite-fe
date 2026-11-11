@@ -9,9 +9,6 @@ import {
   XCircle,
   FileDown,
   AlertCircle,
-  Truck,
-  Clock,
-  Check,
 } from 'lucide-react'
 import type { PurchaseOrderListItemResponse } from '../types/purchaseOrder.types'
 import { PurchaseOrderStatusBadge } from './PurchaseOrderStatusBadge'
@@ -181,20 +178,19 @@ export function PurchaseOrderTable({
       <table className="min-w-full divide-y divide-gray-200 text-xs">
         <thead className="bg-gray-50 font-medium text-gray-500">
           <tr>
-            <th scope="col" className="px-4 py-3 text-left w-40">Mã PO</th>
+            <th scope="col" className="px-4 py-3 text-left w-44">Mã PO</th>
             <th scope="col" className="px-4 py-3 text-left">Nhà cung cấp</th>
-            <th scope="col" className="px-4 py-3 text-left w-28">Kho nhận</th>
+            <th scope="col" className="px-4 py-3 text-left w-32">Kho nhận</th>
             <th scope="col" className="px-4 py-3 text-left w-36">Ngày lập / Dự kiến</th>
-            <th scope="col" className="px-4 py-3 text-center w-16">Số dòng</th>
+            <th scope="col" className="px-4 py-3 text-center w-20">Số dòng</th>
             <th scope="col" className="px-4 py-3 text-right w-36">Tổng tiền</th>
-            <th scope="col" className="px-4 py-3 text-left w-32">Trạng thái</th>
-            <th scope="col" className="px-4 py-3 text-left w-36">Tiến độ đợt</th>
+            <th scope="col" className="px-4 py-3 text-left w-36">Trạng thái</th>
             <th scope="col" className="px-4 py-3 text-right w-56 pr-4">Thao tác</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 text-gray-600">
           {items.map((po) => {
-            const isDraft = po.status === 'DRAFT' || po.status === 'QUOTED'
+            const isDraft = po.status === 'DRAFT'
             const isConfirmed = po.status === 'CONFIRMED'
             const isPartiallyReceived = po.status === 'PARTIALLY_RECEIVED'
             const hasPrice = (po.totalAmount ?? 0) > 0
@@ -246,27 +242,18 @@ export function PurchaseOrderTable({
                 danger: true,
               })
             } else if (isConfirmed) {
-              const hasSettled = (po.settledStages ?? 0) > 0
               actionButton = {
                 label: 'Xuất PDF',
                 icon: FileDown,
                 onClick: () => onExportPdf(po),
                 className: 'border-slate-300 bg-white hover:bg-slate-50 text-slate-700',
               }
-              if (!hasSettled) {
-                moreItems.push({
-                  icon: XCircle,
-                  label: 'Hủy đơn PO',
-                  onClick: () => onCancel(po),
-                  danger: true,
-                })
-              } else {
-                moreItems.push({
-                  icon: AlertCircle,
-                  label: 'Đóng PO nhận thiếu',
-                  onClick: () => onClosePo(po),
-                })
-              }
+              moreItems.push({
+                icon: XCircle,
+                label: 'Hủy đơn PO',
+                onClick: () => onCancel(po),
+                danger: true,
+              })
             } else if (isPartiallyReceived) {
               actionButton = {
                 label: 'Đóng PO',
@@ -324,39 +311,10 @@ export function PurchaseOrderTable({
                   {po.totalItems}
                 </td>
                 <td className="px-4 py-3 text-right font-bold text-slate-900 tabular-nums">
-                  <div>{formatCurrency(po.totalAmount)}</div>
-                  {po.paidAmount !== undefined && po.paidAmount > 0 && (
-                    <div className="text-[11px] font-normal text-emerald-600 mt-0.5">
-                      Đã trả: {formatCurrency(po.paidAmount)}
-                    </div>
-                  )}
+                  {formatCurrency(po.totalAmount)}
                 </td>
-                <td className="px-4 py-3 text-left whitespace-nowrap">
-                  <PurchaseOrderStatusBadge status={po.status} isShortClosed={po.isShortClosed} />
-                </td>
-                <td className="px-4 py-3 text-left whitespace-nowrap">
-                  {po.deliveryPlanType === 'STAGED' ? (
-                    (po.totalStages ?? 0) > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
-                        <Truck className="w-3 h-3 text-indigo-600 shrink-0" />
-                        <span>Xong {po.settledStages ?? 0}/{po.totalStages} đợt</span>
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-slate-500">Chia nhiều đợt</span>
-                    )
-                  ) : po.status === 'COMPLETED' ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
-                      <Check className="w-3 h-3 text-emerald-600 shrink-0" />
-                      <span>1 lần (Đã nhận)</span>
-                    </span>
-                  ) : po.status === 'CONFIRMED' ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-sky-50 text-sky-700 border border-sky-200 shadow-2xs">
-                      <Clock className="w-3 h-3 text-sky-600 shrink-0" />
-                      <span>1 lần (100%)</span>
-                    </span>
-                  ) : (
-                    <span className="text-slate-400 text-xs">—</span>
-                  )}
+                <td className="px-4 py-3 text-left">
+                  <PurchaseOrderStatusBadge status={po.status} />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
