@@ -14,7 +14,7 @@ import {
 } from '../../features/sales/api/salesOrderApi'
 import { OrderStatusBadge } from '../../features/sales/components/OrderStatusBadge'
 import { PaymentStatusBadge } from '../../features/sales/components/PaymentStatusBadge'
-import { OrderPaymentPanel } from '../../features/finance'
+import { OrderCodPanel, OrderPaymentPanel } from '../../features/finance'
 import { useAuth } from '../../features/iam/hooks/useAuth'
 
 export function OrderDetailPage() {
@@ -270,11 +270,14 @@ export function OrderDetailPage() {
 
       {/* UC-23: Ghi nhận & theo dõi thanh toán theo tiến độ các mốc của đơn */}
       {id && (
-        <OrderPaymentPanel
-          orderId={id}
-          canRecord={canRecordPayment}
-          payable={order.orderStatus !== 'CANCELLED'}
-        />
+        <>
+          <OrderCodPanel orderId={id} />
+          <OrderPaymentPanel
+            orderId={id}
+            canRecord={canRecordPayment}
+            payable={order.orderStatus !== 'CANCELLED'}
+          />
+        </>
       )}
 
       {order.note && (

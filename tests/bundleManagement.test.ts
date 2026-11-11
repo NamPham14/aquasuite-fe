@@ -97,7 +97,11 @@ test('cancel does not mutate; confirmation uses fresh version and suppresses dup
     await h.run(() => h.state.open('delete', { ...bundle, version: 1 }))
     assert.equal(h.state.dialog?.mode, 'delete')
     assert.match(h.dom.window.document.body.textContent ?? '', /Xác nhận xóa combo/)
-    await h.run(() => h.state.close())
+    assert.match(h.dom.window.document.body.textContent ?? '', /Mã combo: COMBO-01/)
+    assert.match(h.dom.window.document.body.textContent ?? '', /Mã combo không thể tái sử dụng/)
+    assert.equal(h.dom.window.document.querySelector('table'), null, 'delete confirmation stays compact')
+    const cancel = Array.from(h.dom.window.document.querySelectorAll('button')).find((button) => button.textContent === 'Hủy')!
+    await h.run(() => cancel.click())
     assert.equal(writes, 0)
     await h.run(() => h.state.open('delete', bundle))
     let first!: Promise<void>
@@ -107,6 +111,61 @@ test('cancel does not mutate; confirmation uses fresh version and suppresses dup
     assert.equal(h.state.pending, true)
     assert.equal(h.dom.window.document.querySelector('dialog button')?.hasAttribute('disabled'), true)
     await h.run(async () => { release(json(null)); await first })
+    assert.equal(h.state.dialog, null)
+  } finally { await h.cleanup() }
+})
+
+test('combo details group price, validity and component quantities with retail totals', async () => {
+  const h = await harness(async (input) => {
+    const request = input as Request
+    if (request.url.endsWith(uuid)) return json({ ...bundle, items: [{ ...bundle.items[0], quantity: 3 }, { ...bundle.items[0], variantId: 'missing-price', sku: 'SKU-02', sellingPrice: null, sellable: false }] })
+    return defaultRead(request)
+  })
+  try {
+    await h.run(() => h.state.open('view', bundle))
+    const doc = h.dom.window.document
+    assert.match(doc.body.textContent ?? '', /Chưa có mô tả/)
+    assert.match(doc.querySelector('#combo-detail-price')!.textContent ?? '', /Giá combo/)
+    assert.match(doc.querySelector('#combo-detail-validity')!.parentElement!.textContent ?? '', /Chưa đặt/)
+    const rows = doc.querySelectorAll('tbody tr')
+    assert.equal(rows[0].querySelectorAll('td')[1].textContent, '3')
+    assert.equal(rows[0].querySelectorAll('td')[3].textContent, '300 ₫')
+    assert.equal(rows[1].querySelectorAll('td')[3].textContent, 'Chưa xác định')
+    assert.match(rows[1].textContent ?? '', /Không còn kinh doanh/)
+  } finally { await h.cleanup() }
+})
+
+test('unpublish confirmation stays compact, cancels safely and sends the fresh version', async () => {
+  let writes = 0
+  let payload: unknown
+  let release!: (value: Response) => void
+  const h = await harness(async (input) => {
+    const request = input as Request
+    if (request.method === 'PATCH') {
+      writes++
+      payload = await request.json()
+      return new Promise<Response>((resolve) => { release = resolve })
+    }
+    if (request.url.endsWith(uuid)) return json({ ...bundle, publicationStatus: 'PUBLISHED' })
+    return defaultRead(request)
+  })
+  try {
+    await h.run(() => h.state.open('unpublish', bundle))
+    const doc = h.dom.window.document
+    assert.match(doc.body.textContent ?? '', /Mã combo: COMBO-01/)
+    assert.match(doc.body.textContent ?? '', /Bạn có thể công bố lại/)
+    assert.equal(doc.querySelector('table'), null)
+    await h.run(() => Array.from(doc.querySelectorAll('button')).find((button) => button.textContent === 'Hủy')!.click())
+    assert.equal(writes, 0)
+    assert.equal(h.state.dialog, null)
+    await h.run(() => h.state.open('unpublish', bundle))
+    await h.run(() => Array.from(doc.querySelectorAll('button')).find((button) => button.textContent === 'Ngừng công bố combo')!.click())
+    assert.deepEqual(payload, { publicationStatus: 'UNPUBLISHED', expectedVersion: 3 })
+    const pendingButton = Array.from(doc.querySelectorAll('button')).find((button) => button.textContent === 'Đang ngừng công bố...')!
+    assert.equal(pendingButton.disabled, true)
+    await h.run(() => pendingButton.click())
+    assert.equal(writes, 1)
+    await h.run(() => release(json({ ...bundle, publicationStatus: 'UNPUBLISHED' })))
     assert.equal(h.state.dialog, null)
   } finally { await h.cleanup() }
 })

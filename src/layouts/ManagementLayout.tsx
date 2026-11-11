@@ -78,6 +78,7 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
       { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
       { name: 'Công nợ khách hàng', to: '/app/customer-debts', icon: WalletCards },
       { name: 'Xác minh thanh toán', to: '/app/payment-verifications', icon: ShieldCheck, roles: ['ACCOUNTANT'] },
+      { name: 'Thu & bàn giao COD', to: '/app/cod-collections', icon: HandCoins, roles: ['SHIPPER', 'ACCOUNTANT', 'SALES_STAFF', 'SHOP_OWNER'] },
     ],
   },
   {

@@ -2,9 +2,11 @@
 
 ## Tài liệu
 
-- [UC29 API thật](specifications/FE-UC29-API.md): chọn đơn đã có, chốt giữ hàng và theo dõi/ghi nhận thanh toán qua Finance. [Spec demo cũ](specifications/FE-UC29-DEMO.md) và [wireframe](specifications/FE-UC29-DEMO.drawio) được giữ làm tham khảo lịch sử.
+- [UC29 API thật](specifications/FE-UC29-API.md): chọn đơn đã có, chốt giữ hàng và theo dõi thanh toán. [Wireframe FE hiện tại](specifications/FE-UC29-CURRENT.drawio) và [bảng Screen fields](specifications/FE-UC29-CURRENT.md). [Spec demo cũ](specifications/FE-UC29-DEMO.md) và [wireframe demo](specifications/FE-UC29-DEMO.drawio) được giữ làm tham khảo lịch sử.
 
 - [Manage Combo FE](specifications/FE-MANAGE-COMBO.md): phạm vi UC-13, contract backend, cấu trúc triển khai và phần SRS chưa được hỗ trợ.
+
+- [UC30 MVP FE](specifications/FE-UC30-MVP.md): shipper khai thu không cần ảnh, kế toán xác nhận và nhận tiền COD từng phần, lịch sử bàn giao và trách nhiệm công nợ.
 
 - [Cấu trúc frontend](FRONTEND_PACKAGE_STRUCTURE.md): kiến trúc đích, trách nhiệm các khu vực và ranh giới feature.
 - [Component UI trang quản lý](MANAGEMENT_UI_COMPONENTS.md): danh mục component dùng chung, cách dùng và giới hạn hiện tại.
@@ -25,3 +27,7 @@ Repo BE là repo riêng. Khi tích hợp, tham khảo contract, spec và impleme
 
 - [Customer registration FE](specifications/FE-CUSTOMER-REGISTER.md): /register-customer, email OTP verification and resend contract.
 
+
+- [UC36 FE](specifications/FE-UC36.md): lịch sử hàng giữ và giải phóng theo quyết định UC26 đã duyệt.
+
+- [UX chung UC29 & UC36](specifications/FE-UC29-UC36-UX.md): thiết kế đã chốt và triển khai; tab Hàng giữ mặc định, lịch sử/giải phóng riêng trong cùng ngữ cảnh đơn.

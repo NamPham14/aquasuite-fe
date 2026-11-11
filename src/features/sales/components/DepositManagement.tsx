@@ -13,7 +13,7 @@ export function DepositManagement() {
   const [page, setPage] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
   const orders = useReservationOrdersQuery({ page, keyword: search }, { refetchOnMountOrArgChange: true })
-  return <div className="space-y-5">
+  return <div className="space-y-5 text-sm leading-relaxed text-slate-900">
     <ManagementPageHeader title="Đặt cọc & Giữ hàng" breadcrumb="Đặt cọc & Giữ hàng" group="Bán hàng" description="Chọn đơn đã có để chốt phần hàng giữ và theo dõi cọc theo thỏa thuận" icon={<HandCoins />} />
     <p className="text-sm text-slate-600">Danh sách gồm đơn CONFIRMED hoặc PROCESSING có mức cọc cần thu, kể cả đơn chưa chốt yêu cầu giữ. Báo giá có tỷ lệ cọc khi chuyển thành đơn sẽ được hệ thống tự đăng ký giữ toàn bộ hàng tại kho chính; chỉ phân bổ khi đủ cọc đã xác minh.</p>
     <form onSubmit={(event) => { event.preventDefault(); setSearch(keyword.trim()); setPage(0) }}><ManagementFilterBar>
@@ -22,12 +22,12 @@ export function DepositManagement() {
       <button type="button" className={secondaryButton} disabled={orders.isFetching} onClick={() => void orders.refetch()}>Tải lại</button>
     </ManagementFilterBar></form>
     {orders.error && <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">{normalizeApiError(orders.error).message}</p>}
-    <section aria-labelledby="deposit-list" aria-busy={orders.isFetching} className="rounded-lg border border-slate-200 bg-white p-4">
-      <h2 id="deposit-list" className="mb-4 font-semibold">Đơn hàng</h2>
+    <section aria-labelledby="deposit-list" aria-busy={orders.isFetching} className="rounded-lg border border-slate-200 bg-white p-4 [&_thead]:bg-slate-50 [&_thead]:font-semibold [&_thead]:text-slate-600 [&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:whitespace-normal [&_th]:leading-5 [&_td]:py-3 [&_tbody]:text-slate-700">
+      <h2 id="deposit-list" className="mb-4 text-base font-semibold">Đơn hàng</h2>
       {orders.isFetching ? <p role="status">Đang tải đơn hàng...</p> : !orders.error && <ManagementTable rows={orders.currentData?.content ?? []} rowKey={(order) => order.orderId} labelledBy="deposit-list" emptyMessage="Không có đơn hàng phù hợp." columns={[
-        { key: 'code', header: 'Mã đơn', cell: (order) => order.orderCode },
-        { key: 'customer', header: 'Khách hàng', cell: (order) => order.customerName },
-        { key: 'total', header: 'Tổng đơn', align: 'right', cell: (order) => money(order.totalAmount) },
+        { key: 'code', header: 'Mã đơn', cellClassName: 'font-mono text-xs font-bold text-sky-700', cell: (order) => order.orderCode },
+        { key: 'customer', header: 'Khách hàng', cell: (order) => <span className="block w-40 whitespace-normal break-words font-semibold text-slate-900">{order.customerName}</span> },
+        { key: 'total', header: 'Tổng đơn', align: 'right', cellClassName: 'font-bold tabular-nums text-sm text-slate-900', cell: (order) => money(order.totalAmount) },
         { key: 'deposit', header: 'Cọc thỏa thuận', align: 'right', cell: (order) => order.payment ? money(order.payment.depositRequired) : '—' },
         { key: 'verified', header: 'Đã xác minh', align: 'right', cell: (order) => order.payment ? money(order.payment.verifiedPaid) : '—' },
         { key: 'pending', header: 'Chờ xác minh', align: 'right', cell: (order) => order.payment ? money(order.payment.pendingAmount) : '—' },

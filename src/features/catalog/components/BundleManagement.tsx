@@ -23,12 +23,12 @@ export function BundleManagement() {
     </div></div>
   }
   const columns: ManagementTableColumn<Bundle>[] = [
-    { key: 'name', header: 'Combo', cell: (bundle) => <div className="max-w-64 whitespace-normal"><p className="break-words font-semibold">{bundle.name}</p><p className="break-all text-xs text-slate-500">{bundle.productCode}</p></div> },
+    { key: 'name', header: 'Combo', cell: (bundle) => <div className="max-w-64 whitespace-normal"><p className="break-words font-semibold text-slate-900">{bundle.name}</p><p className="mt-0.5 break-all font-mono text-xs font-bold text-sky-700">{bundle.productCode}</p></div> },
     { key: 'items', header: 'Số SKU', cell: (bundle) => bundle.linkedItemsCount },
-    { key: 'retail', header: 'Tổng giá lẻ', cell: (bundle) => bundleMoney(bundle.originalTotal), align: 'right' },
-    { key: 'price', header: 'Giá gói', cell: (bundle) => <span className="font-semibold text-sky-800">{bundleMoney(bundle.packagePrice)}</span>, align: 'right' },
+    { key: 'retail', header: 'Tổng giá lẻ', cellClassName: 'tabular-nums', cell: (bundle) => bundleMoney(bundle.originalTotal), align: 'right' },
+    { key: 'price', header: 'Giá gói', cell: (bundle) => <span className="text-sm font-bold tabular-nums text-slate-900">{bundleMoney(bundle.packagePrice)}</span>, align: 'right' },
     { key: 'discount', header: 'Giảm giá', cell: (bundle) => bundle.priceIssue ? <span className="text-amber-800">Cần kiểm tra giá</span> : bundle.discountPercent != null ? `${bundle.discountPercent}%` : 'Chưa xác định' },
-    { key: 'status', header: 'Trạng thái', cell: (bundle) => <span className="text-xs text-slate-600">{publicationLabels[bundle.publicationStatus]}</span> },
+    { key: 'status', header: 'Trạng thái', cell: (bundle) => <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">{publicationLabels[bundle.publicationStatus]}</span> },
     { key: 'actions', header: 'Thao tác', cell: actions },
   ]
   const rows = m.list.isError || m.forbidden ? [] : data?.items ?? []
@@ -46,8 +46,8 @@ export function BundleManagement() {
       {m.loadingDetail && <p role="status" className="text-sm text-slate-600">Đang tải chi tiết mới nhất...</p>}
       <section aria-labelledby="combo-list-heading" aria-busy={m.list.isFetching} className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="flex items-center justify-between gap-3 p-4"><h2 id="combo-list-heading" className="font-semibold text-slate-900">Danh sách combo</h2><button type="button" className={bundleButtonClass} disabled={m.list.isFetching} onClick={() => void m.retry()}>Tải lại</button></div>
-        <div className="hidden sm:block [&_table]:text-sm"><ManagementTable columns={columns} rows={rows} rowKey={(bundle) => bundle.bundleId} labelledBy="combo-list-heading" emptyMessage={empty} /></div>
-        <CatalogMobileList rows={rows} rowKey={(bundle) => bundle.bundleId} emptyMessage={empty} renderRow={(bundle) => <div className="space-y-3"><div><h3 className="break-words font-semibold">{bundle.name}</h3><p className="break-all text-xs text-slate-500">{bundle.productCode}</p></div><p className="text-sm">{publicationLabels[bundle.publicationStatus]} · {bundle.linkedItemsCount} SKU</p><p className="font-semibold text-sky-800">Giá gói: {bundleMoney(bundle.packagePrice)}</p><p className="text-xs text-slate-600">Giá lẻ: {bundleMoney(bundle.originalTotal)} · {bundle.priceIssue ? 'Cần kiểm tra giá' : bundle.discountPercent != null ? `Giảm ${bundle.discountPercent}%` : 'Chưa xác định giảm giá'}</p>{actions(bundle)}</div>} />
+        <div className="hidden sm:block [&_table]:text-xs [&_thead]:bg-slate-50 [&_thead]:font-semibold [&_thead]:text-slate-600 [&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:whitespace-normal [&_th]:leading-5 [&_tbody]:text-slate-700 [&_tbody]:divide-slate-100 [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-slate-50/70"><ManagementTable columns={columns} rows={rows} rowKey={(bundle) => bundle.bundleId} labelledBy="combo-list-heading" emptyMessage={empty} /></div>
+        <CatalogMobileList rows={rows} rowKey={(bundle) => bundle.bundleId} emptyMessage={empty} renderRow={(bundle) => <div className="space-y-3"><div><h3 className="break-words font-semibold text-slate-900">{bundle.name}</h3><p className="mt-0.5 break-all font-mono text-xs font-bold text-sky-700">{bundle.productCode}</p></div><p className="text-sm">{publicationLabels[bundle.publicationStatus]} · {bundle.linkedItemsCount} SKU</p><p className="text-sm font-bold tabular-nums text-slate-900">Giá gói: {bundleMoney(bundle.packagePrice)}</p><p className="text-xs text-slate-600">Giá lẻ: {bundleMoney(bundle.originalTotal)} · {bundle.priceIssue ? 'Cần kiểm tra giá' : bundle.discountPercent != null ? `Giảm ${bundle.discountPercent}%` : 'Chưa xác định giảm giá'}</p>{actions(bundle)}</div>} />
         <CatalogPagination page={m.filters.page} totalPages={data?.totalPages ?? 0} totalElements={data?.totalElements ?? 0} noun="combo" disabled={m.list.isFetching} onPageChange={(page) => m.changeFilters({ page })} />
         {data && m.filters.page > 0 && !rows.length && !m.list.isFetching && <button type="button" className={`${bundleButtonClass} m-4`} onClick={() => m.changeFilters({ page: 0 })}>Về trang đầu</button>}
       </section>

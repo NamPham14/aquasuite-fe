@@ -17,6 +17,7 @@ import { PermissionsPage } from '../pages/management/PermissionsPage'
 import { UsersPage } from '../pages/management/UsersPage'
 import { CustomerDebtsPage } from '../pages/management/CustomerDebtsPage'
 import { PaymentVerificationsPage } from '../pages/management/PaymentVerificationsPage'
+import { CodCollectionsPage } from '../pages/management/CodCollectionsPage'
 import { QuotationsPage } from '../pages/management/QuotationsPage'
 import { QuotationCreatePage } from '../pages/management/QuotationCreatePage'
 import { QuotationEditPage } from '../pages/management/QuotationEditPage'
@@ -147,6 +148,7 @@ export const routeConfig: RouteObject[] = [
           { path: 'users', element: <UsersPage /> },
           { path: 'customer-debts', element: <CustomerDebtsPage /> },
           { path: 'payment-verifications', element: <PaymentVerificationsPage /> },
+          { path: 'cod-collections', element: <CodCollectionsPage /> },
         ],
       },
     ],

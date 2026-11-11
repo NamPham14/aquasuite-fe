@@ -34,7 +34,8 @@ test('UC29 has no receipt form, links to order payment, and retains reservation 
       bodies.push(await request.json())
       if (bodies.length === 1) throw new TypeError('Lost response')
     }
-    const data = path.endsWith('/stock-reservations') ? view : path.endsWith('/payments') ? (request.method === 'POST' ? { transactionCode: 'PAY-1', status: 'PENDING' } : [])
+    const data = path.endsWith('/stock-reservations/history') ? { orderId: 'order-1', reservations: [], activities: [], decisions: [] }
+      : path.endsWith('/stock-reservations') ? view : path.endsWith('/payments') ? (request.method === 'POST' ? { transactionCode: 'PAY-1', status: 'PENDING' } : [])
       : { orderId: 'order-1', orderCode: 'DH01', customerName: 'Customer', orderStatus: 'CONFIRMED', items: [{ orderItemId: 'item-1', variantId: 'variant-1', sku: 'SKU-1', productName: 'Product', quantity: 10 }] }
     return new Response(JSON.stringify({ success: true, data }), { headers: { 'content-type': 'application/json' } })
   }) as typeof fetch
@@ -43,7 +44,7 @@ test('UC29 has no receipt form, links to order payment, and retains reservation 
   try {
     await act(async () => { root.render(React.createElement(Provider, { store }, React.createElement(ReservationDetails, { orderId: 'order-1', onClose() {} }))) })
     for (let i = 0; i < 20 && !document.querySelector('a[href="/app/orders/order-1"]'); i++) await settle()
-    const sync = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Đồng bộ bổ sung hàng giữ')!
+    const sync = Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Kiểm tra và giữ thêm hàng')!
     assert.equal(sync.disabled, true, 'must not infer eligibility from verifiedPaid >= required')
     assert.equal(document.querySelector('#receipt-amount'), null)
     assert.equal(document.body.textContent?.includes('Ghi nhận khoản thu'), false)
@@ -51,11 +52,13 @@ test('UC29 has no receipt form, links to order payment, and retains reservation 
     assert.equal(document.querySelectorAll('form').length, 1)
     view.payment.depositSatisfied = true
     await act(async () => { await store.dispatch(reservationApi.endpoints.reservation.initiate('order-1', { forceRefetch: true })).unwrap() })
+    for (let i = 0; i < 20 && Array.from(document.querySelectorAll('button')).find((button) => button.textContent === 'Kiểm tra và giữ thêm hàng')?.disabled; i++) await settle()
     const forms = document.querySelectorAll('form')
     await act(async () => { forms[0].dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })) })
     for (let i = 0; i < 20 && !document.body.textContent?.includes('Chưa xác định kết quả'); i++) await settle()
     assert.equal(bodies.length, 1)
     assert.equal(document.querySelector<HTMLButtonElement>('button[aria-label="Đóng"]')!.disabled, true)
+    assert.ok(Array.from(document.querySelectorAll<HTMLButtonElement>('[role="tab"]')).every((button) => button.disabled))
     assert.equal(document.querySelector('a[aria-disabled="true"]')?.hasAttribute('href'), false)
     await act(async () => { forms[0].dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })) })
     for (let i = 0; i < 20 && !document.body.textContent?.includes('Đã cập nhật yêu cầu giữ hàng.'); i++) await settle()

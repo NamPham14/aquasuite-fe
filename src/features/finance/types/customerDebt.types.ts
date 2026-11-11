@@ -1,10 +1,11 @@
-export type DebtStatus = 'NO_CREDIT' | 'WITHIN_TERM' | 'OVERDUE' | 'CREDIT_BLOCKED' | 'BLACKLISTED' | 'BLOCKED'
+export type DebtStatus = 'NO_CREDIT' | 'WITHIN_TERM' | 'OVERDUE' | 'CREDIT_BLOCKED' | 'BLACKLISTED' | 'BLOCKED' | 'COD_REVIEW'
 export type ReminderType = 'UPCOMING' | 'OVERDUE' | 'FINAL'
 export type DebtCallResult = 'PROMISED_TO_PAY' | 'NEEDS_REVIEW' | 'NO_ANSWER' | 'NUMBER_UNREACHABLE'
 
 export interface CustomerDebtSummary {
   customerId: string; customerCode: string; customerName: string; phone?: string; companyName?: string; customerType?: string
   creditLimit: number; unbilledCommitment: number; issuedInvoiceReceivable: number; unallocatedAdvanceAmount: number
+  codHeldAmount?: number; customerCollectibleAmount?: number; codReviewRequired?: boolean
   outstandingBalance: number; overdueBalance: number; availableCredit: number; nearestDueDate?: string; debtStatus: DebtStatus
 }
 export interface CustomerDebtPage { content: CustomerDebtSummary[]; page: number; size: number; totalElements: number; totalPages: number }

@@ -18,9 +18,11 @@ export const reservationApi = baseApi.injectEndpoints({
     }),
     reservation: builder.query<ReservationView, string>({
       query: reservationPath, transformResponse: unwrap<ReservationView>,
+      providesTags: (_result, _error, id) => [{ type: 'SalesOrder', id }, { type: 'OrderPayment', id }],
     }),
     reservationReceipts: builder.query<OrderReceipt[], string>({
       query: (id) => `/finance/orders/${id}/payments`, transformResponse: unwrap<OrderReceipt[]>,
+      providesTags: (_result, _error, id) => [{ type: 'OrderPayment', id }],
     }),
     submitReservation: builder.mutation<ReservationView, { orderId: string; action: 'requests' | 'synchronize'; body: ReservationRequest }>({
       query: ({ orderId, action, body }) => ({ url: `${reservationPath(orderId)}/${action}`, method: 'POST', body }),
