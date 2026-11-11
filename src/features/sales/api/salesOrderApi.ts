@@ -9,6 +9,7 @@ import type {
   SalesOrderDetailResponse,
   SalesOrderFilterParams,
   SalesOrderSummaryResponse,
+  UpdateOrderFulfillmentRequest,
 } from '../types/salesOrder.types'
 
 function cleanParams(obj: Record<string, unknown>) {
@@ -99,6 +100,35 @@ export const salesOrderApi = baseApi.injectEndpoints({
       // Dùng chung tag 'OrderPayment' với các endpoint UC-23 để tự làm mới sau khi ghi nhận.
       providesTags: (_res, _err, orderId) => [{ type: 'OrderPayment', id: orderId }],
     }),
+
+    // ========== QUẢN LÝ ĐIỀU PHỐI & HOÀN TẤT ĐƠN HÀNG (UC-21.2) ==========
+    updateOrderFulfillment: builder.mutation<
+      SalesOrderDetailResponse,
+      { orderId: string; body: UpdateOrderFulfillmentRequest }
+    >({
+      query: ({ orderId, body }) => ({
+        url: `/sales/orders/${orderId}/fulfillment`,
+        method: 'PATCH',
+        body,
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, { orderId }) => [
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+      ],
+    }),
+
+    completeSalesOrder: builder.mutation<SalesOrderDetailResponse, string>({
+      query: (orderId) => ({
+        url: `/sales/orders/${orderId}/complete`,
+        method: 'PATCH',
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, orderId) => [
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+      ],
+    }),
   }),
 })
 
@@ -110,4 +140,6 @@ export const {
   useLazyGetCustomerCreditSummaryQuery,
   useCheckCustomerCreditMutation,
   useGetOrderPaymentSummaryQuery,
+  useUpdateOrderFulfillmentMutation,
+  useCompleteSalesOrderMutation,
 } = salesOrderApi
