@@ -1,4 +1,4 @@
-import { Eye, ShoppingBag } from 'lucide-react'
+import { Edit3, ShoppingBag } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { OrderStatus, PaymentStatus, SalesOrderSummaryResponse } from '../types/salesOrder.types'
 
@@ -108,12 +108,12 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
           <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase border-b border-slate-200 font-semibold tracking-wider">
             <tr>
               <th className="px-4 py-3 w-[16%] text-left">Mã & Ngày tạo</th>
-              <th className="px-2 py-3 w-[12%] text-center">Loại đơn</th>
-              <th className="px-4 py-3 w-[22%] text-left">Khách hàng & Kênh</th>
+              <th className="px-2 py-3 w-[11%] text-center">Loại đơn</th>
+              <th className="px-4 py-3 w-[21%] text-left">Khách hàng & Kênh</th>
               <th className="px-4 py-3 w-[14%] text-right">Tổng tiền</th>
               <th className="px-2 py-3 w-[14%] text-center">Trạng thái đơn</th>
-              <th className="px-2 py-3 w-[16%] text-center">Thanh toán</th>
-              <th className="px-2 py-3 w-[6%] text-center">Thao tác</th>
+              <th className="px-2 py-3 w-[15%] text-center">Thanh toán</th>
+              <th className="px-2 py-3 w-[9%] text-center">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -216,16 +216,25 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
                     </div>
                   </td>
 
-                  {/* Cột 7: Thao tác */}
+                  {/* Cột 7: Thao tác (Chỉ để thao tác Chỉnh sửa) */}
                   <td className="px-2 py-3.5 align-middle text-center">
                     <div className="flex items-center justify-center">
-                      <Link
-                        to={`/app/orders/${order.orderId}`}
-                        className="inline-flex items-center justify-center p-1.5 rounded text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition"
-                        title="Xem chi tiết đơn hàng"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Link>
+                      {order.orderStatus === 'PROCESSING' ? (
+                        <Link
+                          to={`/app/orders/${order.orderId}`}
+                          className="inline-flex items-center justify-center p-1.5 rounded text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition"
+                          title="Chỉnh sửa thông tin đơn hàng"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </Link>
+                      ) : (
+                        <span
+                          className="inline-flex items-center justify-center p-1.5 rounded text-slate-300 cursor-not-allowed"
+                          title="Đơn hàng đã hoàn tất hoặc đã hủy, không thể chỉnh sửa"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </span>
+                      )}
                     </div>
                   </td>
                 </tr>

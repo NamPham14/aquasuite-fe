@@ -268,3 +268,85 @@ test('salesOrderApi integrates Nam Finance Payment Summary', async () => {
   assert.equal(result.remaining, 15000000)
   assert.equal(result.paymentStatus, 'PARTIALLY_PAID')
 })
+
+test('salesOrderApi updateOrderFulfillment sends PATCH /sales/orders/:id/fulfillment', async () => {
+  const store = createStore()
+  const requests: { url: string; method: string; body?: unknown }[] = []
+
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const req = input instanceof Request ? input : new Request(input, init)
+    const body = req.method !== 'GET' ? await req.clone().json() : undefined
+    requests.push({ url: req.url, method: req.method, body })
+
+    return new Response(
+      JSON.stringify({
+        data: {
+          orderId: 'order-123',
+          orderCode: 'SO-20261111-001',
+          deliveryAddress: '456 Phố Huế, Hai Bà Trưng, Hà Nội',
+          deliverySchedule: 'Giao sáng Chủ Nhật',
+          note: 'Gọi trước 15 phút',
+          orderStatus: 'PROCESSING',
+          paymentStatus: 'PAID',
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    )
+  }) as typeof fetch
+
+  const result = await store
+    .dispatch(
+      salesOrderApi.endpoints.updateOrderFulfillment.initiate({
+        orderId: 'order-123',
+        body: {
+          deliveryAddress: '456 Phố Huế, Hai Bà Trưng, Hà Nội',
+          deliverySchedule: 'Giao sáng Chủ Nhật',
+          note: 'Gọi trước 15 phút',
+        },
+      }),
+    )
+    .unwrap()
+
+  assert.equal(requests.length, 1)
+  assert.match(requests[0].url, /\/sales\/orders\/order-123\/fulfillment$/)
+  assert.equal(requests[0].method, 'PATCH')
+  assert.deepEqual(requests[0].body, {
+    deliveryAddress: '456 Phố Huế, Hai Bà Trưng, Hà Nội',
+    deliverySchedule: 'Giao sáng Chủ Nhật',
+    note: 'Gọi trước 15 phút',
+  })
+  assert.equal(result.orderId, 'order-123')
+  assert.equal(result.deliverySchedule, 'Giao sáng Chủ Nhật')
+})
+
+test('salesOrderApi completeSalesOrder sends PATCH /sales/orders/:id/complete', async () => {
+  const store = createStore()
+  const requests: { url: string; method: string }[] = []
+
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const req = input instanceof Request ? input : new Request(input, init)
+    requests.push({ url: req.url, method: req.method })
+
+    return new Response(
+      JSON.stringify({
+        data: {
+          orderId: 'order-123',
+          orderCode: 'SO-20261111-001',
+          orderStatus: 'COMPLETED',
+          paymentStatus: 'PAID',
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    )
+  }) as typeof fetch
+
+  const result = await store
+    .dispatch(salesOrderApi.endpoints.completeSalesOrder.initiate('order-123'))
+    .unwrap()
+
+  assert.equal(requests.length, 1)
+  assert.match(requests[0].url, /\/sales\/orders\/order-123\/complete$/)
+  assert.equal(requests[0].method, 'PATCH')
+  assert.equal(result.orderStatus, 'COMPLETED')
+})
+

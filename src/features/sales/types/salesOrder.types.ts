@@ -51,6 +51,12 @@ export interface CreateSalesOrderRequest {
   combos?: CreateComboItemRequest[]
 }
 
+export interface UpdateOrderFulfillmentRequest {
+  deliveryAddress?: string
+  deliverySchedule?: string
+  note?: string
+}
+
 export interface SalesOrderFilterParams {
   keyword?: string
   orderStatus?: OrderStatus
