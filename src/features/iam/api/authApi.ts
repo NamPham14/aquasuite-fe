@@ -10,6 +10,26 @@ import type {
 
 const API_BASE = getApiBaseUrl()
 
+export interface RegistrationVerification { email: string; otp: string }
+
+export function registerCustomerApi(data: import('../schemas/customerRegister.schema.ts').CustomerRegisterData) {
+  return safeFetch<{ id: string; email: string; status: 'PENDING_ACTIVATION' }>(
+    `${API_BASE}/iam/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }, 'Đăng ký không thành công',
+  )
+}
+
+export function verifyRegistrationApi(data: RegistrationVerification) {
+  return safeFetch<LoginResponseData>(`${API_BASE}/iam/register/verifications`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+  }, 'Xác minh không thành công')
+}
+
+export function resendRegistrationApi(email: string) {
+  return safeFetch<null>(`${API_BASE}/iam/register/otp-resends`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
+  }, 'Không thể gửi lại mã OTP')
+}
+
 /** Gửi request auth trực tiếp, đọc envelope JSON và ném lỗi có status/data để UI phân loại. */
 async function safeFetch<T>(
   url: string,

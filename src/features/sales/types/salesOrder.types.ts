@@ -85,6 +85,19 @@ export interface SalesOrderItemResponse {
   lineTotal: number
 }
 
+export interface SalesOrderDisplayItemResponse {
+  itemType: 'SINGLE' | 'COMBO'
+  sku: string | null
+  unitPrice: number | null
+  discountAmount: number | null
+  comboId: string | null
+  productName: string
+  quantity: number | null
+  lineTotal: number
+  item: SalesOrderItemResponse | null
+  components: SalesOrderItemResponse[]
+}
+
 export interface SalesOrderMilestoneResponse {
   milestoneId: string
   stageName: string
@@ -126,6 +139,7 @@ export interface SalesOrderDetailResponse {
   note?: string | null
   createdAt: string
   updatedAt: string
+  displayItems?: SalesOrderDisplayItemResponse[]
   items: SalesOrderItemResponse[]
   milestones: SalesOrderMilestoneResponse[]
 }

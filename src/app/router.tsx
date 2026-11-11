@@ -1,11 +1,15 @@
 import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router-dom'
 import { AuthLayout, ManagementLayout } from '../layouts'
 import { LoginPage } from '../pages/auth/LoginPage'
+import { CustomerLoginPage } from '../pages/auth/CustomerLoginPage'
+import { CustomerRegisterPage } from '../pages/auth/CustomerRegisterPage'
 import { DashboardPage } from '../pages/management/DashboardPage'
 import { ProductsPage } from '../pages/management/ProductsPage'
 import { ProductVariantsPage } from '../pages/management/ProductVariantsPage'
 import { CategoriesPage } from '../pages/management/CategoriesPage'
 import { BrandsPage } from '../pages/management/BrandsPage'
+import { CombosPage } from '../pages/management/CombosPage'
+import { DepositsPage } from '../pages/management/DepositsPage'
 import { InventoryPage } from '../pages/management/InventoryPage'
 import { SystemInfoPage } from '../pages/management/SystemInfoPage'
 import { RolesPage } from '../pages/management/RolesPage'
@@ -14,6 +18,7 @@ import { UsersPage } from '../pages/management/UsersPage'
 import { CustomerDebtsPage } from '../pages/management/CustomerDebtsPage'
 import { CreditProfileApprovalsPage } from '../pages/management/CreditProfileApprovalsPage'
 import { PaymentVerificationsPage } from '../pages/management/PaymentVerificationsPage'
+import { CodCollectionsPage } from '../pages/management/CodCollectionsPage'
 import { QuotationsPage } from '../pages/management/QuotationsPage'
 import { QuotationCreatePage } from '../pages/management/QuotationCreatePage'
 import { QuotationEditPage } from '../pages/management/QuotationEditPage'
@@ -40,6 +45,8 @@ export const routeConfig: RouteObject[] = [
       {
         element: <AuthLayout />,
         children: [
+          { path: '/login-customer', element: <CustomerLoginPage /> },
+          { path: '/register-customer', element: <CustomerRegisterPage /> },
           {
             path: '/login',
             element: <LoginPage />,
@@ -83,6 +90,8 @@ export const routeConfig: RouteObject[] = [
             path: 'brands',
             element: <BrandsPage />,
           },
+          { path: 'combos', element: <CombosPage /> },
+          { path: 'deposits', element: <DepositsPage /> },
           {
             path: 'inventory',
             element: <InventoryPage />,
@@ -141,6 +150,7 @@ export const routeConfig: RouteObject[] = [
           { path: 'customer-debts', element: <CustomerDebtsPage /> },
           { path: 'customer-debts/credit-approvals', element: <CreditProfileApprovalsPage /> },
           { path: 'payment-verifications', element: <PaymentVerificationsPage /> },
+          { path: 'cod-collections', element: <CodCollectionsPage /> },
         ],
       },
     ],

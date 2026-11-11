@@ -1,17 +1,22 @@
-import { useEffect, useRef, type FormEventHandler, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type FormEventHandler, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 
-export function ManagementDialog({ title, onClose, children, closeDisabled = false }: { title: string; onClose: () => void; children: ReactNode; closeDisabled?: boolean }) {
+export function ManagementDialog({ title, onClose, children, closeDisabled = false, size = 'default', placement = 'center' }: { title: string; onClose: () => void; children: ReactNode; closeDisabled?: boolean; size?: 'default' | 'wide'; placement?: 'center' | 'right' }) {
+  const titleId = useId()
   const ref = useRef<HTMLDialogElement>(null)
   useEffect(() => {
     const dialog = ref.current
+    const trigger = document.activeElement
     dialog?.showModal()
-    return () => { dialog?.close() }
+    return () => {
+      dialog?.close()
+      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus()
+    }
   }, [])
   return (
-    <dialog ref={ref} aria-labelledby="management-dialog-title" onCancel={(event) => { event.preventDefault(); if (!closeDisabled) onClose() }} className="m-auto max-h-[90vh] w-[min(94vw,640px)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-0 text-slate-900 shadow-xl backdrop:bg-slate-950/50">
+    <dialog ref={ref} aria-labelledby={titleId} onCancel={(event) => { event.preventDefault(); event.stopPropagation(); if (!closeDisabled) onClose() }} className={`${placement === 'right' ? 'fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh w-[min(100vw,480px)]' : `m-auto max-h-[90vh] ${size === 'wide' ? 'w-[min(94vw,960px)]' : 'w-[min(94vw,640px)]'} rounded-xl`} overflow-y-auto border border-slate-200 bg-white p-0 text-slate-900 shadow-xl backdrop:bg-slate-950/50`}>
       <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
-        <h2 id="management-dialog-title" className="text-lg font-semibold">{title}</h2>
+        <h2 id={titleId} className="text-lg font-semibold">{title}</h2>
         <button type="button" disabled={closeDisabled} onClick={onClose} aria-label="Đóng" className="rounded-md p-2 text-slate-600 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:opacity-50"><X className="h-5 w-5" /></button>
       </div>
       {children}

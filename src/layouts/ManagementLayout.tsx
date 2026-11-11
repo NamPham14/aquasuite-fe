@@ -3,6 +3,7 @@ import { Outlet, NavLink, Link } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
+  Layers,
   FolderTree,
   Tags,
   Warehouse,
@@ -15,10 +16,11 @@ import {
   ChevronRight,
   UsersRound,
   KeyRound,
+  HandCoins,
   FileSpreadsheet,
   ShoppingCart,
-  Truck,
   WalletCards,
+  Truck,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -60,6 +62,7 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
         to: '/app/brands',
         icon: Tags,
       },
+      { name: 'Combo', to: '/app/combos', icon: Layers },
       {
         name: 'Tồn kho',
         to: '/app/inventory',
@@ -70,27 +73,12 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
   {
     group: 'Bán hàng & Đơn hàng',
     items: [
-      {
-        name: 'Đơn hàng',
-        to: '/app/orders',
-        icon: ShoppingCart,
-      },
-      {
-        name: 'Báo giá',
-        to: '/app/quotations',
-        icon: FileSpreadsheet,
-      },
-      {
-        name: 'Công nợ khách hàng',
-        to: '/app/customer-debts',
-        icon: WalletCards,
-      },
-      {
-        name: 'Xác minh thanh toán',
-        to: '/app/payment-verifications',
-        icon: ShieldCheck,
-        roles: ['ACCOUNTANT'],
-      },
+      { name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins },
+      { name: 'Đơn hàng', to: '/app/orders', icon: ShoppingCart },
+      { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
+      { name: 'Công nợ khách hàng', to: '/app/customer-debts', icon: WalletCards },
+      { name: 'Xác minh thanh toán', to: '/app/payment-verifications', icon: ShieldCheck, roles: ['ACCOUNTANT'] },
+      { name: 'Thu & bàn giao COD', to: '/app/cod-collections', icon: HandCoins, roles: ['SHIPPER', 'ACCOUNTANT', 'SALES_STAFF', 'SHOP_OWNER'] },
     ],
   },
   {

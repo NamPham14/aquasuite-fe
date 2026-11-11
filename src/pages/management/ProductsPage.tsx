@@ -71,7 +71,6 @@ function formatPriceRange(min?: number | null, max?: number | null): string {
   return `Đến ${max!.toLocaleString('vi-VN')} ₫`
 }
 
-/** Product index uses the actual UC-09 backend endpoint; no demonstration rows are retained. */
 export function ProductsPage() {
   const dispatch = useDispatch<AppDispatch>()
 
@@ -361,7 +360,7 @@ export function ProductsPage() {
             {formatPriceRange(item.minSellingPrice, item.maxSellingPrice)}
           </div>
           <div className="text-[11px] text-slate-500">
-            {item.totalVariants} biến thể
+            <Link className="text-sky-700 underline focus-visible:outline-2 focus-visible:outline-sky-600" to={`/app/products/${item.productId}/variants`} aria-label={`Quản lý SKU của ${item.productName}`}>{item.totalVariants} biến thể</Link>
           </div>
         </div>
       ),
@@ -707,7 +706,7 @@ export function ProductsPage() {
                 </div>
                 <div>
                   <span className="text-slate-500">Biến thể:</span>
-                  <div className="font-medium text-slate-900">{item.totalVariants} biến thể</div>
+                  <div className="font-medium text-slate-900"><Link className="text-sky-700 underline focus-visible:outline-2 focus-visible:outline-sky-600" to={`/app/products/${item.productId}/variants`} aria-label={`Quản lý SKU của ${item.productName}`}>{item.totalVariants} biến thể</Link></div>
                 </div>
               </div>
 

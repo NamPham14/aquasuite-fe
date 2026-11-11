@@ -23,7 +23,7 @@ Trong TypeScript/React đây là function component, type và hằng style; khô
 
 ## Tiêu đề, tìm kiếm và lọc
 
-`ManagementPageHeader` nhận `title`, `description`, `breadcrumb`, `icon` và `group` tùy chọn. Component luôn có liên kết về `/app/dashboard`; dùng khi hành vi đó phù hợp với trang. `ManagementFilterBar` chỉ sắp xếp các control trong vùng tìm kiếm. `ManagementSearch` và `ManagementSelect` là controlled component: trang giữ `value`, truyền `onChange`, tự lọc hoặc gọi API.
+`ManagementPageHeader` nhận `title`, `description`, `breadcrumb`, `icon` và `group` tùy chọn. Component có icon và liên kết về `/app/dashboard`; dùng cùng cách trình bày trên các trang quản lý, gồm Combo. `ManagementFilterBar` chỉ sắp xếp các control trong vùng tìm kiếm. `ManagementSearch` và `ManagementSelect` là controlled component: trang giữ `value`, truyền `onChange`, tự lọc hoặc gọi API.
 
 ```tsx
 import { useState } from 'react'
@@ -81,7 +81,11 @@ function ItemTable({ items }: { items: Item[] }) {
 
 ## Dialog và form
 
-`ManagementDialog` dùng thẻ HTML `<dialog>` và gọi `showModal()` khi được mount. Trang quản lý state mở/đóng bằng conditional render; nút X và Escape gọi `onClose`. `closeDisabled` tùy chọn, mặc định `false`, khóa nút X và Escape trong lúc chờ. Không render nhiều dialog này đồng thời: tiêu đề hiện dùng cùng một `id`. Kiểm tra focus, bàn phím và hành vi trình duyệt cho luồng thực tế.
+Combo dùng nguyên phong cách component của Danh mục/Thương hiệu: header có icon, bộ lọc có nhãn, bảng chia hàng, nút thao tác có icon và màu, phân trang chuẩn và `ManagementForm`. Ảnh wireframe chỉ hướng dẫn nội dung/luồng; không dùng CSS riêng để đổi theme, border-radius hoặc typography của Combo.
+
+`ManagementDialog` nhận `size` tùy chọn: `"default"` (640px tối đa như trước) hoặc `"wide"` (960px tối đa). Cả hai giới hạn 94vw và giữ nguyên màu sắc, bo góc, padding, backdrop, focus và hành vi đóng. Form Combo dùng `size="wide"` để chứa bảng SKU; chi tiết/xác nhận và các trang khác giữ mặc định. Bảng vẫn cuộn ngang trong dialog khi cần trên mobile.
+
+`ManagementDialog` dùng thẻ HTML `<dialog>` và gọi `showModal()` khi được mount. Trang quản lý state mở/đóng bằng conditional render; nút X và Escape gọi `onClose`. Khi unmount, dialog trả focus về phần tử mở ban đầu nếu phần tử đó còn trong DOM. `closeDisabled` tùy chọn, mặc định `false`, khóa nút X và Escape trong lúc chờ. Không render nhiều dialog này đồng thời: tiêu đề hiện dùng cùng một `id`. Kiểm tra focus, bàn phím và hành vi trình duyệt cho luồng thực tế.
 
 `ManagementForm` tạo thẻ `<form noValidate>`, bố trí phần nội dung và nút Hủy/Đóng, Lưu. `onSubmit` và `submitLabel` là bắt buộc; `readOnly` ẩn nút submit nhưng **không tự khóa các input**. `submitDisabled` tùy chọn (mặc định `false`) vô hiệu hóa nút submit; `closeDisabled` khóa nút Hủy/Đóng. Trang vẫn phải chặn gửi lặp trong handler và quản lý state, validation, pending, lỗi, đóng dialog và xử lý lưu. Không dùng một form giả để thể hiện thao tác đã kết nối backend.
 

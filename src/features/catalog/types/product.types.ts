@@ -115,3 +115,4 @@ export interface ProductPageResponse {
   totalElements: number
   totalPages: number
 }
+

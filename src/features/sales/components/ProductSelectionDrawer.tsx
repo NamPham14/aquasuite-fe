@@ -91,8 +91,9 @@ export function ProductSelectionDrawer({
   const formatMoney = (val: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
 
-  const { data: apiCatalogItems, isLoading } = useGetSalesCatalogItemsQuery(undefined, {
+  const { data: apiCatalogItems, isLoading, isError, refetch } = useGetSalesCatalogItemsQuery(undefined, {
     skip: !isOpen,
+    refetchOnMountOrArgChange: true,
   })
 
   // Toàn bộ dữ liệu sản phẩm & combo lấy 100% từ Database API
@@ -317,6 +318,11 @@ export function ProductSelectionDrawer({
                   <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
                   <p className="text-xs">Đang tải danh mục từ hệ thống...</p>
                 </div>
+              ) : isError ? (
+                <div role="alert" className="p-4 text-center text-sm text-rose-700">
+                  <p>Không tải được danh mục sản phẩm.</p>
+                  <button type="button" onClick={() => void refetch()} className="mt-2 underline">Thử lại</button>
+                </div>
               ) : filteredList.length === 0 ? (
                 <div className="text-center py-12 px-4">
                   <Package className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
@@ -324,7 +330,7 @@ export function ProductSelectionDrawer({
                     Không tìm thấy {activeTab === 'product' ? 'sản phẩm' : 'combo'} phù hợp
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    Thử tìm với từ khóa hoặc đổi hãng khác
+                    {activeTab === 'combo' ? 'Kiểm tra combo đang hoạt động hoặc thử từ khóa khác' : 'Thử tìm với từ khóa hoặc đổi hãng khác'}
                   </p>
                 </div>
               ) : (
