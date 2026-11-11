@@ -1048,9 +1048,10 @@ test('Placeholder Pages — only unimplemented management pages show a no-API di
   assert.ok(p3.container.innerHTML.includes('Quản lý Thương hiệu'))
   assert.ok(p3.container.textContent?.includes('BRAND_A'))
 
+  // UC-31 đã được triển khai: trang Tồn kho không còn là placeholder và không hiển thị disclaimer no-API.
   const p4 = await renderAppWithRouter('/app/inventory', true)
   assert.ok(p4.container.innerHTML.includes('Quản lý Tồn kho'))
-  assert.ok(p4.container.innerHTML.includes('chưa kết nối API nghiệp vụ'))
+  assert.ok(!p4.container.innerHTML.includes('chưa kết nối API nghiệp vụ'))
   } finally {
     mock.restore()
   }

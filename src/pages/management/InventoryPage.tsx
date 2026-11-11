@@ -1,101 +1,129 @@
-import { Warehouse, ArrowLeft, Info } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Warehouse, RotateCcw, SlidersHorizontal } from 'lucide-react'
+import { ManagementPageHeader, ManagementFilterBar, ManagementSearch, ManagementSelect } from '../../shared/ui/ManagementPage'
+import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
+import { ManagementActionButton } from '../../shared/ui/ManagementRowActions'
+import { useAuth } from '../../features/iam/hooks/useAuth'
+import { useInventoryFilters } from '../../features/inventory/hooks/useInventoryFilters'
+import { useSearchInventoryQuery } from '../../features/inventory/api/inventoryApi'
+import { InventoryStatusBadge } from '../../features/inventory/components/InventoryStatusBadge'
+import { InventoryThresholdDialog } from '../../features/inventory/components/InventoryThresholdDialog'
+import { InventoryDetailDialog } from '../../features/inventory/components/InventoryDetailDialog'
+import type { InventoryListItem, InventoryStockStatus } from '../../features/inventory/types/inventory.types'
 
+/**
+ * Trang Tra cứu & Quản lý Tồn kho (UC-31).
+ * Gom các luồng nghiệp vụ: A) danh sách/tìm kiếm, B) xem chi tiết + thẻ kho, C) lọc hàng tồn thấp,
+ * D) cấu hình ngưỡng tồn an toàn (chỉ Chủ cửa hàng). Tái dùng toàn bộ bộ UI quản lý dùng chung.
+ */
 export function InventoryPage() {
-  return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  const { user } = useAuth()
+  // Chỉ Chủ cửa hàng được cấu hình ngưỡng (khớp @PreAuthorize hasRole('SHOP_OWNER') ở backend).
+  const isOwner = user?.roles.some((role) => ['SHOP_OWNER', 'ROLE_SHOP_OWNER'].includes(role.toUpperCase())) ?? false
+
+  const { keyword, setKeyword, status, setStatus, lowStockOnly, setLowStockOnly, page, setPage, resetFilters, queryParams } =
+    useInventoryFilters({ page: 1, size: 10 })
+
+  const { data, isLoading, isFetching } = useSearchInventoryQuery(queryParams)
+  const rows = data?.items ?? []
+  const totalPages = data?.totalPages ?? 1
+
+  // SKU đang mở hộp thoại chi tiết / cấu hình ngưỡng.
+  const [detailItem, setDetailItem] = useState<InventoryListItem | null>(null)
+  const [thresholdItem, setThresholdItem] = useState<InventoryListItem | null>(null)
+
+  const columns: readonly ManagementTableColumn<InventoryListItem>[] = [
+    {
+      key: 'product', header: 'Sản phẩm / SKU',
+      cell: (r) => (
         <div>
-          <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-1">
-            <ol className="flex items-center gap-1.5">
-              <li>
-                <Link to="/app/dashboard" className="hover:text-blue-600 transition-colors">
-                  AquaSuite
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li className="text-gray-400">Quản lý danh mục</li>
-              <li aria-hidden="true">/</li>
-              <li className="text-gray-900 font-medium" aria-current="page">Tồn kho</li>
-            </ol>
-          </nav>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-              <Warehouse className="w-6 h-6" aria-hidden="true" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Quản lý Tồn kho</h1>
-              <p className="text-xs text-gray-500">Kiểm soát xuất nhập tồn, vị trí kho bãi và cảnh báo dự trữ</p>
-            </div>
-          </div>
+          <p className="font-medium text-slate-900">{r.productName ?? '—'}</p>
+          <p className="text-2xs text-slate-500">{r.sku ?? r.variantId}</p>
         </div>
+      ),
+    },
+    { key: 'onHand', header: 'Tồn thực tế', align: 'right', cell: (r) => `${r.onHandQty} ${r.unit ?? ''}` },
+    { key: 'reserved', header: 'Đang giữ', align: 'right', cell: (r) => r.reservedQty },
+    { key: 'available', header: 'Khả dụng', align: 'right', cellClassName: 'font-semibold text-slate-900', cell: (r) => r.availableQty },
+    { key: 'minimum', header: 'Ngưỡng min', align: 'right', cell: (r) => r.minimumQty },
+    { key: 'status', header: 'Trạng thái', align: 'center', cell: (r) => <InventoryStatusBadge status={r.status} /> },
+    {
+      key: 'actions', header: 'Thao tác', align: 'right',
+      cell: (r) => (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <ManagementActionButton variant="view" label="Chi tiết" ariaLabel={`Xem chi tiết ${r.sku ?? r.productName}`} onClick={() => setDetailItem(r)} />
+          {isOwner && (
+            <ManagementActionButton variant="edit" label="Ngưỡng" ariaLabel={`Cấu hình ngưỡng ${r.sku ?? r.productName}`} onClick={() => setThresholdItem(r)} />
+          )}
+        </div>
+      ),
+    },
+  ]
 
-        <Link
-          to="/app/dashboard"
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors self-start sm:self-auto"
-        >
-          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-          <span>Về bảng điều khiển</span>
-        </Link>
+  return (
+    <div className="space-y-6 pb-12">
+      <ManagementPageHeader
+        title="Quản lý Tồn kho"
+        description="Tra cứu tồn kho thời gian thực, theo dõi ngưỡng an toàn và cảnh báo sắp hết hàng"
+        group="Kho & Mua hàng"
+        breadcrumb="Tồn kho"
+        icon={<Warehouse className="h-6 w-6" aria-hidden="true" />}
+      />
+
+      {/* Bộ lọc tra cứu */}
+      <ManagementFilterBar>
+        <ManagementSearch id="inv-keyword" label="Tìm kiếm" value={keyword} onChange={setKeyword} placeholder="Tên sản phẩm hoặc mã SKU…" />
+        <ManagementSelect id="inv-status" label="Trạng thái" value={status} onChange={(v) => setStatus(v as InventoryStockStatus | '')}>
+          <option value="">Tất cả trạng thái</option>
+          <option value="IN_STOCK">Còn hàng</option>
+          <option value="LOW_STOCK">Sắp hết</option>
+          <option value="OUT_OF_STOCK">Hết hàng</option>
+        </ManagementSelect>
+        <div className="flex items-end gap-4">
+          <label className="inline-flex items-center gap-2 pb-2.5 text-sm text-slate-700">
+            <input type="checkbox" checked={lowStockOnly} onChange={(e) => setLowStockOnly(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
+            Chỉ hàng tồn thấp
+          </label>
+          <button type="button" onClick={resetFilters}
+            className="mb-0.5 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100">
+            <RotateCcw className="h-3.5 w-3.5" /> Đặt lại
+          </button>
+        </div>
+      </ManagementFilterBar>
+
+      <div className="flex items-center gap-2 text-xs text-slate-500">
+        <SlidersHorizontal className="h-3.5 w-3.5" />
+        Hiển thị {rows.length} / {data?.totalElements ?? 0} SKU
       </div>
 
-      {/* Placeholder Notice */}
-      <div
-        role="region"
-        aria-label="Thông báo trạng thái tính năng"
-        className="bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-5 flex items-start gap-3.5"
-      >
-        <div className="p-1 bg-amber-100 text-amber-800 rounded-md shrink-0 mt-0.5">
-          <Info className="w-5 h-5" aria-hidden="true" />
-        </div>
-        <div className="space-y-1 text-xs text-amber-900">
-          <h2 className="font-semibold text-sm text-amber-950">
-            Trang giao diện mẫu (Placeholder) — WORK-002
-          </h2>
-          <p className="leading-relaxed">
-            Màn hình <strong>Quản lý Tồn kho</strong> hiện là giao diện giữ chỗ theo kế hoạch phát triển. 
-            Theo phạm vi của <strong>WORK-002</strong>, hệ thống chỉ triển khai route điều hướng và layout chung; 
-            chưa kết nối API nghiệp vụ và chưa hỗ trợ thao tác thêm, sửa, xóa (CRUD).
-          </p>
-        </div>
+      {/* Bảng tồn kho */}
+      <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
+        <h2 id="inventory-table-title" className="sr-only">Danh sách tồn kho</h2>
+        <ManagementTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.variantId}
+          labelledBy="inventory-table-title"
+          emptyMessage={isLoading || isFetching ? 'Đang tải dữ liệu tồn kho…' : 'Không tìm thấy SKU phù hợp.'}
+        />
       </div>
 
-      {/* Mock Inventory Status Summary */}
-      <div className="bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden">
-        <div className="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="text-base font-semibold text-gray-900">Thống kê kho bãi minh họa</h3>
-            <p className="text-xs text-gray-500">Khung bố cục theo dõi mức độ tồn kho và điều chuyển nội bộ</p>
+      {/* Phân trang */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-2">
+          <p className="text-xs text-slate-500">Trang {page} / {totalPages}</p>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40">Trang trước</button>
+            <button type="button" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page >= totalPages}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40">Trang sau</button>
           </div>
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 self-start sm:self-auto">
-            Dữ liệu mẫu
-          </span>
         </div>
+      )}
 
-        <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="border border-emerald-200 bg-emerald-50/50 rounded-lg p-4 space-y-1">
-            <span className="text-xs font-medium text-emerald-800">Kho chính TP.HCM</span>
-            <div className="text-xl font-bold text-emerald-950">1.850 SP</div>
-            <p className="text-2xs text-emerald-700">Công suất: 75% diện tích</p>
-          </div>
-          <div className="border border-blue-200 bg-blue-50/50 rounded-lg p-4 space-y-1">
-            <span className="text-xs font-medium text-blue-800">Kho phụ Hà Nội</span>
-            <div className="text-xl font-bold text-blue-950">920 SP</div>
-            <p className="text-2xs text-blue-700">Công suất: 52% diện tích</p>
-          </div>
-          <div className="border border-amber-200 bg-amber-50/50 rounded-lg p-4 space-y-1">
-            <span className="text-xs font-medium text-amber-800">Cảnh báo thiếu hụt</span>
-            <div className="text-xl font-bold text-amber-950">12 mã SP</div>
-            <p className="text-2xs text-amber-700">Dưới mức an toàn</p>
-          </div>
-          <div className="border border-purple-200 bg-purple-50/50 rounded-lg p-4 space-y-1">
-            <span className="text-xs font-medium text-purple-800">Đang luân chuyển</span>
-            <div className="text-xl font-bold text-purple-950">65 SP</div>
-            <p className="text-2xs text-purple-700">2 chuyến hàng trên đường</p>
-          </div>
-        </div>
-      </div>
+      {detailItem && <InventoryDetailDialog item={detailItem} onClose={() => setDetailItem(null)} />}
+      {thresholdItem && <InventoryThresholdDialog item={thresholdItem} onClose={() => setThresholdItem(null)} />}
     </div>
   )
 }
