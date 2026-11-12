@@ -21,6 +21,7 @@ import {
   ShoppingCart,
   WalletCards,
   Truck,
+  Wrench,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -89,6 +90,12 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
         to: '/app/purchase-orders',
         icon: Truck,
       },
+    ],
+  },
+  {
+    group: 'Dịch vụ kỹ thuật',
+    items: [
+      { name: 'Công việc kỹ thuật', to: '/app/technical-jobs', icon: Wrench, roles: ['SHOP_OWNER', 'TECHNICAL_STAFF'] },
     ],
   },
   {
