@@ -25,6 +25,7 @@ import {
 import { OrderStatusBadge } from '../../features/sales/components/OrderStatusBadge'
 import { PaymentStatusBadge } from '../../features/sales/components/PaymentStatusBadge'
 import { EditOrderFulfillmentModal } from '../../features/sales/components/EditOrderFulfillmentModal'
+import { OrderInvoicesModal } from '../../features/sales/components/OrderInvoicesModal'
 import { OrderCodPanel, OrderPaymentPanel } from '../../features/finance'
 import { useAuth } from '../../features/iam/hooks/useAuth'
 
@@ -36,6 +37,7 @@ export function OrderDetailPage() {
   const canRecordPayment = (user?.roles ?? []).some((r) => r === 'SALES_STAFF' || r === 'SHOP_OWNER')
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isInvoicesModalOpen, setIsInvoicesModalOpen] = useState(false)
 
   const { data: order, isLoading, error } = useGetSalesOrderByIdQuery(id || '', {
     skip: !id,
@@ -160,6 +162,22 @@ export function OrderDetailPage() {
         <div className="flex flex-wrap items-center gap-2">
           <OrderStatusBadge status={order.orderStatus} />
           <PaymentStatusBadge status={order.paymentStatus} />
+
+          {/* Action: Quản lý Hóa đơn (DRAFT -> ISSUED) */}
+          <button
+            type="button"
+            onClick={() => setIsInvoicesModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold transition"
+            title="Xem, chỉnh sửa hóa đơn Nháp (DRAFT) hoặc Chốt & Phát hành (ISSUED)"
+          >
+            <Receipt className="w-3.5 h-3.5" />
+            <span>Hóa đơn</span>
+            {(order.totalInvoiceCount ?? 0) > 0 && (
+              <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-indigo-600 text-white text-[10px] font-bold">
+                {order.issuedInvoiceCount ?? 0}/{order.totalInvoiceCount}
+              </span>
+            )}
+          </button>
 
           {/* Action: Sửa thông tin điều phối giao nhận (UC-21.2) */}
           {isProcessing && (
@@ -480,6 +498,18 @@ export function OrderDetailPage() {
         initialSchedule={order.deliverySchedule}
         initialNote={order.note}
         isProject={isProject}
+      />
+
+      {/* Modal Hóa đơn bán hàng (DRAFT chỉnh sửa được -> ISSUED chốt khóa để xuất kho) */}
+      <OrderInvoicesModal
+        isOpen={isInvoicesModalOpen}
+        onClose={() => setIsInvoicesModalOpen(false)}
+        orderId={order.orderId}
+        orderCode={order.orderCode}
+        orderType={order.orderType}
+        orderStatus={order.orderStatus}
+        vatRate={order.vatRate}
+        canManageInvoices={canRecordPayment}
       />
     </div>
   )

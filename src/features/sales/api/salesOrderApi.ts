@@ -1,15 +1,18 @@
 import { baseApi } from '../../../shared/api/baseApi.ts'
 import type { PageResponse } from '../../../shared/api/types.ts'
 import type {
+  CreateDraftInvoiceRequest,
   CreateSalesOrderRequest,
   CreditCheckRequest,
   CreditCheckResponse,
   CustomerCreditSummaryResponse,
   OrderPaymentSummaryResponse,
+  SalesInvoiceResponse,
   SalesOrderDetailResponse,
   SalesOrderFilterParams,
   SalesOrderSummaryResponse,
   UpdateOrderFulfillmentRequest,
+  UpdateSalesInvoiceRequest,
 } from '../types/salesOrder.types'
 
 function cleanParams(obj: Record<string, unknown>) {
@@ -129,6 +132,78 @@ export const salesOrderApi = baseApi.injectEndpoints({
         { type: 'SalesOrder', id: 'LIST' },
       ],
     }),
+
+    // ========== QUẢN LÝ HÓA ĐƠN BÁN HÀNG (DRAFT -> ISSUED) ==========
+    getOrderInvoices: builder.query<SalesInvoiceResponse[], string>({
+      query: (orderId) => `/sales/orders/${orderId}/invoices`,
+      transformResponse: (res: any) => res?.data ?? res,
+      providesTags: (_res, _err, orderId) => [{ type: 'SalesInvoice', id: `ORDER-${orderId}` }],
+    }),
+
+    createDraftInvoice: builder.mutation<
+      SalesInvoiceResponse,
+      { orderId: string; body: CreateDraftInvoiceRequest }
+    >({
+      query: ({ orderId, body }) => ({
+        url: `/sales/orders/${orderId}/invoices`,
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, { orderId }) => [
+        { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'OrderPayment', id: orderId },
+      ],
+    }),
+
+    updateDraftInvoice: builder.mutation<
+      SalesInvoiceResponse,
+      { invoiceId: string; orderId: string; body: UpdateSalesInvoiceRequest }
+    >({
+      query: ({ invoiceId, body }) => ({
+        url: `/sales/invoices/${invoiceId}`,
+        method: 'PUT',
+        body,
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, { orderId }) => [
+        { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'OrderPayment', id: orderId },
+      ],
+    }),
+
+    issueSalesInvoice: builder.mutation<
+      SalesInvoiceResponse,
+      { invoiceId: string; orderId: string }
+    >({
+      query: ({ invoiceId }) => ({
+        url: `/sales/invoices/${invoiceId}/issue`,
+        method: 'POST',
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, { orderId }) => [
+        { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+      ],
+    }),
+
+    cancelDraftInvoice: builder.mutation<void, { invoiceId: string; orderId: string }>({
+      query: ({ invoiceId }) => ({
+        url: `/sales/invoices/${invoiceId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_res, _err, { orderId }) => [
+        { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'OrderPayment', id: orderId },
+      ],
+    }),
   }),
 })
 
@@ -142,4 +217,9 @@ export const {
   useGetOrderPaymentSummaryQuery,
   useUpdateOrderFulfillmentMutation,
   useCompleteSalesOrderMutation,
+  useGetOrderInvoicesQuery,
+  useCreateDraftInvoiceMutation,
+  useUpdateDraftInvoiceMutation,
+  useIssueSalesInvoiceMutation,
+  useCancelDraftInvoiceMutation,
 } = salesOrderApi

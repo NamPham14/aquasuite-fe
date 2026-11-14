@@ -110,6 +110,9 @@ export interface SalesOrderDetailResponse {
   orderId: string
   orderCode: string
   storeInvoiceId?: string | null
+  totalInvoiceCount?: number | null
+  draftInvoiceCount?: number | null
+  issuedInvoiceCount?: number | null
   customerId?: string | null
   customerName?: string | null
   customerPhone?: string | null
@@ -216,4 +219,74 @@ export interface OrderPaymentSummaryResponse {
   pendingAmount: number
   remaining: number
   paymentStatus: string
+}
+
+// =================== SALES INVOICES (DRAFT -> ISSUED) ===================
+
+export type SalesInvoiceStatus = 'DRAFT' | 'ISSUED' | 'CANCELLED'
+export type SalesInvoiceType = 'STORE' | 'PROJECT'
+
+export interface SalesInvoiceItemResponse {
+  invoiceItemId: string
+  orderItemId: string
+  variantId: string
+  sku?: string | null
+  description?: string | null
+  quantity: number
+  unitPrice: number
+  discountAmount: number
+  taxRate: number
+  lineTotal: number
+}
+
+export interface SalesInvoiceResponse {
+  invoiceId: string
+  invoiceCode: string
+  orderId: string
+  orderCode: string
+  customerId: string
+  invoiceType: SalesInvoiceType | string
+  status: SalesInvoiceStatus | string
+  batchNo: number
+  batchName?: string | null
+  scheduledDeliveryDate?: string | null
+  issueDate: string
+  creditTermDays?: number | null
+  dueDate?: string | null
+  subtotal: number
+  discountAmount: number
+  taxAmount: number
+  totalAmount: number
+  createdBy: string
+  createdAt: string
+  issuedBy?: string | null
+  issuedAt?: string | null
+  cancelledBy?: string | null
+  cancelledAt?: string | null
+  note?: string | null
+  editable: boolean
+  lockedByModificationRequest: boolean
+  items: SalesInvoiceItemResponse[]
+}
+
+export interface InvoiceLineInput {
+  variantId: string
+  quantity: number
+  discountAmount?: number
+}
+
+export interface CreateDraftInvoiceRequest {
+  batchName?: string
+  scheduledDeliveryDate?: string | null
+  note?: string
+  splitFromInvoiceId?: string | null
+  items: InvoiceLineInput[]
+}
+
+export interface UpdateSalesInvoiceRequest {
+  batchName?: string
+  scheduledDeliveryDate?: string | null
+  note?: string
+  discountAmount?: number
+  items: InvoiceLineInput[]
 }
