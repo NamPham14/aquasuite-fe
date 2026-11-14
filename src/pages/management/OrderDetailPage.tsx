@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { OrderComboRow } from '../../features/sales/components/OrderComboRow'
+import { DeliveryList } from '../../features/fulfillment'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -33,6 +34,7 @@ export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const [tab, setTab] = useState<'order' | 'delivery'>('order')
   // Chỉ Sales Staff / Shop Owner được ghi nhận thanh toán tại quầy (UC-23); BE vẫn thực thi phân quyền.
   const canRecordPayment = (user?.roles ?? []).some((r) => r === 'SALES_STAFF' || r === 'SHOP_OWNER')
 
@@ -230,6 +232,15 @@ export function OrderDetailPage() {
         </div>
       )}
 
+      {user?.roles.some((role) => role === 'ACCOUNTANT' || role === 'SHOP_OWNER') && <div className="flex gap-4 border-b border-slate-200" role="tablist" aria-label="Thông tin đơn hàng" onKeyDown={(event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+        event.preventDefault()
+        const next = event.key === 'Home' ? 'order' : event.key === 'End' ? 'delivery' : tab === 'order' ? 'delivery' : 'order'
+        setTab(next)
+        document.getElementById(`${next}-tab`)?.focus()
+      }}><button id="order-tab" role="tab" tabIndex={tab === 'order' ? 0 : -1} aria-selected={tab === 'order'} aria-controls="order-panel" className={`px-3 py-3 font-semibold focus-visible:outline-2 focus-visible:outline-sky-600 ${tab === 'order' ? 'border-b-2 border-sky-600 text-sky-700' : 'text-slate-600'}`} onClick={() => setTab('order')}>Thông tin đơn</button><button id="delivery-tab" role="tab" tabIndex={tab === 'delivery' ? 0 : -1} aria-selected={tab === 'delivery'} aria-controls="delivery-panel" className={`px-3 py-3 font-semibold focus-visible:outline-2 focus-visible:outline-sky-600 ${tab === 'delivery' ? 'border-b-2 border-sky-600 text-sky-700' : 'text-slate-600'}`} onClick={() => setTab('delivery')}>Giao hàng</button></div>}
+      {tab === 'delivery' && id && <div id="delivery-panel" role="tabpanel" aria-labelledby="delivery-tab"><DeliveryList orderId={id} /></div>}
+      <div id="order-panel" hidden={tab !== 'order'} className="space-y-4">
       {/* Grid thông tin chung */}
       <div className={`grid grid-cols-1 ${isProject ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
         {/* Khối 1: Khách hàng */}
@@ -487,6 +498,7 @@ export function OrderDetailPage() {
           )}
         </div>
       )}
+      </div>
 
       {/* Modal chỉnh sửa giao nhận & ghi chú điều phối */}
       <EditOrderFulfillmentModal

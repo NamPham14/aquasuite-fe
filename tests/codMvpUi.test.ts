@@ -30,15 +30,15 @@ test('COD claim form requires no photo and retains amount, delivery and collecti
   for (const name of ['deliveryId', 'amount', 'collectedAt', 'note']) assert.ok(html.includes(`name="${name}"`))
   store.dispatch(baseApi.util.resetApiState())
 })
-test('COD screen offers claim only to shipper and receipt only to accountant', async () => {
+test('COD screen offers claim only to shipper and removes obsolete bulk handover', async () => {
   for (const role of ['SHIPPER', 'ACCOUNTANT', 'SALES_STAFF', 'SHOP_OWNER', 'CUSTOMER']) {
     const store = storeForRoles([role])
     await store.dispatch(codApi.util.upsertQueryData('getCodCollections', { orderId: undefined, shipperId: undefined, status: undefined, page: 0, size: 20 }, { items: [], page: 0, size: 20, totalElements: 0, totalPages: 0 }))
     const html = render(store, React.createElement(CodManagement))
     assert.equal(html.includes('Khai thu COD</button>'), role === 'SHIPPER')
-    assert.equal(html.includes('Nhận tiền đã chọn'), role === 'ACCOUNTANT')
+    assert.equal(html.includes('Nhận tiền đã chọn'), false)
     if (role === 'CUSTOMER') assert.match(html, /Bạn không có quyền/)
-    else { assert.match(html, /Trạng thái khai thu/); assert.match(html, /Không có khoản thu phù hợp/); assert.match(html, /overflow-x-auto/) }
+    else { assert.match(html, /Trạng thái bàn giao/); assert.match(html, /Không có khoản thu phù hợp/); assert.match(html, /overflow-x-auto/) }
     store.dispatch(baseApi.util.resetApiState())
   }
 })

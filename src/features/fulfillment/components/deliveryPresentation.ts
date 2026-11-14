@@ -1,0 +1,4 @@
+export const deliveryButton = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50'
+export const deliveryPrimary = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-sky-700 bg-sky-700 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50'
+export const deliveryDate = (value: string | null) => value ? new Date(value).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '—'
+export const deliveryMoney = (value: number | null) => value == null ? 'Chưa có số tiền' : `${new Intl.NumberFormat('vi-VN').format(value)} ₫`

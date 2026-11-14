@@ -76,6 +76,9 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
     items: [
       { name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins },
       { name: 'Đơn hàng', to: '/app/orders', icon: ShoppingCart },
+      { name: 'Phiếu xuất kho', to: '/app/issue-notes', icon: Truck, roles: ['ACCOUNTANT', 'SHOP_OWNER'] },
+      { name: 'Quản lý giao hàng', to: '/app/deliveries', icon: Truck, roles: ['ACCOUNTANT', 'SHOP_OWNER'] },
+      { name: 'Đơn giao của tôi', to: '/app/my-deliveries', icon: Truck, roles: ['SHIPPER'] },
       { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
       { name: 'Công nợ khách hàng', to: '/app/customer-debts', icon: WalletCards },
       { name: 'Xác minh thanh toán', to: '/app/payment-verifications', icon: ShieldCheck, roles: ['ACCOUNTANT'] },

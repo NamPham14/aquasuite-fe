@@ -32,6 +32,8 @@ import { PurchaseOrderCreatePage } from '../pages/management/PurchaseOrderCreate
 import { PurchaseOrderEditPage } from '../pages/management/PurchaseOrderEditPage'
 import { PurchaseOrderDetailPage } from '../pages/management/PurchaseOrderDetailPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { DeliveriesPage, MyDeliveriesPage, IssueNotesPage } from '../pages/management/DeliveriesPage'
+import { DeliveryDetailPage } from '../pages/management/DeliveryDetailPage'
 import { ProtectedRoute } from '../features/iam/components/ProtectedRoute'
 import { PublicOnlyRoute } from '../features/iam/components/PublicOnlyRoute'
 
@@ -156,6 +158,10 @@ export const routeConfig: RouteObject[] = [
           { path: 'customer-debts/credit-approvals', element: <CreditProfileApprovalsPage /> },
           { path: 'payment-verifications', element: <PaymentVerificationsPage /> },
           { path: 'cod-collections', element: <CodCollectionsPage /> },
+          { path: 'issue-notes', element: <IssueNotesPage /> },
+          { path: 'deliveries', element: <DeliveriesPage /> },
+          { path: 'my-deliveries', element: <MyDeliveriesPage /> },
+          { path: 'deliveries/:id', element: <DeliveryDetailPage /> },
         ],
       },
     ],

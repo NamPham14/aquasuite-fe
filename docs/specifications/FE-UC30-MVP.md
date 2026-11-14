@@ -1,39 +1,33 @@
-# UC30 MVP — Thu và bàn giao COD
+# UC30 — Quản lý tiền COD shipper bàn giao
 
-Route: `/app/cod-collections`, có thể lọc trước bằng `?orderId=<UUID>` từ chi tiết đơn.
+Scope approved by owner, updated 2026-11-14. This replaces the earlier preliminary
+review/partial remittance design. Backend contract: aquasuite-be/docs/contracts/uc30-current-api.md.
 
-## Phạm vi
+## Workflow
 
-- SHIPPER khai thu tiền mặt bằng ID delivery thật, số VND nguyên dương, thời điểm thu và ghi chú; không yêu cầu ảnh. Backend xác nhận ownership và điều kiện delivery.
-- ACCOUNTANT đối chiếu số khai thu với shipper và chấp nhận/bác (bắt buộc lý do); không tự duyệt hoặc nhận khoản của mình.
-- Nhận tiền cho 1..20 khoản trên trang hiện tại, cùng shipper, đã ACCEPTED. Có thể nhận một phần, nhiều lần; tổng tự tính từ từng khoản thực nhận. Backend hỗ trợ tối đa 50 dòng, FE giới hạn theo trang 20 dòng cho MVP.
-- SALES_STAFF/SHOP_OWNER chỉ xem; SHIPPER xem khoản của mình theo kiểm soát BE. Chỉ vai trò được phép mới gửi request đọc.
-- Chi tiết có lịch sử phiếu/transaction, số dư đơn cho kế toán/bán hàng/chủ shop. Chi tiết đơn liên kết danh sách COD theo orderId.
-- Công nợ hỗ trợ COD_REVIEW, hiển thị tiền shipper giữ/khách còn phải trả; tạm khóa thao tác nhắc nợ, cuộc gọi, kiểm tra tín dụng và sao kê trong màn chi tiết khi đang đối soát. Backend tiếp tục thực thi quyền và chặn nghiệp vụ.
+- SHIPPER declares collected cash for their delivered COD batch: status PENDING.
+- ACCOUNTANT/SHOP_OWNER receives the entire declaration in cash and confirms:
+  POST /finance/cod/collections/{id}/accept -> VERIFIED, contributing to order payment.
+- Reject requires a reason: POST /collections/{id}/reject -> REJECTED, no payment.
+- No self-receipt, second handover step, partial allocation, or additional business tables.
+- COD declaration needs no image; proof of delivery remains owned by Delivery.
+- Shipper selects an own DELIVERED batch with positive COD from the existing
+  paginated /fulfillment/me/deliveries API; there is no manual UUID entry.
+  Options show delivery code, recipient, batch and planned COD. Actual cash is
+  entered separately. Backend still verifies ownership and remaining claim limits.
 
-## Contract đã đối chiếu
+## Frontend
 
-Nguồn read-only: repo `aquasuite-be`, `docs/contracts/uc30-mvp.md`, `docs/specifications/UC-30-cod-mvp.md`, `CodController`, `CodPayload`, `CodRepository` ngày 10/11/2026.
+- List/detail use backend status PENDING/VERIFIED/REJECTED, amount and reviewed metadata.
+- Receipt requires explicit confirmation that the full amount was physically received.
+- Rejection requires a reason, without falsely confirming that cash was received.
+- Uncertain mutation results retain the exact decision/version and lock closing until retry.
+- Declaration retries retain original payload/idempotency key. No persistence across reload.
+- Removed remittance endpoints/components are not used. Display existing declaration and
+  review timestamps; do not claim an immutable or multi-receipt history.
+- Order COD balance invalidates by order ID after ordinary payments/deposit verification,
+  and after COD changes. Order panel refreshes on mount and polls every 30 seconds.
 
-Base `/api/v1/finance/cod`, dùng baseApi hiện có (base URL đã có `/api/v1`). API JSON bọc `ApiResponse<T>`; trang COD dùng `items`, không dùng `content`. Collection chứa version; duyệt/bác và nhận tiền gửi expectedVersion. Trạng thái bàn giao: null, PENDING_REMITTANCE, PARTIAL_REMITTANCE, SETTLED.
-
-POST collections gửi body `application/json` gồm deliveryId, amount, collectedAt, note, idempotencyKey; không gửi file. POST remittances dùng idempotencyKey, shipperId, amount, items, note. Lỗi mạng/5xx/408 khóa chỉnh sửa và đóng dialog; gửi lại nguyên payload/key. Sau lỗi 4xx nhận bàn giao, đóng và tải lại danh sách để chọn lại dữ liệu mới. Giữ tab mở khi chưa rõ kết quả; request retry chỉ lưu trong bộ nhớ, không bền qua reload.
-
-Theo quyết định bỏ ảnh, UC30 không upload, xem, kiểm tra ảnh hoặc gọi endpoint proof. Kế toán vẫn xác nhận/bác khai thu thủ công với expectedVersion; bác bắt buộc lý do.
-
-ACCEPTED chỉ xác nhận khách đã giao shipper, chưa tạo thanh toán. Chỉ tiền thực nhận từ remittance tạo RECEIPT VERIFIED. UI dùng số dư BE, không tự cộng tiền shipper giữ vào đã thanh toán.
-
-## Cấu trúc
-
-- `features/finance/api/codApi.ts`: RTK Query endpoints.
-- `features/finance/types/cod.types.ts`: contract.
-- `features/finance/lib/cod.ts`: kiểm tra và lập phân bổ.
-- `features/finance/components/Cod*`, `OrderCodPanel`: nghiệp vụ UI.
-- `pages/management/CodCollectionsPage.tsx`: ghép feature qua public export.
-- `app/router.tsx`, `layouts/ManagementLayout.tsx`: route và menu.
-
-Không bổ sung dependency hay sửa BE. Tái sử dụng ManagementPageHeader/FilterBar/Select/Table/Dialog/Form/Field và style hiện có. Có loading/error/retry/empty, phân trang server, labels, dialog focus/Escape, bảng cuộn ngang trên màn nhỏ.
-
-## Giới hạn MVP
-
-Chưa có API liệt kê delivery/shipper nên nhập UUID thật, không tạo dữ liệu giao hàng giả. Không CRUD UC41, xuất PDF, đảo phiếu, phí, tiền thừa hay legacy. Cần delivery DELIVERED có COD hợp lệ để kiểm tra end-to-end với BE.
+Verification: API transport/cache tests, interactive role/self-receipt/acknowledgment,
+rejection/retry tests, production build and synthetic desktop/mobile browser review.
+No live financial mutation was performed as part of frontend verification.

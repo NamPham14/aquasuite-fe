@@ -1,6 +1,6 @@
 import { baseApi } from '../../../shared/api/baseApi.ts'
 import type { ApiResponse } from '../../../shared/api/types.ts'
-import type { CodBalance, CodClaim, CodCollection, CodFilters, CodPage, CodReceipt, CodRemit } from '../types/cod.types.ts'
+import type { CodBalance, CodClaim, CodCollection, CodFilters, CodPage } from '../types/cod.types.ts'
 
 const codApiBase = baseApi.enhanceEndpoints({ addTagTypes: ['Cod'] })
 const changedTags = ['Cod', 'CustomerDebt', 'OrderPayment', 'SalesOrder'] as const
@@ -22,18 +22,11 @@ export const codApi = codApiBase.injectEndpoints({
       query: ({ id, accept, ...body }) => ({ url: `/finance/cod/collections/${id}/${accept ? 'accept' : 'reject'}`, method: 'POST', body }),
       transformResponse: (res: ApiResponse<CodCollection>) => res.data!, invalidatesTags: changedTags,
     }),
-    remitCod: builder.mutation<CodReceipt, CodRemit>({
-      query: (body) => ({ url: '/finance/cod/remittances', method: 'POST', body }),
-      transformResponse: (res: ApiResponse<CodReceipt>) => res.data!, invalidatesTags: changedTags,
-    }),
-    getCodHistory: builder.query<CodReceipt[], string>({
-      query: (id) => `/finance/cod/collections/${id}/remittances`,
-      transformResponse: (res: ApiResponse<CodReceipt[]>) => res.data!, providesTags: ['Cod'],
-    }),
     getCodBalance: builder.query<CodBalance, string>({
       query: (id) => `/finance/cod/orders/${id}/balance`,
-      transformResponse: (res: ApiResponse<CodBalance>) => res.data!, providesTags: ['Cod', 'OrderPayment', 'SalesOrder'],
+      transformResponse: (res: ApiResponse<CodBalance>) => res.data!,
+      providesTags: (_res, _err, orderId) => ['Cod', { type: 'OrderPayment', id: orderId }, { type: 'SalesOrder', id: orderId }],
     }),
   }),
 })
-export const { useGetCodCollectionsQuery, useGetCodCollectionQuery, useClaimCodMutation, useReviewCodMutation, useRemitCodMutation, useGetCodHistoryQuery, useGetCodBalanceQuery } = codApi
+export const { useGetCodCollectionsQuery, useGetCodCollectionQuery, useClaimCodMutation, useReviewCodMutation, useGetCodBalanceQuery } = codApi

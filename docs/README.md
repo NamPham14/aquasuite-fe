@@ -2,11 +2,13 @@
 
 ## Tài liệu
 
+- [Giao hàng FE](specifications/FE-DELIVERY.md): ba màn quản lý, đơn giao của shipper và chi tiết; popup thao tác, tab giao hàng trong đơn, giới hạn IAM picker và storage ảnh.
+
 - [UC29 API thật](specifications/FE-UC29-API.md): chọn đơn đã có, chốt giữ hàng và theo dõi thanh toán. [Wireframe FE hiện tại](specifications/FE-UC29-CURRENT.drawio) và [bảng Screen fields](specifications/FE-UC29-CURRENT.md). [Spec demo cũ](specifications/FE-UC29-DEMO.md) và [wireframe demo](specifications/FE-UC29-DEMO.drawio) được giữ làm tham khảo lịch sử.
 
 - [Manage Combo FE](specifications/FE-MANAGE-COMBO.md): phạm vi UC-13, contract backend, cấu trúc triển khai và phần SRS chưa được hỗ trợ.
 
-- [UC30 MVP FE](specifications/FE-UC30-MVP.md): shipper khai thu không cần ảnh, kế toán xác nhận và nhận tiền COD từng phần, lịch sử bàn giao và trách nhiệm công nợ.
+- [UC30 FE](specifications/FE-UC30-MVP.md): shipper khai tiền đã thu; kế toán/owner xác nhận đã nhận đủ tiền thực tế từng khoản, theo dõi trạng thái và số dư đơn hàng.
 
 - [Cấu trúc frontend](FRONTEND_PACKAGE_STRUCTURE.md): kiến trúc đích, trách nhiệm các khu vực và ranh giới feature.
 - [Component UI trang quản lý](MANAGEMENT_UI_COMPONENTS.md): danh mục component dùng chung, cách dùng và giới hạn hiện tại.
