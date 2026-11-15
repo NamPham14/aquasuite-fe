@@ -19,9 +19,10 @@ import {
   HandCoins,
   FileSpreadsheet,
   ShoppingCart,
-  WalletCards,
   Truck,
+  WalletCards,
   Wrench,
+  ClipboardList,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -101,6 +102,29 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
       { name: 'Công việc kỹ thuật', to: '/app/technical-jobs', icon: Wrench, roles: ['SHOP_OWNER', 'TECHNICAL_STAFF'] },
       { name: 'Chính sách bảo hành', to: '/app/warranty-policies', icon: Wrench, roles: ['SHOP_OWNER'] },
       { name: 'Bảo hành của tôi', to: '/app/my-warranties', icon: ShieldCheck, roles: ['CUSTOMER'] },
+    ],
+  },
+  {
+    group: 'Dịch vụ & Hậu mãi',
+    items: [
+      {
+        name: 'Thẻ bảo hành điện tử',
+        to: '/app/warranty-records',
+        icon: ShieldCheck,
+        roles: ['SHOP_OWNER', 'SALES_STAFF', 'TECHNICAL_STAFF'],
+      },
+      {
+        name: 'Bảo hành của tôi',
+        to: '/app/my-warranties',
+        icon: ShieldCheck,
+        roles: ['CUSTOMER'],
+      },
+      {
+        name: 'Yêu cầu bảo hành của tôi',
+        to: '/app/my-warranty-tickets',
+        icon: ClipboardList,
+        roles: ['CUSTOMER'],
+      },
     ],
   },
   {

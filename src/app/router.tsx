@@ -33,6 +33,9 @@ import { PurchaseOrdersPage } from '../pages/management/PurchaseOrdersPage'
 import { PurchaseOrderCreatePage } from '../pages/management/PurchaseOrderCreatePage'
 import { PurchaseOrderEditPage } from '../pages/management/PurchaseOrderEditPage'
 import { PurchaseOrderDetailPage } from '../pages/management/PurchaseOrderDetailPage'
+import { WarrantyRecordsPage } from '../pages/management/WarrantyRecordsPage'
+import { WarrantyRecordDetailPage } from '../pages/management/WarrantyRecordDetailPage'
+import { MyWarrantyTicketsPage } from '../pages/customer/MyWarrantyTicketsPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { DeliveriesPage, MyDeliveriesPage, IssueNotesPage } from '../pages/management/DeliveriesPage'
 import { DeliveryDetailPage } from '../pages/management/DeliveryDetailPage'
@@ -166,6 +169,11 @@ export const routeConfig: RouteObject[] = [
           { path: 'deliveries/:id', element: <DeliveryDetailPage /> },
           { path: 'warranty-policies', element: <WarrantyPoliciesPage /> },
           { path: 'my-warranties', element: <MyWarrantiesPage /> },
+          { path: 'warranty-records', element: <WarrantyRecordsPage /> },
+          { path: 'warranty-records/:id', element: <WarrantyRecordDetailPage /> },
+          { path: 'my-warranties', element: <WarrantyRecordsPage customerScope /> },
+          { path: 'my-warranties/:id', element: <WarrantyRecordDetailPage customerScope /> },
+          { path: 'my-warranty-tickets', element: <MyWarrantyTicketsPage /> },
         ],
       },
     ],

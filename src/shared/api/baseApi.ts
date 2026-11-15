@@ -22,6 +22,7 @@ export const baseApi = createApi({
     'TechnicalJob',
     'WarrantyPolicy',
     'WarrantyRecord',
+    'WarrantyTicket',
   ],
   endpoints: () => ({}),
 })
