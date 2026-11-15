@@ -1,8 +1,11 @@
 import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router-dom'
-import { AuthLayout, ManagementLayout } from '../layouts'
+import { AuthLayout, ManagementLayout, SalesLayout } from '../layouts'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { CustomerLoginPage } from '../pages/auth/CustomerLoginPage'
 import { CustomerRegisterPage } from '../pages/auth/CustomerRegisterPage'
+import { CartPage } from '../pages/sales/CartPage'
+import { CheckoutPage } from '../pages/sales/CheckoutPage'
+import { CheckoutResultPage } from '../pages/sales/CheckoutResultPage'
 import { DashboardPage } from '../pages/management/DashboardPage'
 import { ProductsPage } from '../pages/management/ProductsPage'
 import { ProductVariantsPage } from '../pages/management/ProductVariantsPage'
@@ -46,6 +49,23 @@ export const routeConfig: RouteObject[] = [
   {
     path: '/',
     element: <Navigate to="/app/dashboard" replace />,
+  },
+  {
+    element: <SalesLayout />,
+    children: [
+      {
+        path: '/cart',
+        element: <CartPage />,
+      },
+      {
+        path: '/checkout',
+        element: <CheckoutPage />,
+      },
+      {
+        path: '/checkout/result',
+        element: <CheckoutResultPage />,
+      },
+    ],
   },
   {
     element: <PublicOnlyRoute />,

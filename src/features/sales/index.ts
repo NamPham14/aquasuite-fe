@@ -29,3 +29,19 @@ export * from './components/OrderFilterBar'
 export * from './components/OrderTable'
 export { ReservationHistoryPanel } from './components/ReservationHistoryPanel'
 export { ReservationWorkspace } from './components/ReservationWorkspace'
+
+// Customer Cart (UC-17)
+export * from './types/cart.types'
+export * from './schemas/cart.schema'
+export * from './api/cartApi'
+export * from './hooks/useCustomerCart'
+export * from './components/CustomerCartTable'
+export * from './components/CustomerCartSummary'
+export * from './components/CartProductPickerDrawer'
+
+// Online Checkout & PayOS (UC-18)
+export * from './types/onlineCheckout.types'
+export * from './schemas/onlineCheckout.schema'
+export * from './api/onlineCheckoutApi'
+export * from './hooks/useOnlineCheckout'
+export * from './components/PayosCheckoutPanel'
