@@ -20,7 +20,10 @@ import {
   FileSpreadsheet,
   ShoppingCart,
   WalletCards,
+<<<<<<< Updated upstream
   Truck,
+=======
+>>>>>>> Stashed changes
   Wrench,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
@@ -96,9 +99,15 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
     ],
   },
   {
+<<<<<<< Updated upstream
     group: 'Dịch vụ kỹ thuật',
     items: [
       { name: 'Công việc kỹ thuật', to: '/app/technical-jobs', icon: Wrench, roles: ['SHOP_OWNER', 'TECHNICAL_STAFF'] },
+=======
+    group: 'Bảo hành & Dịch vụ',
+    items: [
+      { name: 'Chính sách bảo hành', to: '/app/warranty-policies', icon: Wrench, roles: ['SHOP_OWNER'] },
+>>>>>>> Stashed changes
     ],
   },
   {
