@@ -19,11 +19,9 @@ import { UsersPage } from '../pages/management/UsersPage'
 import { CustomerDebtsPage } from '../pages/management/CustomerDebtsPage'
 import { CreditProfileApprovalsPage } from '../pages/management/CreditProfileApprovalsPage'
 import { PaymentVerificationsPage } from '../pages/management/PaymentVerificationsPage'
-<<<<<<< Updated upstream
 import { CodCollectionsPage } from '../pages/management/CodCollectionsPage'
-=======
 import { WarrantyPoliciesPage } from '../pages/management/WarrantyPoliciesPage'
->>>>>>> Stashed changes
+import { MyWarrantiesPage } from '../pages/management/MyWarrantiesPage'
 import { QuotationsPage } from '../pages/management/QuotationsPage'
 import { QuotationCreatePage } from '../pages/management/QuotationCreatePage'
 import { QuotationEditPage } from '../pages/management/QuotationEditPage'
@@ -161,15 +159,13 @@ export const routeConfig: RouteObject[] = [
           { path: 'customer-debts', element: <CustomerDebtsPage /> },
           { path: 'customer-debts/credit-approvals', element: <CreditProfileApprovalsPage /> },
           { path: 'payment-verifications', element: <PaymentVerificationsPage /> },
-<<<<<<< Updated upstream
           { path: 'cod-collections', element: <CodCollectionsPage /> },
           { path: 'issue-notes', element: <IssueNotesPage /> },
           { path: 'deliveries', element: <DeliveriesPage /> },
           { path: 'my-deliveries', element: <MyDeliveriesPage /> },
           { path: 'deliveries/:id', element: <DeliveryDetailPage /> },
-=======
           { path: 'warranty-policies', element: <WarrantyPoliciesPage /> },
->>>>>>> Stashed changes
+          { path: 'my-warranties', element: <MyWarrantiesPage /> },
         ],
       },
     ],
