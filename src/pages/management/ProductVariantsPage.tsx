@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import {
   AlertTriangle,
+  ArrowLeft,
   Ban,
   Boxes,
   Check,
@@ -14,7 +15,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   CatalogPagination,
@@ -53,6 +54,7 @@ type DialogState =
   | { kind: 'create' }
   | { kind: 'edit'; variant: ProductVariant }
   | { kind: 'matrix' }
+  | { kind: 'status'; variant: ProductVariant }
   | { kind: 'delete'; variant: ProductVariant }
   | null
 
@@ -217,10 +219,6 @@ export function ProductVariantsPage() {
       return
     }
     const next = item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
-    const message = next === 'INACTIVE'
-      ? `Ngừng kinh doanh ${item.sku}? SKU sẽ không còn được thêm vào giỏ hàng, báo giá và đơn hàng mới.`
-      : `Kích hoạt kinh doanh lại ${item.sku}?`
-    if (!window.confirm(message)) return
     try {
       await changeStatus({ productId, variantId: item.id, status: next }).unwrap()
       toast.success(`Đã ${next === 'ACTIVE' ? 'kích hoạt kinh doanh' : 'ngừng kinh doanh'} biến thể ${item.sku}.`)
@@ -330,7 +328,7 @@ export function ProductVariantsPage() {
               type="button"
               className={iconActionButton}
               disabled={statusState.isLoading}
-              onClick={() => void switchStatus(item)}
+              onClick={() => setDialog({ kind: 'status', variant: item })}
               title={item.status === 'ACTIVE' ? 'Ngừng kinh doanh' : 'Kinh doanh lại'}
               aria-label={item.status === 'ACTIVE' ? `Ngừng kinh doanh ${item.sku}` : `Kích hoạt ${item.sku}`}
             >
@@ -364,6 +362,9 @@ export function ProductVariantsPage() {
         group="Danh mục sản phẩm"
         icon={<Boxes className="h-6 w-6" />}
       />
+      <Link to="/app/products" className="inline-flex w-fit items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900">
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Quay về danh sách sản phẩm
+      </Link>
 
       {product.data && (
         <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-2xs">
@@ -499,6 +500,7 @@ export function ProductVariantsPage() {
                 columns={columns}
                 rows={rows}
                 rowKey={(item) => item.id}
+                wrapCells
                 labelledBy="variant-list"
                 emptyMessage={
                   list.isLoading
@@ -564,7 +566,7 @@ export function ProductVariantsPage() {
                           type="button"
                           className={iconActionButton}
                           disabled={statusState.isLoading}
-                          onClick={() => void switchStatus(item)}
+                          onClick={() => setDialog({ kind: 'status', variant: item })}
                           aria-label={item.status === 'ACTIVE' ? `Ngừng kinh doanh ${item.sku}` : `Kích hoạt ${item.sku}`}
                         >
                           {item.status === 'ACTIVE' ? (
@@ -612,13 +614,14 @@ export function ProductVariantsPage() {
       />
 
       {dialog?.kind === 'create' && (
-        <ManagementDialog title="Thêm biến thể" onClose={() => setDialog(null)} closeDisabled={createState.isLoading}>
+        <ManagementDialog title="Thêm biến thể" size="wide" onClose={() => setDialog(null)} closeDisabled={createState.isLoading}>
           <VariantForm inheritedSpecifications={product.data?.specifications} pending={createState.isLoading} onClose={() => setDialog(null)} onSubmit={(data) => void save(data)} />
         </ManagementDialog>
       )}
       {dialog?.kind === 'edit' && (
         <ManagementDialog
           title={`Sửa biến thể — ${dialog.variant.sku}`}
+          size="wide"
           onClose={() => setDialog(null)}
           closeDisabled={updateState.isLoading}
         >
@@ -634,6 +637,7 @@ export function ProductVariantsPage() {
       {dialog?.kind === 'matrix' && (
         <ManagementDialog
           title="Tạo ma trận biến thể — Màu sắc × Kích thước"
+          size="xl"
           onClose={() => setDialog(null)}
           closeDisabled={matrixState.isLoading}
         >
@@ -647,8 +651,11 @@ export function ProductVariantsPage() {
           pending={removeState.isLoading || statusState.isLoading}
           onClose={() => setDialog(null)}
           onDelete={deleteConfirmed}
-          onDeactivate={() => void switchStatus(dialog.variant)}
+          onDeactivate={() => setDialog({ kind: 'status', variant: dialog.variant })}
         />
+      )}
+      {dialog?.kind === 'status' && (
+        <StatusChangeDialog variant={dialog.variant} pending={statusState.isLoading} onClose={() => setDialog(null)} onConfirm={() => void switchStatus(dialog.variant)} />
       )}
     </div>
   )
@@ -1444,6 +1451,23 @@ function MatrixForm({
         </button>
       </div>
     </form>
+  )
+}
+
+function StatusChangeDialog({ variant, pending, onClose, onConfirm }: { variant: ProductVariant; pending: boolean; onClose: () => void; onConfirm: () => void }) {
+  const deactivating = variant.status === 'ACTIVE'
+  return (
+    <ManagementDialog title={deactivating ? 'Ngừng kinh doanh biến thể' : 'Kích hoạt kinh doanh biến thể'} onClose={onClose} closeDisabled={pending}>
+      <div className="space-y-4 p-5 sm:p-6">
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+          {deactivating ? <>SKU <strong className="font-mono">{variant.sku}</strong> sẽ không còn được thêm vào giỏ hàng, báo giá và đơn hàng mới. Lịch sử giao dịch vẫn được giữ nguyên.</> : <>SKU <strong className="font-mono">{variant.sku}</strong> sẽ được phép bán trở lại.</>}
+        </div>
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <button type="button" className={secondaryButton} disabled={pending} onClick={onClose}>Hủy</button>
+          <button type="button" className={primaryButton} disabled={pending} onClick={onConfirm}>{pending ? 'Đang cập nhật...' : deactivating ? 'Xác nhận ngừng kinh doanh' : 'Xác nhận kích hoạt'}</button>
+        </div>
+      </div>
+    </ManagementDialog>
   )
 }
 
