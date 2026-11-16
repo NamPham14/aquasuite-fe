@@ -16,6 +16,12 @@ export interface ProductVariant {
   warrantyPolicyId?: string | null
   serialTracking: boolean
   status: VariantStatus
+  warehouseCode?: string | null
+  onHandQty?: number | null
+  reservedQty?: number | null
+  availableQty?: number | null
+  minimumQty?: number | null
+  lowStock?: boolean
 }
 
 export interface VariantUpsertRequest {

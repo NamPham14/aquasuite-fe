@@ -65,6 +65,14 @@ export interface ProductDetail {
   status: ProductStatus
   images: ProductImage[]
   variants?: ProductVariantBrief[]
+  warrantyPolicy?: {
+    warrantyPolicyId: string
+    policyCode: string
+    policyName: string
+    warrantyMonths: number
+    warrantyTerms?: string | null
+    policyStatus: string
+  } | null
   createdAt: string
   updatedAt: string
 }

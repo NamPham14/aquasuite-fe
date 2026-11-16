@@ -8,7 +8,7 @@ type VariantPath = { productId: string; variantId: string }
 /** UC-10 contract. Catalog backend owns authorization and deletion eligibility. */
 export const variantApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getVariants: builder.query<VariantPage, { productId: string; keyword?: string; status?: VariantStatus; page: number; size: number }>({
+    getVariants: builder.query<VariantPage, { productId: string; keyword?: string; status?: VariantStatus; missingPrice?: boolean; sortBy?: string; sortDir?: 'ASC' | 'DESC'; warehouseCode?: string; page: number; size: number }>({
       query: ({ productId, ...params }) => ({ url: `/catalog/products/${productId}/variants`, params }), transformResponse: responseData<VariantPage>,
       providesTags: (result, _error, { productId }) => [{ type: 'Variant', id: `LIST-${productId}` }, ...(result?.content.map((item) => ({ type: 'Variant' as const, id: item.id })) ?? [])],
     }),
