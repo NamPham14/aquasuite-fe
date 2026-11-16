@@ -12,6 +12,7 @@ import {
 import { useLazyGetOrderPaymentProofQuery } from '../../features/finance/api/orderPaymentApi'
 import { RejectVerificationDialog } from '../../features/finance/components/RejectVerificationDialog'
 import type { PaymentVerificationItem } from '../../features/finance/types/paymentVerification.types'
+import { ActivityLogPanel } from '../../features/audit'
 
 type StatusTab = 'PENDING' | 'VERIFIED' | 'REJECTED'
 
@@ -257,6 +258,7 @@ export function PaymentVerificationsPage() {
       </div>
 
       {rejecting && <RejectVerificationDialog item={rejecting} onClose={() => setRejecting(null)} />}
+      <ActivityLogPanel entityType="PAYMENT_RECEIPT" title="Nhật ký phân bổ tiền vào hóa đơn" description="Các khoản thu đã được phân bổ vào hóa đơn cửa hàng (UC-63)." />
     </div>
   )
 }

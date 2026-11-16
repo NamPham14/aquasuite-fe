@@ -94,7 +94,7 @@ export function CustomerRegisterForm() {
       const result = registrationOtpSchema.safeParse(otp)
       if (!result.success) { setMessage('Mã OTP gồm 6 chữ số.'); otpInput.current?.focus(); return }
       void run(async () => {
-        try { if (await login({ email, otp })) navigate('/app/dashboard', { replace: true }) }
+        try { if (await login({ email, otp })) navigate('/profile', { replace: true }) }
         catch (error) {
           // Verification may have created the account before session completion failed.
           if (!normalizeApiError(error).code?.startsWith('REG_')) setActivated(true)

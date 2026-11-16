@@ -7,7 +7,7 @@ import { loginSchema, type LoginFormData } from '../schemas/login.schema'
 import { useAuth } from '../hooks/useAuth'
 
 /** Form đăng nhập: validate bằng loginSchema, gọi useAuth.login và hiển thị lỗi phù hợp. */
-export function LoginForm() {
+export function LoginForm({ successPath = '/app/dashboard' }: { successPath?: string }) {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -37,7 +37,7 @@ export function LoginForm() {
       })
 
       if (result) {
-        navigate('/app/dashboard', { replace: true })
+        navigate(successPath, { replace: true })
       }
     } catch (err: unknown) {
       const apiError = normalizeApiError(err)

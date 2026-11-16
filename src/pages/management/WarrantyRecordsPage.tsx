@@ -65,7 +65,7 @@ export function WarrantyRecordsPage({ customerScope = false }: { customerScope?:
   const items = pageData?.items ?? []
   const totalElements = pageData?.totalElements ?? 0
   const totalPages = Math.max(1, pageData?.totalPages ?? 1)
-  const detailBasePath = customerScope ? '/app/my-warranties' : '/app/warranty-records'
+  const detailBasePath = customerScope ? '/profile/warranties' : '/app/warranty-records'
 
   const hasActiveFilters = Boolean(keyword || phone || displayStatus)
 

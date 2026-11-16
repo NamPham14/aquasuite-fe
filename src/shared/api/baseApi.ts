@@ -24,7 +24,8 @@ export const baseApi = createApi({
     'WarrantyRecord',
     'WarrantyTicket',
     'Cart',
-    'OnlineOrder'
+    'OnlineOrder',
+    'AuditLog'
   ],
   endpoints: () => ({}),
 })

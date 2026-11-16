@@ -10,7 +10,6 @@ import {
   useDeactivateWarrantyPolicyMutation,
   useDeleteWarrantyPolicyMutation,
   useGetWarrantyPoliciesQuery,
-  useGetWarrantyPolicyAuditLogsQuery,
   useGetWarrantyPolicyQuery,
   useGetWarrantyPolicyReferenceDataQuery,
   useUpdateWarrantyPolicyMutation,
@@ -18,6 +17,7 @@ import {
   type WarrantyPolicy,
   type WarrantyPolicyStatus,
 } from '../../features/servicedesk'
+import { ActivityLogPanel } from '../../features/audit'
 
 type DialogMode = 'create' | 'edit' | 'view' | 'deactivate' | 'delete' | null
 const emptyForm: UpsertWarrantyPolicyRequest = { policyName: '', brandId: '', categoryId: '', warrantyPeriodMonths: 24, coverageConditions: '', status: 'ACTIVE' }
@@ -42,7 +42,6 @@ export function WarrantyPoliciesPage() {
   const policies = useGetWarrantyPoliciesQuery({ keyword: keyword || undefined, status: status || undefined, page, size: 10 })
   const references = useGetWarrantyPolicyReferenceDataQuery()
   const detail = useGetWarrantyPolicyQuery(selected?.policyId ?? '', { skip: dialog !== 'view' || !selected })
-  const audit = useGetWarrantyPolicyAuditLogsQuery()
   const [createPolicy, createState] = useCreateWarrantyPolicyMutation()
   const [updatePolicy, updateState] = useUpdateWarrantyPolicyMutation()
   const [deactivatePolicy, deactivateState] = useDeactivateWarrantyPolicyMutation()
@@ -129,7 +128,7 @@ export function WarrantyPoliciesPage() {
       <ManagementTable columns={columns} rows={rows} rowKey={(item) => item.policyId} labelledBy="warranty-policy-list" emptyMessage={policies.isLoading ? 'Đang tải chính sách...' : 'Không tìm thấy chính sách phù hợp.'} />
       <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-600"><span>Trang {page + 1}/{Math.max(policies.data?.totalPages ?? 0, 1)}</span><div className="flex gap-2"><button className={secondary} disabled={page === 0 || policies.isFetching} onClick={() => setPage(page - 1)}>Trước</button><button className={secondary} disabled={!policies.data || page + 1 >= policies.data.totalPages || policies.isFetching} onClick={() => setPage(page + 1)}>Sau</button></div></div>
     </section>
-    <section className="rounded-lg border border-slate-200 bg-white p-4"><h2 className="text-base font-semibold text-slate-900">Nhật ký hoạt động</h2><div className="mt-3 divide-y divide-slate-100">{(audit.data?.content ?? []).map((entry) => <div key={entry.id} className="py-3 text-sm text-slate-700"><span className="mr-3 text-slate-500">{new Date(entry.createdAt).toLocaleString('vi-VN')}</span><strong>{entry.actorName ?? 'Chủ cửa hàng'}</strong><span className="ml-2">{entry.action}</span><span className="ml-2 text-slate-500">{String(entry.newData?.policyName ?? entry.oldData?.policyName ?? '')}</span></div>)}{audit.isLoading && <p className="py-3 text-sm text-slate-500">Đang tải nhật ký...</p>}{audit.isError && <p className="py-3 text-sm text-rose-700">Không thể tải nhật ký hoạt động.</p>}</div></section>
+    <ActivityLogPanel entityType="WARRANTY_POLICY" description="Các lần tạo, cập nhật, ngừng áp dụng và xóa chính sách bảo hành." />
     {(dialog === 'create' || dialog === 'edit') && <ManagementDialog title={dialog === 'create' ? 'Tạo chính sách bảo hành' : 'Sửa chính sách bảo hành'} onClose={() => setDialog(null)} closeDisabled={pending}><form className="space-y-4 p-5 sm:p-6" onSubmit={submit} noValidate>
       {formError && <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">{formError}</p>}
       <ManagementFormField id="policy-name" label="Tên chính sách *"><input id="policy-name" className={managementFieldClass} value={form.policyName} disabled={pending} onChange={(event) => setForm({ ...form, policyName: event.target.value })} /></ManagementFormField>

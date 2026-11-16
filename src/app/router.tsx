@@ -3,6 +3,7 @@ import { AuthLayout, ManagementLayout, SalesLayout } from '../layouts'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { CustomerLoginPage } from '../pages/auth/CustomerLoginPage'
 import { CustomerRegisterPage } from '../pages/auth/CustomerRegisterPage'
+import { CustomerProfilePage } from '../pages/customer/CustomerProfilePage'
 import { CartPage } from '../pages/sales/CartPage'
 import { CheckoutPage } from '../pages/sales/CheckoutPage'
 import { CheckoutResultPage } from '../pages/sales/CheckoutResultPage'
@@ -20,11 +21,11 @@ import { RolesPage } from '../pages/management/RolesPage'
 import { PermissionsPage } from '../pages/management/PermissionsPage'
 import { UsersPage } from '../pages/management/UsersPage'
 import { CustomerDebtsPage } from '../pages/management/CustomerDebtsPage'
+import { CustomerDebtDetailPage } from '../features/finance'
 import { CreditProfileApprovalsPage } from '../pages/management/CreditProfileApprovalsPage'
 import { PaymentVerificationsPage } from '../pages/management/PaymentVerificationsPage'
 import { CodCollectionsPage } from '../pages/management/CodCollectionsPage'
 import { WarrantyPoliciesPage } from '../pages/management/WarrantyPoliciesPage'
-import { MyWarrantiesPage } from '../pages/management/MyWarrantiesPage'
 import { QuotationsPage } from '../pages/management/QuotationsPage'
 import { QuotationCreatePage } from '../pages/management/QuotationCreatePage'
 import { QuotationEditPage } from '../pages/management/QuotationEditPage'
@@ -89,6 +90,15 @@ export const routeConfig: RouteObject[] = [
       {
         path: '/dashboard',
         element: <Navigate to="/app/dashboard" replace />,
+      },
+      {
+        element: <SalesLayout />,
+        children: [
+          { path: '/profile', element: <CustomerProfilePage /> },
+          { path: '/profile/warranties', element: <WarrantyRecordsPage customerScope /> },
+          { path: '/profile/warranties/:id', element: <WarrantyRecordDetailPage customerScope /> },
+          { path: '/profile/warranty-tickets', element: <MyWarrantyTicketsPage /> },
+        ],
       },
       {
         path: '/app',
@@ -180,6 +190,7 @@ export const routeConfig: RouteObject[] = [
           { path: 'permissions', element: <PermissionsPage /> },
           { path: 'users', element: <UsersPage /> },
           { path: 'customer-debts', element: <CustomerDebtsPage /> },
+          { path: 'customer-debts/:customerId', element: <CustomerDebtDetailPage /> },
           { path: 'customer-debts/credit-approvals', element: <CreditProfileApprovalsPage /> },
           { path: 'payment-verifications', element: <PaymentVerificationsPage /> },
           { path: 'cod-collections', element: <CodCollectionsPage /> },
@@ -188,12 +199,8 @@ export const routeConfig: RouteObject[] = [
           { path: 'my-deliveries', element: <MyDeliveriesPage /> },
           { path: 'deliveries/:id', element: <DeliveryDetailPage /> },
           { path: 'warranty-policies', element: <WarrantyPoliciesPage /> },
-          { path: 'my-warranties', element: <MyWarrantiesPage /> },
           { path: 'warranty-records', element: <WarrantyRecordsPage /> },
           { path: 'warranty-records/:id', element: <WarrantyRecordDetailPage /> },
-          { path: 'my-warranties', element: <WarrantyRecordsPage customerScope /> },
-          { path: 'my-warranties/:id', element: <WarrantyRecordDetailPage customerScope /> },
-          { path: 'my-warranty-tickets', element: <MyWarrantyTicketsPage /> },
         ],
       },
     ],

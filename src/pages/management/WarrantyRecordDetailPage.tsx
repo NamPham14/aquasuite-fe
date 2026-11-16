@@ -37,7 +37,7 @@ export function WarrantyRecordDetailPage({ customerScope = false }: { customerSc
   const activeQuery = customerScope ? customerQuery : staffQuery
 
   const record = activeQuery.data
-  const backPath = customerScope ? '/app/my-warranties' : '/app/warranty-records'
+  const backPath = customerScope ? '/profile/warranties' : '/app/warranty-records'
 
   if (activeQuery.isLoading) {
     return (

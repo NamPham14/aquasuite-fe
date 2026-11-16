@@ -75,14 +75,14 @@ export function SalesLayout() {
 
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-                <div className="flex items-center gap-2 text-xs text-slate-700">
+                <Link to="/profile" className="flex items-center gap-2 rounded-md px-1 py-1 text-xs text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500">
                   <div className="w-7 h-7 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
                     <UserIcon className="w-3.5 h-3.5" />
                   </div>
                   <span className="hidden md:inline font-medium max-w-36 truncate">
                     {user.username || user.email}
                   </span>
-                </div>
+                </Link>
                 <button
                   type="button"
                   onClick={() => void logout()}
