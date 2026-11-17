@@ -20,7 +20,7 @@ import { POSCustomerSection } from '../../features/sales/components/POSCustomerS
 import { POSPaymentMethodCard } from '../../features/sales/components/POSPaymentMethodCard'
 import { POSOrderSuccessModal } from '../../features/sales/components/POSOrderSuccessModal'
 import { ProductSelectionDrawer } from '../../features/sales/components/ProductSelectionDrawer'
-import { CreditProfilePanel } from '../../features/finance/components/CreditProfilePanel'
+import { CreditProfileRequestForm } from '../../features/finance/components/CreditProfileRequestForm'
 import { ManagementDialog } from '../../shared/ui/ManagementDialog'
 import type { SalesOrderDetailResponse } from '../../features/sales/types/salesOrder.types'
 import type { CatalogItemOption } from '../../features/sales/data/catalogProducts.data'
@@ -354,9 +354,10 @@ export function POSOrderCreatePage() {
       {isCreditProfileOpen && cart.selectedCustomer && (
         <ManagementDialog title={`Hồ sơ tín dụng · ${cart.selectedCustomer.customerName}`} onClose={() => setIsCreditProfileOpen(false)}>
           <div className="p-5 sm:p-6">
-            <CreditProfilePanel
+            <CreditProfileRequestForm
               customer={cart.selectedCustomer}
               onDone={() => setIsCreditProfileOpen(false)}
+              onCancel={() => setIsCreditProfileOpen(false)}
             />
           </div>
         </ManagementDialog>

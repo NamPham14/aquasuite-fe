@@ -6,6 +6,8 @@ function dataOf<T>(response: ApiResponse<T>): T { if (response.data === undefine
 
 export const customerDebtApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    uploadCreditProfileEvidence: builder.mutation<{ identityDocumentObjectKey: string }, { customerId: string; data: FormData }>({ query: ({ customerId, data }) => ({ url: `/crm/customers/${customerId}/credit-profile-evidence`, method: 'POST', body: data }), transformResponse: dataOf<{ identityDocumentObjectKey: string }> }),
+    getCreditProfileEvidence: builder.query<Blob, string>({ query: (requestId) => ({ url: `/crm/credit-profile-requests/${requestId}/identity-document`, responseHandler: (response) => response.blob() }) }),
     getCustomerDebtStats: builder.query<DebtDashboardStats, void>({ query: () => '/finance/customer-debts/stats', transformResponse: dataOf<DebtDashboardStats>, providesTags: [{ type: 'CustomerDebt', id: 'STATS' }] }),
     getCustomerDebts: builder.query<CustomerDebtPage, { keyword?: string; customerType?: string; debtStatus?: string; page: number; size: number }>({
       query: (params) => ({ url: '/finance/customer-debts', params }), transformResponse: dataOf<CustomerDebtPage>,
@@ -31,3 +33,4 @@ export const customerDebtApi = baseApi.injectEndpoints({
 })
 
 export const { useGetCustomerDebtStatsQuery, useGetCustomerDebtsQuery, useGetCustomerDebtDetailQuery, useCheckCreditMutation, useApproveCreditOverrideMutation, useSendDebtReminderMutation, useSaveDebtCallResultMutation, useLazyExportDebtStatementQuery, useEmailDebtStatementMutation, useBlockCustomerMutation, useRestoreCustomerMutation, useIssueCreditApprovalGrantMutation, useUpdateCustomerCreditProfileMutation, useGetCreditProfileRequestsQuery, useLazyGetCreditProfileRequestDetailQuery, useApproveCreditProfileRequestMutation, useRejectCreditProfileRequestMutation, useSubmitCreditProfileRequestMutation } = customerDebtApi
+export const { useUploadCreditProfileEvidenceMutation, useLazyGetCreditProfileEvidenceQuery } = customerDebtApi

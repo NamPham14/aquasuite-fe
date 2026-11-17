@@ -5,6 +5,7 @@ export interface ManagementTableColumn<T> {
   header: ReactNode
   cell: (row: T) => ReactNode
   align?: 'left' | 'center' | 'right'
+  headerClassName?: string
   cellClassName?: string
 }
 
@@ -22,11 +23,38 @@ export function ManagementTable<T>({ columns, rows, rowKey, emptyMessage, labell
     <div className="overflow-x-auto" role="region" aria-labelledby={labelledBy} tabIndex={0}>
       <table aria-labelledby={labelledBy} className={`${wrapCells ? 'w-full table-fixed' : 'min-w-full'} divide-y divide-gray-200 text-xs`}>
         <thead className="bg-gray-50 font-medium text-gray-500">
-          <tr>{columns.map((column) => <th key={column.key} scope="col" className={`px-4 py-3 ${alignment[column.align ?? 'left']}`}>{column.header}</th>)}</tr>
+          <tr>
+            {columns.map((column) => (
+              <th
+                key={column.key}
+                scope="col"
+                className={`px-3 py-3 ${alignment[column.align ?? 'left']} ${column.headerClassName ?? ''}`}
+              >
+                {column.header}
+              </th>
+            ))}
+          </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 text-gray-600">
-          {rows.map((row) => <tr key={rowKey(row)}>{columns.map((column) => <td key={column.key} className={`${wrapCells ? 'break-words whitespace-normal' : 'whitespace-nowrap'} px-3 py-3 ${alignment[column.align ?? 'left']} ${column.cellClassName ?? ''}`}>{column.cell(row)}</td>)}</tr>)}
-          {rows.length === 0 && <tr><td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-slate-600">{emptyMessage}</td></tr>}
+          {rows.map((row) => (
+            <tr key={rowKey(row)} className="hover:bg-slate-50/70">
+              {columns.map((column) => (
+                <td
+                  key={column.key}
+                  className={`${wrapCells ? 'break-words whitespace-normal align-top' : 'whitespace-nowrap'} px-3 py-3 ${alignment[column.align ?? 'left']} ${column.cellClassName ?? ''}`}
+                >
+                  {column.cell(row)}
+                </td>
+              ))}
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={columns.length} className="px-4 py-8 text-center text-sm text-slate-600">
+                {emptyMessage}
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

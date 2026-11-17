@@ -75,7 +75,7 @@ function statusLabel(status: VariantStatus) {
 function StatusBadge({ status, missingPrice }: { status: VariantStatus; missingPrice?: boolean }) {
   if (status === 'INACTIVE' && missingPrice) {
     return (
-      <div>
+      <div className="inline-flex flex-col">
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800">
           <span className="h-[7px] w-[7px] rounded-full bg-current" aria-hidden="true" />
           Chưa có giá bán
@@ -110,11 +110,11 @@ function MarginInfo({ costPrice, sellingPrice }: { costPrice?: number | null; se
   const belowCost = hasCost && diff < 0
 
   return (
-    <div className="text-right">
-      <p className="font-bold text-slate-900">{money(sellingPrice)}</p>
+    <div className="tabular-nums">
+      <p className="whitespace-nowrap font-bold text-slate-900">{money(sellingPrice)}</p>
       {hasCost && (
         <>
-          <p className={`text-xs font-semibold ${belowCost ? 'text-red-700' : 'text-sky-800'}`}>
+          <p className={`whitespace-nowrap text-xs font-semibold ${belowCost ? 'text-red-700' : 'text-sky-800'}`}>
             Lãi: {belowCost ? '−' : '+'}
             {new Intl.NumberFormat('vi-VN').format(Math.abs(diff))} ₫ · {pct}%
           </p>
@@ -240,37 +240,38 @@ export function ProductVariantsPage() {
 
   const rows = list.data?.content ?? []
 
-  const columns: ManagementTableColumn<ProductVariant>[] = [
+const columns: ManagementTableColumn<ProductVariant>[] = [
     {
       key: 'sku',
       header: 'Mã SKU / Biến thể',
+      align: 'left',
+      headerClassName: 'w-[17%]',
       cell: (item) => (
-        <div className="min-w-48">
-          <p className="font-mono text-[13px] font-semibold text-sky-800">{item.sku}</p>
-          <p className="font-semibold text-slate-900">{item.variantName}</p>
-          {item.serialTracking && <p className="text-xs text-slate-500">Theo dõi Serial từng chiếc</p>}
+        <div>
+          <p className="truncate font-mono text-[13px] font-semibold text-sky-800" title={item.sku}>
+            {item.sku}
+          </p>
+          <p className="line-clamp-2 font-semibold text-slate-900" title={item.variantName}>
+            {item.variantName}
+          </p>
+          {item.serialTracking && <p className="mt-0.5 text-[11px] text-slate-500">Theo dõi Serial</p>}
         </div>
       ),
     },
     {
       key: 'attributes',
       header: 'Thuộc tính',
-      cell: (item) => {
-        const specs = specSummary(item)
-        return (
-          <div>
-            <p className="text-slate-800">{[item.color, item.size].filter(Boolean).join(' · ') || '—'}</p>
-            {specs && <p className="text-xs text-slate-500">{specs}</p>}
-            {item.weight != null && item.weight > 0 && <p className="text-xs text-slate-500">{item.weight} kg</p>}
-          </div>
-        )
-      },
+      align: 'right',
+      headerClassName: 'w-[16%]',
+      cell: (item) => <AttributeSummary item={item} />,
     },
     {
       key: 'unit',
       header: 'ĐVT · Quy đổi',
+      align: 'right',
+      headerClassName: 'w-[10%]',
       cell: (item) => (
-        <span className="whitespace-nowrap text-slate-800">
+        <span className="whitespace-nowrap tabular-nums text-slate-800">
           {item.unit}
           {item.conversionRate !== 1 && <span className="text-xs text-slate-500"> · × {item.conversionRate}</span>}
         </span>
@@ -279,41 +280,52 @@ export function ProductVariantsPage() {
     {
       key: 'cost',
       header: 'Giá nhập',
-      cell: (item) => (
-        <div className="text-right">
-          {item.costPrice != null ? (
-            <span className="font-semibold text-slate-900">{money(item.costPrice)}</span>
-          ) : (
-            <span className="text-[13px] font-medium italic text-slate-400">Chưa nhập</span>
-          )}
-        </div>
-      ),
+      align: 'left',
+      headerClassName: 'w-[11%]',
+      cell: (item) =>
+        item.costPrice != null ? (
+          <span className="whitespace-nowrap font-semibold tabular-nums text-slate-900">{money(item.costPrice)}</span>
+        ) : (
+          <span className="text-[13px] font-medium italic text-slate-400">Chưa nhập</span>
+        ),
     },
     {
       key: 'stock',
       header: 'Tồn kho WH_MAIN',
+      align: 'right',
+      headerClassName: 'w-[12%]',
       cell: (item) => (
-        <div className="text-right text-xs text-slate-700">
-          <p className={item.lowStock ? 'font-bold text-amber-700' : 'font-semibold text-slate-900'}>{item.onHandQty ?? 0} tồn thực tế</p>
-          <p>Khả dụng: {item.availableQty ?? 0} · Giữ: {item.reservedQty ?? 0}</p>
+        <div className="text-xs tabular-nums text-slate-700">
+          <p className={item.lowStock ? 'font-bold text-amber-700' : 'font-semibold text-slate-900'}>
+            {item.onHandQty ?? 0} tồn thực tế
+          </p>
+          <p className="text-[11px] text-slate-500">
+            Khả dụng: {item.availableQty ?? 0} · Giữ: {item.reservedQty ?? 0}
+          </p>
         </div>
       ),
     },
     {
       key: 'retail',
       header: 'Giá bán & lãi dự kiến',
+      align: 'right',
+      headerClassName: 'w-[13%]',
       cell: (item) => <MarginInfo costPrice={item.costPrice} sellingPrice={item.sellingPrice} />,
     },
     {
       key: 'status',
       header: 'Trạng thái',
+      align: 'left',
+      headerClassName: 'w-[11%]',
       cell: (item) => <StatusBadge status={item.status} missingPrice={item.sellingPrice == null} />,
     },
     {
       key: 'actions',
       header: 'Thao tác',
+      align: 'right',
+      headerClassName: 'w-[8%]',
       cell: (item) => (
-        <div className="flex min-w-28 items-center justify-end gap-1.5">
+        <div className="flex items-center justify-end gap-1">
           <button
             type="button"
             className={iconActionButton}
@@ -917,7 +929,7 @@ function VariantForm({
           initial={initial?.weight ?? 0}
           min="0"
           step="any"
-          hint="Dùng để tính phí giao hàng."
+          hint="Khối lượng sản phẩm"
         />
         <Select name="status" label="Trạng thái kinh doanh" initial={initial?.status ?? 'ACTIVE'}>
           <option value="ACTIVE">Đang kinh doanh</option>
@@ -927,7 +939,7 @@ function VariantForm({
 
       <fieldset className="grid gap-3.5 border-t border-slate-100 pt-3.5 sm:grid-cols-2">
         <legend className="px-1 text-[11.5px] font-bold uppercase tracking-wider text-slate-400">
-          Thông số kỹ thuật (kế thừa từ sản phẩm gốc)
+          Thông số kỹ thuật
         </legend>
         {Object.entries(spec).map(([key, value]) => (
           <Field key={key} name={`spec-${key}`} label={key} initial={String(value ?? '')}>
@@ -960,7 +972,7 @@ function VariantForm({
           <ManagementFormField
             id="variant-sellingPrice"
             label="Giá bán niêm yết (VNĐ)"
-            hint="Để trống → biến thể tự chuyển Ngừng kinh doanh."
+            hint="Để trống tự đặt trạng thái Ngừng kinh doanh."
           >
             <input
               id="variant-sellingPrice"
@@ -1260,7 +1272,7 @@ function MatrixForm({
               placeholder="Thêm màu khác..."
               className={managementFieldClass}
             />
-            <button type="button" onClick={addColorChip} className={secondaryButton}>
+            <button type="button" onClick={addColorChip} className={secondaryButton} style={{ margin: '4px 0px 0px' }}>
               Thêm
             </button>
           </div>
@@ -1300,7 +1312,7 @@ function MatrixForm({
               placeholder="Thêm size khác..."
               className={managementFieldClass}
             />
-            <button type="button" onClick={addSizeChip} className={secondaryButton}>
+            <button type="button" onClick={addSizeChip} className={secondaryButton} style={{ margin: '4px 0px 0px' }}>
               Thêm
             </button>
           </div>
@@ -1468,6 +1480,49 @@ function StatusChangeDialog({ variant, pending, onClose, onConfirm }: { variant:
         </div>
       </div>
     </ManagementDialog>
+  )
+}
+
+function AttributeSummary({ item }: { item: ProductVariant }) {
+  const basic = [
+    item.color,
+    item.size,
+    item.weight != null && item.weight > 0 ? `${item.weight} kg` : null,
+  ].filter(Boolean)
+
+  const specEntries = Object.entries(item.technicalSpec ?? {}).filter(
+    ([, value]) => value != null && String(value).trim() !== '',
+  )
+  const visibleSpecs = specEntries.slice(0, 2)
+  const hiddenCount = specEntries.length - visibleSpecs.length
+  const fullTitle = [
+    basic.join(' · '),
+    ...specEntries.map(([k, v]) => `${k}: ${String(v)}`),
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  return (
+    <div className="space-y-1 text-left" title={fullTitle || undefined}>
+      <p className="line-clamp-1 font-medium text-slate-800">{basic.join(' · ') || '—'}</p>
+      {specEntries.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1">
+          {visibleSpecs.map(([key, value]) => (
+            <span
+              key={key}
+              className="inline-block max-w-[140px] truncate rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600"
+            >
+              {key}: {String(value)}
+            </span>
+          ))}
+          {hiddenCount > 0 && (
+            <span className="inline-block rounded bg-sky-50 px-1.5 py-0.5 text-[11px] font-semibold text-sky-700">
+              +{hiddenCount} thông số
+            </span>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

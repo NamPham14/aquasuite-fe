@@ -1,16 +1,17 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ArrowLeft, Download, Mail, PhoneCall, ShieldCheck, WalletCards } from 'lucide-react'
 import { toast } from 'sonner'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { normalizeApiError } from '../../../shared/api/apiError.ts'
-import { managementFieldClass } from '../../../shared/ui/ManagementDialog.tsx'
+import { ManagementDialog, managementFieldClass } from '../../../shared/ui/ManagementDialog.tsx'
 import { useAuth } from '../../iam/hooks/useAuth.ts'
 import { useBlockCustomerMutation, useCheckCreditMutation, useEmailDebtStatementMutation, useGetCustomerDebtDetailQuery, useLazyExportDebtStatementQuery, useRestoreCustomerMutation, useSaveDebtCallResultMutation, useSendDebtReminderMutation } from '../api/customerDebtApi.ts'
 import type { CreditCheckResult, CustomerDebtDetail, DebtReminderResult, DebtStatus } from '../types/customerDebt.types.ts'
 import { CreditProfilePanel } from './CreditProfilePanel.tsx'
+import { CreditProfileRequestForm } from './CreditProfileRequestForm.tsx'
 
 type Tab = 'info' | 'statement' | 'history'
-type Action = 'credit' | 'reminder' | 'call' | 'profile' | 'block' | null
+type Action = 'credit' | 'reminder' | 'call' | 'profile' | 'profile-read' | 'profile-edit' | 'block' | null
 const secondaryButton = 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:opacity-50'
 const primaryButton = 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md bg-sky-700 px-3 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:opacity-50'
 const money = (value?: number) => value == null ? '—' : `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value)} ₫`
@@ -24,12 +25,16 @@ export function CustomerDebtDetailPage() {
   const { customerId: customerIdParam } = useParams<{ customerId: string }>()
   const customerId = customerIdParam ?? ''
   const navigate = useNavigate()
+  const location = useLocation()
   const onClose = () => navigate(-1)
   const { user } = useAuth(); const isOwner = user?.roles.some((role) => ['SHOP_OWNER', 'ROLE_SHOP_OWNER'].includes(role.toUpperCase())) ?? false
   const isSalesOrOwner = isOwner || (user?.roles.some((role) => ['SALES_STAFF', 'ROLE_SALES_STAFF'].includes(role.toUpperCase())) ?? false)
   const isAccountantOrOwner = isOwner || (user?.roles.some((role) => ['ACCOUNTANT', 'ROLE_ACCOUNTANT'].includes(role.toUpperCase())) ?? false)
   const detail = useGetCustomerDebtDetailQuery(customerId, { skip: !customerId })
-  const [tab, setTab] = useState<Tab>('info'); const [action, setAction] = useState<Action>(null); const [actionError, setActionError] = useState('')
+  const requestedAction = new URLSearchParams(location.search).get('action')
+  const routeAction: Action = requestedAction === 'credit' || requestedAction === 'reminder' ? requestedAction : null
+  const [tab, setTab] = useState<Tab>('info'); const [action, setAction] = useState<Action>(routeAction); const [actionError, setActionError] = useState('')
+  useEffect(() => { setAction(routeAction) }, [routeAction])
   const [exportStatement, exportState] = useLazyExportDebtStatementQuery(); const [emailStatement, emailState] = useEmailDebtStatementMutation()
   const [checkCredit, checkState] = useCheckCreditMutation(); const [sendReminder, reminderState] = useSendDebtReminderMutation(); const [saveCall, callState] = useSaveDebtCallResultMutation(); const [block, blockState] = useBlockCustomerMutation(); const [restore, restoreState] = useRestoreCustomerMutation()
   const pending = exportState.isFetching || emailState.isLoading || checkState.isLoading || reminderState.isLoading || callState.isLoading || blockState.isLoading || restoreState.isLoading
@@ -37,7 +42,7 @@ export function CustomerDebtDetailPage() {
   const pageTitle = data ? `Chi tiết công nợ · ${data.customer.customerCode} — ${data.customer.customerName}` : 'Chi tiết công nợ'
   async function downloadStatement() { try { const blob = await exportStatement(customerId).unwrap(); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `sao-ke-cong-no.pdf`; anchor.click(); URL.revokeObjectURL(url); toast.success('Đã tải sao kê PDF.'); } catch (error) { toast.error(normalizeApiError(error).message) } }
   async function sendStatement() { try { const result = await emailStatement(customerId).unwrap(); if (result.emailResult === 'SENT') toast.success(result.message); else toast.error(result.message) } catch (error) { toast.error(normalizeApiError(error).message) } }
-  function open(next: Action) { setActionError(''); setAction(next) }
+  function open(next: Action) { setActionError(''); setAction(next === 'profile' ? 'profile-read' : next) }
   if (!customerId) return <DebtPageShell title="Chi tiết công nợ" onBack={onClose}>
     <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">Thiếu mã khách hàng trong đường dẫn.</p>
   </DebtPageShell>
@@ -49,6 +54,8 @@ export function CustomerDebtDetailPage() {
   </DebtPageShell>
   return <DebtPageShell title={pageTitle} onBack={onClose} backDisabled={pending}>
     <div className="space-y-4">
+      {action === 'profile-read' && <CreditProfileReadOnlyDialog data={data} onClose={() => setAction(null)} onRequest={() => setAction('profile-edit')} />}
+      {action === 'profile-edit' && <ActionShell title="Gửi yêu cầu hồ sơ tín dụng" onClose={() => setAction('profile-read')}><CreditProfileRequestForm customer={data.customer} onCancel={() => setAction('profile-read')} onDone={() => { setAction(null); void detail.refetch() }} /></ActionShell>}
       <div className="flex flex-wrap justify-end gap-2 border-b border-slate-200 pb-3">{isAccountantOrOwner && <><button type="button" className={secondaryButton} disabled={pending} onClick={downloadStatement}><Download className="h-4 w-4" />Tải sao kê PDF</button><button type="button" className={secondaryButton} disabled={pending} onClick={() => void sendStatement()}><Mail className="h-4 w-4" />Gửi sao kê</button></>}{isSalesOrOwner ? <><button type="button" className={secondaryButton} disabled={pending} onClick={() => open('reminder')}><Mail className="h-4 w-4" />Nhắc nợ</button><button type="button" className={secondaryButton} disabled={pending} onClick={() => open('call')}><PhoneCall className="h-4 w-4" />Ghi nhận cuộc gọi</button><button type="button" className={primaryButton} disabled={pending} onClick={() => open('credit')}><ShieldCheck className="h-4 w-4" />Kiểm tra tín dụng</button></> : <span className="self-center text-xs text-slate-500">Nhắc nợ và gọi điện chỉ dành cho Sales Staff hoặc Chủ cửa hàng.</span>}{isOwner && <><button type="button" className={secondaryButton} disabled={pending} onClick={() => open('profile')}><WalletCards className="h-4 w-4" />Hồ sơ tín dụng</button><button type="button" className={data.customer.status === 'BLOCKED' ? primaryButton : 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md bg-rose-700 px-3 text-sm font-semibold text-white hover:bg-rose-800 disabled:opacity-50'} disabled={pending} onClick={() => open('block')}>{data.customer.status === 'BLOCKED' ? 'Mở chặn khách' : 'Chặn khách'}</button></>}</div>
       <div className="flex flex-wrap gap-2 border-b border-slate-200"><TabButton active={tab === 'info'} onClick={() => setTab('info')}>Thông tin</TabButton><TabButton active={tab === 'statement'} onClick={() => setTab('statement')}>Hóa đơn & sao kê</TabButton><TabButton active={tab === 'history'} onClick={() => setTab('history')}>Lịch sử nhắc nợ</TabButton></div>
       {actionError && <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">{actionError}</p>}
@@ -93,4 +100,5 @@ function ReminderDialog({ data, initialTab, sendPending, callPending, onSend, on
 }
 function ReadOnly({ label, value }: { label: string; value: string }) { return <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800">{value}</p></div> }
 function BlockForm({ blocked, pending, onSubmit, onClose }: { blocked: boolean; pending: boolean; onSubmit: (reason: string) => Promise<void>; onClose: () => void }) { const [reason, setReason] = useState(''); return <ActionShell title={blocked ? 'Mở chặn khách hàng' : 'Chặn khách hàng'} onClose={onClose}><form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (reason.trim()) void onSubmit(reason.trim()) }}><p className={`rounded-md p-3 text-sm ${blocked ? 'bg-sky-50 text-sky-900' : 'bg-rose-50 text-rose-900'}`}>{blocked ? 'Khách hàng sẽ trở lại trạng thái ACTIVE. Công nợ quá hạn vẫn được tính riêng.' : 'Khách hàng bị BLOCKED sẽ không được cấp tín dụng cho đến khi được mở chặn.'}</p><label className="block text-sm font-medium text-slate-700">Lý do *<textarea required maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} className={`${managementFieldClass} min-h-24`} /></label><div className="flex justify-end"><button disabled={pending || !reason.trim()} className={blocked ? primaryButton : 'inline-flex min-h-9 items-center justify-center rounded-md bg-rose-700 px-3 text-sm font-semibold text-white hover:bg-rose-800 disabled:opacity-50'}>{pending ? 'Đang xử lý...' : blocked ? 'Xác nhận mở chặn' : 'Xác nhận chặn'}</button></div></form></ActionShell> }
-function ActionShell({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) { return <section className="rounded-lg border border-slate-200 bg-slate-50/50 p-4"><div className="mb-4 flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900">{title}</h3><button type="button" className={secondaryButton} onClick={onClose}>Quay lại</button></div>{children}</section> }
+function ActionShell({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) { return <ManagementDialog title={title} onClose={onClose} size="wide"><div className="p-5 sm:p-6">{children}</div></ManagementDialog> }
+function CreditProfileReadOnlyDialog({ data, onClose, onRequest }: { data: CustomerDebtDetail; onClose: () => void; onRequest: () => void }) { const customer = data.customer; return <ManagementDialog title="Hồ sơ tín dụng" onClose={onClose} size="wide"><div className="space-y-5 p-5 sm:p-6"><p className="rounded-md border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">Thông tin hiện tại chỉ để xem. Chọn “Gửi yêu cầu” để cấp mới hoặc điều chỉnh hạn mức/kỳ hạn.</p><dl className="grid gap-3 sm:grid-cols-2"><Info label="Khách hàng" value={`${customer.customerCode} · ${customer.customerName}`} /><Info label="Nhóm khách" value={customer.customerType ?? '—'} /><Info label="Hạn mức hiện tại" value={money(data.summary.creditLimit)} /><Info label="Kỳ hạn hiện tại" value={`${customer.creditTermDays ?? 0} ngày`} /><Info label="Dư nợ hiện tại" value={money(data.summary.outstandingBalance)} /><Info label="Hạn mức còn lại" value={money(data.summary.availableCredit)} /></dl><div className="flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" className={secondaryButton} onClick={onClose}>Đóng</button><button type="button" className={primaryButton} onClick={onRequest}>Gửi yêu cầu</button></div></div></ManagementDialog> }

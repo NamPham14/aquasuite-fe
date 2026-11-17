@@ -113,7 +113,7 @@ export function WarrantyPoliciesPage() {
   ], [])
 
   return <div className="space-y-5">
-    <ManagementPageHeader title="Chính sách bảo hành" description="UC-44 · Quản lý chính sách bảo hành" breadcrumb="Chính sách bảo hành" group="Bảo hành" icon={<Wrench className="h-6 w-6" />} />
+    <ManagementPageHeader title="Chính sách bảo hành" description="Chính sách bảo hành áp dụng cho các sản phẩm" breadcrumb="Chính sách bảo hành" group="Bảo hành" icon={<Wrench className="h-6 w-6" />} />
     <ManagementFilterBar>
       <ManagementSearch id="warranty-policy-search" label="Tìm kiếm" value={keyword} onChange={setKeyword} placeholder="Tên chính sách, hãng, nhóm hàng..." disabled={policies.isFetching} />
       <ManagementSelect id="warranty-policy-status" label="Trạng thái" value={status} onChange={(value) => setStatus(value as WarrantyPolicyStatus | '')} disabled={policies.isFetching}>
