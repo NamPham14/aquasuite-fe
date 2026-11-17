@@ -16,6 +16,7 @@ export const baseApi = createApi({
     'PurchaseOrder',
     'CustomerDebt',
     'OrderPayment',
+    'PaymentAllocation',
     'PaymentVerification',
     'GoodsReceipt',
     'Inventory',

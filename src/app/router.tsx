@@ -24,6 +24,7 @@ import { CustomerDebtsPage } from '../pages/management/CustomerDebtsPage'
 import { CustomerDebtDetailPage } from '../features/finance'
 import { CreditProfileApprovalsPage } from '../pages/management/CreditProfileApprovalsPage'
 import { PaymentVerificationsPage } from '../pages/management/PaymentVerificationsPage'
+import { PaymentAllocationsPage } from '../pages/management/PaymentAllocationsPage'
 import { CodCollectionsPage } from '../pages/management/CodCollectionsPage'
 import { WarrantyPoliciesPage } from '../pages/management/WarrantyPoliciesPage'
 import { QuotationsPage } from '../pages/management/QuotationsPage'
@@ -33,6 +34,7 @@ import { QuotationDetailPage } from '../pages/management/QuotationDetailPage'
 import { OrdersPage } from '../pages/management/OrdersPage'
 import { POSOrderCreatePage } from '../pages/management/POSOrderCreatePage'
 import { OrderDetailPage } from '../pages/management/OrderDetailPage'
+import { OrderModificationRequestsPage } from '../pages/management/OrderModificationRequestsPage'
 import { PurchaseOrdersPage } from '../pages/management/PurchaseOrdersPage'
 import { PurchaseOrderCreatePage } from '../pages/management/PurchaseOrderCreatePage'
 import { PurchaseOrderEditPage } from '../pages/management/PurchaseOrderEditPage'
@@ -183,6 +185,14 @@ export const routeConfig: RouteObject[] = [
             element: <OrderDetailPage />,
           },
           {
+            path: 'order-modification-requests',
+            element: <OrderModificationRequestsPage />,
+          },
+          {
+            path: 'order-modification-requests/:requestId',
+            element: <OrderModificationRequestsPage />,
+          },
+          {
             path: 'system-info',
             element: <SystemInfoPage />,
           },
@@ -193,6 +203,7 @@ export const routeConfig: RouteObject[] = [
           { path: 'customer-debts/:customerId', element: <CustomerDebtDetailPage /> },
           { path: 'customer-debts/credit-approvals', element: <CreditProfileApprovalsPage /> },
           { path: 'payment-verifications', element: <PaymentVerificationsPage /> },
+          { path: 'payment-allocations', element: <PaymentAllocationsPage /> },
           { path: 'cod-collections', element: <CodCollectionsPage /> },
           { path: 'issue-notes', element: <IssueNotesPage /> },
           { path: 'deliveries', element: <DeliveriesPage /> },
