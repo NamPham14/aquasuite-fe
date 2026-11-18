@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Trash2,
   ShoppingCart,
@@ -8,6 +9,7 @@ import {
   Package,
   RefreshCw,
   ArrowUpRight,
+  Droplets,
 } from 'lucide-react'
 import { formatVnd } from '../../../shared/lib/money.ts'
 import type { CartItemResponse } from '../types/cart.types.ts'
@@ -31,32 +33,31 @@ function QuantityControl({
   isPending: boolean
   onUpdateQuantity: (cartItemId: string, quantity: number) => Promise<boolean> | void
 }) {
-  const [draftQty, setDraftQty] = useState<string>(String(item.quantity))
+  const [editingValue, setEditingValue] = useState<string | null>(null)
 
   const maxAvailable = Math.max(0, Math.floor(item.availableQty))
   const isInactive = item.variantStatus.toUpperCase() !== 'ACTIVE'
 
   const commitQuantity = (raw: string) => {
+    setEditingValue(null)
     const parsed = Number.parseInt(raw, 10)
     if (Number.isNaN(parsed) || parsed < 1) {
-      setDraftQty(String(item.quantity))
       return
     }
     const clamped = maxAvailable > 0 ? Math.min(parsed, maxAvailable) : parsed
-    setDraftQty(String(clamped))
     if (clamped !== item.quantity) {
       void onUpdateQuantity(item.cartItemId, clamped)
     }
   }
 
   return (
-    <div className="inline-flex items-center border border-slate-200 rounded-md bg-white overflow-hidden shadow-2xs">
+    <div className="inline-flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden shadow-2xs">
       <button
         type="button"
         aria-label={`Giảm số lượng ${item.productName}`}
         disabled={isPending || item.quantity <= 1 || isInactive}
         onClick={() => void onUpdateQuantity(item.cartItemId, Math.max(1, item.quantity - 1))}
-        className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+        className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
       >
         <Minus className="w-3.5 h-3.5" />
       </button>
@@ -66,15 +67,20 @@ function QuantityControl({
         max={maxAvailable > 0 ? maxAvailable : undefined}
         aria-label={`Số lượng ${item.productName}`}
         disabled={isPending || isInactive}
-        value={draftQty}
-        onChange={(e) => setDraftQty(e.target.value)}
+        value={editingValue ?? String(item.quantity)}
+        onFocus={() => setEditingValue(String(item.quantity))}
+        onChange={(e) => setEditingValue(e.target.value)}
         onBlur={(e) => commitQuantity(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.currentTarget.blur()
           }
+          if (e.key === 'Escape') {
+            setEditingValue(null)
+            e.currentTarget.blur()
+          }
         }}
-        className="w-12 h-7 text-center text-xs font-semibold text-slate-800 border-x border-slate-200 focus:outline-none focus:bg-sky-50/40 disabled:bg-slate-50"
+        className="w-12 h-8 text-center text-xs font-bold text-slate-800 border-x border-slate-200 focus:outline-none focus:bg-sky-50/40 disabled:bg-slate-50 tabular-nums"
       />
       <button
         type="button"
@@ -85,11 +91,37 @@ function QuantityControl({
           (maxAvailable > 0 && item.quantity >= maxAvailable)
         }
         onClick={() => void onUpdateQuantity(item.cartItemId, item.quantity + 1)}
-        className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+        className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
       >
         <Plus className="w-3.5 h-3.5" />
       </button>
     </div>
+  )
+}
+
+function CartItemThumbnail({ item }: { item: CartItemResponse }) {
+  const [imgError, setImgError] = useState(false)
+  const detailPath = `/products/${encodeURIComponent(item.variantId)}`
+
+  return (
+    <Link
+      to={detailPath}
+      className="h-14 w-14 shrink-0 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center hover:border-sky-300 transition"
+    >
+      {item.imageUrl && !imgError ? (
+        <img
+          src={item.imageUrl}
+          alt={item.productName}
+          loading="lazy"
+          onError={() => setImgError(true)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="h-full w-full bg-gradient-to-br from-slate-900 via-sky-950 to-cyan-950 flex items-center justify-center text-cyan-300">
+          <Droplets className="h-5 w-5" aria-hidden="true" />
+        </div>
+      )}
+    </Link>
   )
 }
 
@@ -106,34 +138,42 @@ export function CustomerCartTable({
 
   if (items.length === 0) {
     return (
-      <div className="border border-dashed border-slate-300 rounded-xl p-12 text-center bg-white shadow-2xs">
-        <div className="w-14 h-14 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center mx-auto mb-4">
+      <div className="border border-dashed border-sky-200 rounded-2xl p-12 text-center bg-white/95 shadow-sm">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-100 to-cyan-100 text-sky-600 flex items-center justify-center mx-auto mb-4">
           <ShoppingCart className="w-7 h-7" />
         </div>
-        <h3 className="text-base font-bold text-slate-800">
+        <h3 className="text-base font-extrabold text-slate-900">
           Giỏ hàng của bạn đang trống
         </h3>
-        <p className="text-xs text-slate-500 mt-1.5 max-w-md mx-auto">
+        <p className="text-xs text-slate-500 mt-1.5 max-w-md mx-auto leading-relaxed">
           Hãy chọn thiết bị vệ sinh và phụ kiện phòng tắm từ danh mục để thêm vào giỏ hàng trước khi tiến hành đặt hàng.
         </p>
-        <button
-          type="button"
-          onClick={onOpenProductPicker}
-          className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-lg bg-sky-600 text-white hover:bg-sky-700 transition shadow-xs cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Chọn thêm sản phẩm vào giỏ</span>
-        </button>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+          <Link
+            to="/storefront#catalog"
+            className="aqua-shine-btn inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 text-white hover:from-sky-500 hover:to-cyan-500 transition shadow-md shadow-sky-500/20"
+          >
+            <span>Khám phá Showroom</span>
+          </Link>
+          <button
+            type="button"
+            onClick={onOpenProductPicker}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:text-sky-700 transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Chọn nhanh theo SKU</span>
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-2xs">
-      <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+    <div className="border border-sky-200/80 rounded-2xl bg-white/95 overflow-hidden shadow-md shadow-sky-950/5">
+      <div className="px-5 py-3.5 bg-gradient-to-r from-slate-50 via-sky-50/40 to-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Package className="w-4 h-4 text-sky-600" />
-          <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+          <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
             Danh sách sản phẩm trong giỏ ({items.length})
           </span>
         </div>
@@ -142,7 +182,7 @@ export function CustomerCartTable({
           <button
             type="button"
             onClick={onOpenProductPicker}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-semibold transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-bold transition cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Thêm sản phẩm</span>
@@ -153,13 +193,13 @@ export function CustomerCartTable({
               type="button"
               disabled={isClearing}
               onClick={() => setConfirmClear(true)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-rose-600 hover:text-rose-700 disabled:opacity-50 transition cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50 transition cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Xóa toàn bộ</span>
             </button>
           ) : (
-            <div className="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-md">
+            <div className="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-xl">
               <span className="text-[11px] font-medium text-rose-700">Xác nhận xóa hết?</span>
               <button
                 type="button"
@@ -168,7 +208,7 @@ export function CustomerCartTable({
                   await onClearCart()
                   setConfirmClear(false)
                 }}
-                className="px-2 py-0.5 bg-rose-600 text-white text-[11px] font-semibold rounded hover:bg-rose-700 cursor-pointer"
+                className="px-2 py-0.5 bg-rose-600 text-white text-[11px] font-semibold rounded-lg hover:bg-rose-700 cursor-pointer"
               >
                 Đồng ý
               </button>
@@ -186,7 +226,7 @@ export function CustomerCartTable({
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs text-slate-700">
-          <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase border-b border-slate-200 font-semibold">
+          <thead className="bg-slate-50/90 text-slate-600 text-[11px] uppercase border-b border-slate-200 font-bold">
             <tr>
               <th className="px-5 py-3">Sản phẩm / Biến thể SKU</th>
               <th className="px-4 py-3 text-right">Đơn giá</th>
@@ -201,6 +241,7 @@ export function CustomerCartTable({
               const isPending = Boolean(pendingItemIds[item.cartItemId])
               const isInactive = item.variantStatus.toUpperCase() !== 'ACTIVE'
               const isOutOfStock = !item.inStock || item.availableQty < item.quantity
+              const detailPath = `/products/${encodeURIComponent(item.variantId)}`
 
               return (
                 <tr
@@ -208,20 +249,21 @@ export function CustomerCartTable({
                   className={`transition-colors ${
                     isInactive || isOutOfStock
                       ? 'bg-amber-50/30 hover:bg-amber-50/50'
-                      : 'hover:bg-slate-50/60'
+                      : 'hover:bg-sky-50/35'
                   }`}
                 >
                   <td className="px-5 py-3.5">
                     <div className="flex items-start gap-3">
-                      <span className="p-2 rounded-lg bg-sky-50 text-sky-600 mt-0.5 shrink-0">
-                        <Package className="w-4 h-4" />
-                      </span>
+                      <CartItemThumbnail item={item} />
                       <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 text-sm leading-snug">
+                        <Link
+                          to={detailPath}
+                          className="font-bold text-slate-900 hover:text-sky-700 text-sm leading-snug transition-colors block"
+                        >
                           {item.productName}
-                        </p>
+                        </Link>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-100 text-slate-700">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-slate-100 text-slate-700">
                             SKU: {item.sku}
                           </span>
                           {item.variantName && (
@@ -264,8 +306,8 @@ export function CustomerCartTable({
                     </div>
                   </td>
 
-                  <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                    <div className="font-semibold text-slate-800">
+                  <td className="px-4 py-3.5 text-right whitespace-nowrap tabular-nums">
+                    <div className="font-bold text-slate-800">
                       {formatVnd(item.currentSellingPrice)}
                     </div>
                     {item.priceChanged && (
@@ -278,7 +320,6 @@ export function CustomerCartTable({
                   <td className="px-4 py-3.5 text-center">
                     <div className="inline-flex flex-col items-center gap-1">
                       <QuantityControl
-                        key={`${item.cartItemId}-${item.quantity}`}
                         item={item}
                         isPending={isPending}
                         onUpdateQuantity={onUpdateQuantity}
@@ -292,19 +333,19 @@ export function CustomerCartTable({
                     </div>
                   </td>
 
-                  <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                  <td className="px-4 py-3.5 text-center whitespace-nowrap tabular-nums">
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                         item.availableQty > 0
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-rose-50 text-rose-700'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200'
                       }`}
                     >
                       {item.availableQty} {item.unit || 'SP'}
                     </span>
                   </td>
 
-                  <td className="px-4 py-3.5 text-right whitespace-nowrap font-bold text-slate-900 text-sm">
+                  <td className="px-4 py-3.5 text-right whitespace-nowrap font-extrabold text-sky-700 text-sm tabular-nums">
                     {formatVnd(item.lineTotal)}
                   </td>
 
@@ -314,7 +355,7 @@ export function CustomerCartTable({
                       aria-label={`Xóa ${item.productName}`}
                       disabled={isPending}
                       onClick={() => void onRemoveItem(item.cartItemId)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-40 transition cursor-pointer"
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-40 transition cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

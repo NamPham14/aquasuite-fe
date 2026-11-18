@@ -38,6 +38,9 @@ export * from './hooks/useCustomerCart'
 export * from './components/CustomerCartTable'
 export * from './components/CustomerCartSummary'
 export * from './components/CartProductPickerDrawer'
+export * from './components/StorefrontHeroBanner'
+export * from './components/StorefrontQuickAccessStrip'
+export * from './components/StorefrontProductCard'
 
 // Online Checkout & PayOS (UC-18)
 export * from './types/onlineCheckout.types'

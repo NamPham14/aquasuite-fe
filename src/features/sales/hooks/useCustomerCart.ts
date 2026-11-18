@@ -1,21 +1,33 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 import { normalizeApiError } from '../../../shared/api/apiError.ts'
 import {
   useGetCartQuery,
   useAddCartItemMutation,
+  useMergeCartItemsMutation,
   useUpdateCartItemQuantityMutation,
   useRemoveCartItemMutation,
   useClearCartMutation,
 } from '../api/cartApi.ts'
+import {
+  buildGuestCartResponse,
+  clearGuestCart,
+  GUEST_CART_UPDATED_EVENT,
+  readGuestCart,
+  removeGuestCartItem,
+  updateGuestCartQuantity,
+  upsertGuestCartItem,
+  type GuestCartEntry,
+} from '../lib/guestCartStorage.ts'
 import { addCartItemSchema, updateCartItemQuantitySchema } from '../schemas/cart.schema.ts'
 
 /**
  * Hook quản lý toàn bộ thao tác giỏ hàng trực tuyến của khách hàng (UC-17).
+ * Hỗ trợ đầy đủ cả người dùng đã đăng nhập (đồng bộ DB) và khách vãng lai (Guest Cart tự động gộp khi đăng nhập).
  */
 export function useCustomerCart(enabled = true) {
   const {
-    data: cart,
+    data: serverCart,
     isLoading,
     isFetching,
     isError,
@@ -23,12 +35,69 @@ export function useCustomerCart(enabled = true) {
     refetch,
   } = useGetCartQuery(undefined, { skip: !enabled })
 
-  const [addCartItemMutation, { isLoading: isAdding }] = useAddCartItemMutation()
+  const [addCartItemMutation] = useAddCartItemMutation()
+  const [mergeCartItemsMutation] = useMergeCartItemsMutation()
   const [updateCartItemQuantityMutation] = useUpdateCartItemQuantityMutation()
   const [removeCartItemMutation] = useRemoveCartItemMutation()
   const [clearCartMutation, { isLoading: isClearing }] = useClearCartMutation()
 
+  const [pendingVariantIds, setPendingVariantIds] = useState<Record<string, boolean>>({})
   const [pendingItemIds, setPendingItemIds] = useState<Record<string, boolean>>({})
+  const [guestEntries, setGuestEntries] = useState<GuestCartEntry[]>(() => readGuestCart())
+  const mergingRef = useRef(false)
+
+  // Lắng nghe đồng bộ Guest Cart giữa Header, Storefront, PDP và CartPage
+  useEffect(() => {
+    const syncGuestEntries = () => {
+      setGuestEntries(readGuestCart())
+    }
+    window.addEventListener(GUEST_CART_UPDATED_EVENT, syncGuestEntries)
+    window.addEventListener('storage', syncGuestEntries)
+    return () => {
+      window.removeEventListener(GUEST_CART_UPDATED_EVENT, syncGuestEntries)
+      window.removeEventListener('storage', syncGuestEntries)
+    }
+  }, [])
+
+  // Tự động gộp Guest Cart vào server khi khách hàng vừa đăng nhập thành công
+  useEffect(() => {
+    if (!enabled || mergingRef.current) return
+    const pendingGuestItems = readGuestCart()
+    if (pendingGuestItems.length === 0) return
+
+    mergingRef.current = true
+    void mergeCartItemsMutation({
+      items: pendingGuestItems.map((entry) => ({
+        variantId: entry.variantId,
+        quantity: entry.quantity,
+      })),
+    })
+      .unwrap()
+      .then(() => {
+        clearGuestCart()
+        setGuestEntries([])
+        toast.success(
+          `Đã đồng bộ ${pendingGuestItems.length} sản phẩm từ giỏ hàng tạm vào tài khoản`,
+        )
+      })
+      .catch(() => {
+        // Giữ nguyên guest cart nếu đồng bộ tạm thời thất bại
+      })
+      .finally(() => {
+        mergingRef.current = false
+      })
+  }, [enabled, mergeCartItemsMutation])
+
+  const markVariantPending = useCallback((variantId: string, pending: boolean) => {
+    setPendingVariantIds((prev) => {
+      if (!pending) {
+        const next = { ...prev }
+        delete next[variantId]
+        return next
+      }
+      return { ...prev, [variantId]: true }
+    })
+  }, [])
 
   const markItemPending = useCallback((cartItemId: string, pending: boolean) => {
     setPendingItemIds((prev) => {
@@ -49,6 +118,18 @@ export function useCustomerCart(enabled = true) {
         return false
       }
 
+      if (!enabled) {
+        const res = upsertGuestCartItem(parsed.data.variantId, parsed.data.quantity)
+        if (res.error) {
+          toast.error(res.error)
+          return false
+        }
+        setGuestEntries(res.entries)
+        toast.success('Đã thêm sản phẩm vào giỏ hàng tạm')
+        return true
+      }
+
+      markVariantPending(parsed.data.variantId, true)
       try {
         await addCartItemMutation(parsed.data).unwrap()
         toast.success('Đã thêm sản phẩm vào giỏ hàng')
@@ -56,9 +137,11 @@ export function useCustomerCart(enabled = true) {
       } catch (err) {
         toast.error(normalizeApiError(err).message)
         return false
+      } finally {
+        markVariantPending(parsed.data.variantId, false)
       }
     },
-    [addCartItemMutation],
+    [addCartItemMutation, enabled, markVariantPending],
   )
 
   const handleUpdateQuantity = useCallback(
@@ -67,6 +150,16 @@ export function useCustomerCart(enabled = true) {
       if (!parsed.success) {
         toast.error(parsed.error.issues[0]?.message ?? 'Số lượng không hợp lệ')
         return false
+      }
+
+      if (!enabled) {
+        const res = updateGuestCartQuantity(cartItemId, parsed.data.quantity)
+        if (res.error) {
+          toast.error(res.error)
+          return false
+        }
+        setGuestEntries(res.entries)
+        return true
       }
 
       markItemPending(cartItemId, true)
@@ -83,11 +176,18 @@ export function useCustomerCart(enabled = true) {
         markItemPending(cartItemId, false)
       }
     },
-    [markItemPending, updateCartItemQuantityMutation],
+    [enabled, markItemPending, updateCartItemQuantityMutation],
   )
 
   const handleRemoveItem = useCallback(
     async (cartItemId: string) => {
+      if (!enabled) {
+        const entries = removeGuestCartItem(cartItemId)
+        setGuestEntries(entries)
+        toast.success('Đã xóa sản phẩm khỏi giỏ hàng')
+        return true
+      }
+
       markItemPending(cartItemId, true)
       try {
         await removeCartItemMutation(cartItemId).unwrap()
@@ -100,10 +200,17 @@ export function useCustomerCart(enabled = true) {
         markItemPending(cartItemId, false)
       }
     },
-    [markItemPending, removeCartItemMutation],
+    [enabled, markItemPending, removeCartItemMutation],
   )
 
   const handleClearCart = useCallback(async () => {
+    if (!enabled) {
+      clearGuestCart()
+      setGuestEntries([])
+      toast.success('Đã làm trống giỏ hàng')
+      return true
+    }
+
     try {
       await clearCartMutation().unwrap()
       toast.success('Đã làm trống giỏ hàng')
@@ -112,20 +219,30 @@ export function useCustomerCart(enabled = true) {
       toast.error(normalizeApiError(err).message)
       return false
     }
-  }, [clearCartMutation])
+  }, [clearCartMutation, enabled])
+
+  const guestCart = useMemo(
+    () => (!enabled ? buildGuestCartResponse(guestEntries) : undefined),
+    [enabled, guestEntries],
+  )
+
+  const activeCart = enabled ? serverCart : guestCart
+  const isAdding = Object.keys(pendingVariantIds).length > 0
 
   return {
-    cart,
-    items: cart?.items ?? [],
-    totalItems: cart?.totalItems ?? 0,
-    totalQuantity: cart?.totalQuantity ?? 0,
-    subtotal: cart?.subtotal ?? 0,
-    hasInvalidItems: cart?.hasInvalidItems ?? false,
-    isLoading,
-    isFetching,
-    isError,
-    error: error ? normalizeApiError(error) : null,
+    cart: activeCart,
+    isGuestCart: !enabled,
+    items: activeCart?.items ?? [],
+    totalItems: activeCart?.totalItems ?? 0,
+    totalQuantity: activeCart?.totalQuantity ?? 0,
+    subtotal: activeCart?.subtotal ?? 0,
+    hasInvalidItems: activeCart?.hasInvalidItems ?? false,
+    isLoading: enabled ? isLoading : false,
+    isFetching: enabled ? isFetching : false,
+    isError: enabled ? isError : false,
+    error: enabled && error ? normalizeApiError(error) : null,
     isAdding,
+    pendingVariantIds,
     isClearing,
     pendingItemIds,
     refetch,
@@ -135,4 +252,3 @@ export function useCustomerCart(enabled = true) {
     handleClearCart,
   }
 }
-

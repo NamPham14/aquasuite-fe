@@ -27,10 +27,23 @@ export function normalizeApiError(error: unknown): ApiError {
   if (isRecord(error) && (typeof error.status === 'number' || typeof error.status === 'string')) {
     const payload = isRecord(error.data) ? error.data : undefined
     const status = error.status
-    let fallback = 'Đã xảy ra lỗi khi gọi API.'
+    const customErrText = typeof error.error === 'string' && error.error.trim() ? error.error.trim() : ''
+
+    let fallback =
+      typeof status === 'number'
+        ? status >= 500
+          ? `Máy chủ chưa phản hồi hoặc đang khởi động lại (HTTP ${status}).`
+          : `Yêu cầu không thành công (HTTP ${status}).`
+        : 'Đã xảy ra lỗi khi gọi API.'
+
     if (status === 'FETCH_ERROR') fallback = 'Không thể kết nối đến máy chủ.'
     else if (status === 'TIMEOUT_ERROR') fallback = 'Yêu cầu đã hết thời gian chờ.'
     else if (status === 'PARSING_ERROR') fallback = 'Không thể xử lý phản hồi từ máy chủ.'
+    else if (status === 'CUSTOM_ERROR' && customErrText === 'STALE_SESSION_DISCARDED') {
+      fallback = 'Phiên đăng nhập đã thay đổi, vui lòng tải lại trang hoặc đăng nhập lại.'
+    } else if (status === 'CUSTOM_ERROR' && customErrText) {
+      fallback = customErrText
+    }
 
     return {
       status,
