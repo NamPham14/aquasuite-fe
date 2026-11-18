@@ -527,9 +527,7 @@ export function PaymentAllocationsPage() {
           <div>
             <div className="flex flex-wrap items-center gap-1.5 text-[11.5px] font-medium text-slate-500">
               <span>Tài chính &amp; Công nợ</span>
-              <span>·</span>
-              <span>Kế toán, Công nợ &amp; Đối soát tài chính (FE-14)</span>
-              <span>·</span>
+              <span>/</span>
               <b className="font-semibold text-sky-700">Phân bổ tiền thu</b>
             </div>
             <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
