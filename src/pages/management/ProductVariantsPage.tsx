@@ -138,7 +138,7 @@ function specSummary(item: ProductVariant) {
     .join(' · ')
 }
 
-/** UC-10; product master data remains the responsibility of UC-09. */
+/** Quản lý biến thể và giá bán; dữ liệu sản phẩm gốc thuộc phạm vi quản lý sản phẩm. */
 export function ProductVariantsPage() {
   const { productId } = useParams<{ productId: string }>()
   const [keyword, setKeyword] = useState('')

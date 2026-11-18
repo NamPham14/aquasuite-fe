@@ -38,7 +38,7 @@ function isOutageOrNetworkError(err: any): boolean {
 
 let isGlobalBootstrapInProgress = false
 
-/** Khôi phục phiên: consume refresh token, đổi token, tải /me và chỉ nhận kết quả của generation hiện tại. */
+/** Khôi phục phiên: đọc refresh token (giữ bản sao), đổi token, tải /me và chỉ nhận kết quả của generation hiện tại. */
 export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
   if (isGlobalBootstrapInProgress) {
     return
@@ -58,8 +58,10 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
       getState().auth.sessionGeneration,
   )
 
-  // Lấy và xóa refresh token trước khi gọi mạng; nếu xóa thất bại thì dừng.
-  const refreshToken = tokenStorage.popRefreshToken()
+  // Đọc refresh token KHÔNG XÓA để giữ bản sao an toàn trong storage.
+  // Token cũ sẽ bị ghi đè bởi token mới khi server trả về thành công.
+  // Nếu mạng lỗi, token cũ vẫn còn trong storage để thử lại sau.
+  const refreshToken = tokenStorage.getRefreshToken()
   if (!refreshToken) {
     dispatch(clearAuthLocal())
     isGlobalBootstrapInProgress = false
@@ -93,7 +95,7 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
       return
     }
 
-    // Lưu refresh token mới vào sessionStorage.
+    // Server đã xác nhận rotation → lưu token mới (ghi đè token cũ trong storage).
     const saved = tokenStorage.setRefreshToken(tokenData.refresh_token)
     if (!saved) {
       dispatch(clearAuthLocal())
@@ -183,22 +185,28 @@ export async function triggerAuthBootstrap(dispatch: Dispatch): Promise<void> {
       return
     }
 
-    dispatch(clearAuthLocal())
-    dispatch(baseApi.util.resetApiState())
-
-    // Refresh token đã bị xóa trước request; dù là 503, mất mạng hay 401,
-    // không thể thử lại token cũ một cách an toàn. Yêu cầu đăng nhập lại
-    // để tránh lặp vô hạn với token không thể khôi phục.
-    const message = isOutageOrNetworkError(refreshError)
-      ? 'Dịch vụ xác thực tạm thời không khả dụng trong quá trình khôi phục phiên (503 / Mất kết nối). Vui lòng đăng nhập lại.'
-      : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
-
-    dispatch(
-      setBootstrapError({
-        type: 'SESSION_EXPIRED',
-        message,
-      }),
-    )
+    if (isOutageOrNetworkError(refreshError)) {
+      // Lỗi mạng/503 tạm thời: GIỮ NGUYÊN refresh token trong storage.
+      // Cho phép người dùng thử lại (nút Retry) khi kết nối ổn định.
+      dispatch(
+        setBootstrapError({
+          type: 'SERVICE_UNAVAILABLE',
+          message:
+            'Dịch vụ xác thực tạm thời không khả dụng (503 / Mất kết nối). Vui lòng thử lại.',
+        }),
+      )
+    } else {
+      // Lỗi xác thực thực sự (401/phiên hết hạn): xóa phiên và yêu cầu đăng nhập lại.
+      tokenStorage.clearRefreshToken()
+      dispatch(clearAuthLocal())
+      dispatch(baseApi.util.resetApiState())
+      dispatch(
+        setBootstrapError({
+          type: 'SESSION_EXPIRED',
+          message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+        }),
+      )
+    }
   } finally {
     isGlobalBootstrapInProgress = false
   }

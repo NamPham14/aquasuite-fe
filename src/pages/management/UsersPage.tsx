@@ -119,7 +119,7 @@ function AccountAvatar({ account }: { account: UserAccount }) {
   )
 }
 
-/** UC-05 account dashboard. Server-side authorization and final business rules remain in IAM. */
+/** Trang quản lý tài khoản người dùng. Phân quyền và quy tắc nghiệp vụ do phân hệ IAM tại Backend kiểm soát. */
 export function UsersPage() {
   return (
     <IamAccessGate>

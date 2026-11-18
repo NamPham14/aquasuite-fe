@@ -164,3 +164,55 @@ test('UC-10 variantApi: deleteVariant gọi DELETE với payload confirmed và r
   assert.equal(body?.confirmed, true)
   assert.equal(body?.reason, 'Tạo nhầm SKU trong quá trình nhập dữ liệu')
 })
+
+test('UC-10 ProductVariantsPage: hiển thị nhãn tiếng Việt "Biến thể" và không lộ mã UC-*', async () => {
+  const { register } = await import('node:module')
+  register('./loader.mjs', import.meta.url)
+  const React = await import('react')
+  const { renderToStaticMarkup } = await import('react-dom/server')
+  const { Provider } = await import('react-redux')
+  const { MemoryRouter, Routes, Route } = await import('react-router-dom')
+  const { authReducer, setCredentials } = await import('../src/features/iam/model/authSlice.ts')
+  const { ProductVariantsPage } = await import('../src/pages/management/ProductVariantsPage.tsx')
+
+  const store = configureStore({
+    reducer: { [baseApi.reducerPath]: baseApi.reducer, auth: authReducer },
+    middleware: (gDM) => gDM().concat(baseApi.middleware),
+  })
+  store.dispatch(setCredentials({
+    user: { id: 'owner-1', username: 'owner', email: 'o@a.vn', roles: ['SHOP_OWNER'] },
+    accessToken: 'tok',
+    generation: store.getState().auth.sessionGeneration,
+  }))
+  await store.dispatch(variantApi.util.upsertQueryData('getVariants', {
+    productId: 'prod-001',
+    keyword: undefined,
+    status: undefined,
+    missingPrice: undefined,
+    sortBy: 'default',
+    sortDir: 'DESC',
+    warehouseCode: 'WH_MAIN',
+    page: 0,
+    size: 10,
+  }, mockVariantPage))
+  await store.dispatch(variantApi.util.upsertQueryData('getVariantStats', 'prod-001', {
+    total: 1, active: 1, inactive: 0, missingRetailPrice: 0,
+  }))
+
+  const html = renderToStaticMarkup(
+    React.createElement(Provider, { store } as React.ComponentProps<typeof Provider>,
+      React.createElement(MemoryRouter, { initialEntries: ['/app/products/prod-001/variants'] },
+        React.createElement(Routes, null,
+          React.createElement(Route, { path: '/app/products/:productId/variants', element: React.createElement(ProductVariantsPage) }),
+        ),
+      ),
+    ),
+  )
+
+  assert.ok(html.includes('Biến thể &amp; Giá'), 'Phải hiển thị tiêu đề Biến thể & Giá')
+  assert.ok(html.includes('Danh sách biến thể (SKU)'), 'Phải hiển thị tiêu đề bảng Danh sách biến thể (SKU)')
+  assert.ok(html.includes('Mã SKU / Biến thể'), 'Phải hiển thị cột Mã SKU / Biến thể')
+  assert.ok(html.includes('Thêm biến thể'), 'Phải hiển thị nút Thêm biến thể')
+  assert.doesNotMatch(html, /UC-\d+/, 'Không được lộ mã UC-* trên giao diện')
+  store.dispatch(baseApi.util.resetApiState())
+})

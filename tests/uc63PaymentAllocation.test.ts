@@ -138,6 +138,21 @@ test('createPaymentAllocation and reversePaymentAllocation endpoints are defined
 
 // ─── UI permission tests ──────────────────────────────────────────────────────
 
+function mockEmptySubqueries() {
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    const url = input instanceof Request ? input.url : String(input)
+    if (url.includes('/allocations')) {
+      return new Response(JSON.stringify({ data: [] }), { headers: { 'Content-Type': 'application/json' } })
+    }
+    if (url.includes('/allocation-targets')) {
+      return new Response(JSON.stringify({ data: { receiptId: 'r-done-1', receiptCode: 'RCT-2026-0118', orderId: 'ord-1042', customerId: 'cust-1042', receiptAmount: 60000000, allocatedAmount: 60000000, remainingAmount: 0, invoices: [] } }), { headers: { 'Content-Type': 'application/json' } })
+    }
+    return new Response(JSON.stringify({ data: { content: [], items: [], page: 0, number: 0, size: 200, totalElements: 0, totalPages: 0 } }), {
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+}
+
 test('PaymentAllocationsPage: ACCOUNTANT sees the page content', async () => {
   const store = storeForRoles(['ACCOUNTANT'])
   await store.dispatch(paymentAllocationApi.util.upsertQueryData('getUnallocatedReceipts', { page: 0, size: 20 }, { content: [], number: 0, size: 20, totalElements: 0, totalPages: 0 }))
@@ -147,10 +162,11 @@ test('PaymentAllocationsPage: ACCOUNTANT sees the page content', async () => {
   store.dispatch(baseApi.util.resetApiState())
 })
 
-test('PaymentAllocationsPage: SHOP_OWNER sees AccessDenied', async () => {
+test('PaymentAllocationsPage: SHOP_OWNER sees AccessDenied without UC-* codes', async () => {
   const store = storeForRoles(['SHOP_OWNER'])
   const html = render(store)
   assert.ok(html.includes('Chỉ dành cho Kế toán'), 'SHOP_OWNER should see AccessDenied message')
+  assert.doesNotMatch(html, /UC-\d+/, 'AccessDenied should not expose internal UC-* codes')
   store.dispatch(baseApi.util.resetApiState())
 })
 
@@ -161,7 +177,8 @@ test('PaymentAllocationsPage: SALES_STAFF sees AccessDenied', async () => {
   store.dispatch(baseApi.util.resetApiState())
 })
 
-test('PaymentAllocationsPage: ACCOUNTANT with receipts sees queue with receipt code', async () => {
+test('PaymentAllocationsPage: ACCOUNTANT with receipts sees KPI strip, independent queue scroll, sticky workspace, and no UC-* labels', async () => {
+  mockEmptySubqueries()
   const store = storeForRoles(['ACCOUNTANT'])
   const mockReceipt = {
     receiptId: 'r1',
@@ -174,10 +191,94 @@ test('PaymentAllocationsPage: ACCOUNTANT with receipts sees queue with receipt c
     paymentMethod: 'BANK_TRANSFER',
     receivedAt: new Date().toISOString(),
   }
-  await store.dispatch(paymentAllocationApi.util.upsertQueryData('getUnallocatedReceipts', { page: 0, size: 20 }, { content: [mockReceipt], number: 0, size: 20, totalElements: 1, totalPages: 1 }))
+  await store.dispatch(paymentAllocationApi.util.upsertQueryData('getUnallocatedReceipts', { page: 0, size: 200, view: 'UNALLOCATED' }, { content: [mockReceipt], number: 0, size: 200, totalElements: 1, totalPages: 1 }))
   const html = render(store)
+  assert.ok(html.includes('Phiếu thu &amp; Phân bổ tiền thu'), 'Should render header title')
+  assert.ok(html.includes('Tiền đã xác minh · chưa phân bổ'), 'Should render KPI 1')
+  assert.ok(html.includes('Phiếu thu đang chờ phân bổ'), 'Should render KPI 2')
+  assert.ok(html.includes('Hóa đơn điện tử còn nợ'), 'Should render KPI 3')
   assert.ok(html.includes('RC-2024-001'), 'Should display receipt code')
   assert.ok(html.includes('VERIFIED'), 'Should show VERIFIED badge')
+  assert.ok(html.includes('Chuyển khoản đã đối soát'), 'Should show clean Vietnamese payment source label')
+  assert.ok(html.includes('Xem phiếu thu gốc →'), 'Should show original receipt link on card')
+  assert.ok(html.includes('lg:overflow-y-auto') && html.includes('lg:max-h-[calc(100vh-200px)]'), 'Receipt queue should have independent vertical scroll container')
+  assert.ok(html.includes('aria-label="Khu vực phân bổ"') && html.includes('lg:sticky lg:top-4 lg:self-start'), 'Allocation workspace and queue panel should be sticky')
+  assert.doesNotMatch(html, /UC-\d+/, 'PaymentAllocationsPage should not expose internal UC-* codes')
+  store.dispatch(baseApi.util.resetApiState())
+})
+
+test('PaymentAllocationsPage: Đã phân bổ hết & Tất cả tabs render search, period filter, allocation status filter, and page size selector', async () => {
+  const { JSDOM } = await import('jsdom')
+  const ReactDOMClient = await import('react-dom/client')
+  const { act } = React
+  const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'http://localhost/' })
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true
+  globalThis.window = dom.window as unknown as Window & typeof globalThis
+  globalThis.document = dom.window.document
+  globalThis.HTMLElement = dom.window.HTMLElement
+
+  mockEmptySubqueries()
+  const store = storeForRoles(['ACCOUNTANT'])
+  const allocatedReceipt = {
+    receiptId: 'r-done-1',
+    receiptCode: 'RCT-2026-0118',
+    orderId: 'ord-1042',
+    customerId: 'cust-1042',
+    receiptAmount: 60000000,
+    allocatedAmount: 60000000,
+    remainingAmount: 0,
+    paymentMethod: 'BANK_TRANSFER',
+    receivedAt: '2026-11-08T08:42:00Z',
+  }
+  await store.dispatch(paymentAllocationApi.util.upsertQueryData('getUnallocatedReceipts', { page: 0, size: 200, view: 'UNALLOCATED' }, { content: [], number: 0, size: 200, totalElements: 0, totalPages: 0 }))
+  await store.dispatch(paymentAllocationApi.util.upsertQueryData('getUnallocatedReceipts', { page: 0, size: 200, view: 'ALLOCATED' }, { content: [allocatedReceipt], number: 0, size: 200, totalElements: 1, totalPages: 1 }))
+  await store.dispatch(paymentAllocationApi.util.upsertQueryData('getPaymentAllocations', 'r-done-1', [
+    {
+      allocationId: 'ALC-0096-UUID',
+      allocationRequestId: 'req-0096',
+      transactionId: 'r-done-1',
+      orderId: 'ord-1042',
+      invoiceId: 'INV-TAX-2601',
+      allocatedAmount: 60000000,
+      allocationType: 'MANUAL',
+      allocationStatus: 'ACTIVE',
+      allocatedAt: '2026-11-08T09:14:00Z',
+      reason: 'Phân bổ đợt 1',
+    },
+  ]))
+
+  const rootEl = dom.window.document.getElementById('root')!
+  const root = ReactDOMClient.createRoot(rootEl)
+  await act(async () => {
+    root.render(
+      React.createElement(Provider, { store } as React.ComponentProps<typeof Provider>,
+        React.createElement(MemoryRouter, null, React.createElement(PaymentAllocationsPage)),
+      ),
+    )
+  })
+
+  /* Ở tab Chờ phân bổ: chưa hiện bộ lọc kỳ / trạng thái / mỗi trang */
+  assert.equal(rootEl.querySelector('#queueSearch'), null)
+
+  /* Chuyển sang tab Đã phân bổ hết */
+  const doneTab = Array.from(rootEl.querySelectorAll('button[role="tab"]')).find((b) =>
+    b.textContent?.includes('Đã phân bổ hết'),
+  ) as HTMLButtonElement
+  assert.ok(doneTab, 'Tab Đã phân bổ hết phải tồn tại')
+  await act(async () => {
+    doneTab.click()
+  })
+
+  assert.ok(rootEl.querySelector('#queueSearch'), 'Phải có ô Tìm kiếm trên tab Đã phân bổ hết')
+  assert.ok(rootEl.querySelector('#periodSel'), 'Phải có bộ lọc Kỳ hiển thị')
+  assert.ok(rootEl.querySelector('#queueAllocStatus'), 'Phải có bộ lọc Trạng thái phân bổ')
+  assert.ok(rootEl.querySelector('#pageSizeSel'), 'Phải có bộ chọn Mỗi trang')
+  assert.ok(rootEl.innerHTML.includes('Phân bổ của phiếu này:'), 'Phải hiển thị danh sách phân bổ ngay trong thẻ phiếu')
+  assert.ok(rootEl.innerHTML.includes('Thu hồi / Điều chỉnh'), 'Phải có nút Thu hồi / Điều chỉnh')
+
+  await act(async () => {
+    root.unmount()
+  })
   store.dispatch(baseApi.util.resetApiState())
 })
 

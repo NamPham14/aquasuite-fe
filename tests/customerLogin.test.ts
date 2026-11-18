@@ -6,7 +6,7 @@ import { loginApi } from '../src/features/iam/api/authApi.ts'
 
 test('customer page reuses email login and keeps registration link', () => {
   const source = readFileSync(new URL('../src/pages/auth/CustomerLoginPage.tsx', import.meta.url), 'utf8')
-  assert.ok(source.includes('<LoginForm />'))
+  assert.ok(source.includes('<LoginForm'))
   assert.ok(source.includes('to="/register-customer"'))
   assert.equal(source.includes('CustomerLoginForm'), false)
   const parsed = loginSchema.parse({ email: ' customer@example.com ', password: ' secret ' })

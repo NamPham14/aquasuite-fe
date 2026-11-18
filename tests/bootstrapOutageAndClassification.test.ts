@@ -79,7 +79,7 @@ test('bootstrapOutage: refreshApi handles network failure (fetch TypeError)', as
   }
 })
 
-test('bootstrapOutage: triggerAuthBootstrap sets SESSION_EXPIRED when refreshApi fails with 503 outage because consumed token cannot be retried', async () => {
+test('bootstrapOutage: triggerAuthBootstrap sets SERVICE_UNAVAILABLE and preserves refresh token when refreshApi fails with 503 outage', async () => {
   mockStorage.clear()
   tokenStorage.setRefreshToken('token-before-outage')
 
@@ -105,18 +105,18 @@ test('bootstrapOutage: triggerAuthBootstrap sets SESSION_EXPIRED when refreshApi
     const state = store.getState().auth
 
     // Verification:
-    // Finding 3: Since token was popped, it cannot be retried.
-    // Transition to SESSION_EXPIRED requiring login instead of locking in a dead Retry loop.
-    assert.strictEqual(state.bootstrapError?.type, 'SESSION_EXPIRED')
+    // Refresh token is read non-destructively (getRefreshToken) so transient 503 preserves token for retry.
+    assert.strictEqual(state.bootstrapError?.type, 'SERVICE_UNAVAILABLE')
     assert.ok(state.bootstrapError.message.includes('503'))
     assert.strictEqual(state.isBootstrapping, false)
-    assert.strictEqual(tokenStorage.hasRefreshToken(), false)
+    assert.strictEqual(tokenStorage.hasRefreshToken(), true)
+    assert.strictEqual(tokenStorage.getRefreshToken(), 'token-before-outage')
   } finally {
     globalThis.fetch = originalFetch
   }
 })
 
-test('bootstrapOutage: triggerAuthBootstrap sets SESSION_EXPIRED when refreshApi fails with network failure', async () => {
+test('bootstrapOutage: triggerAuthBootstrap sets SERVICE_UNAVAILABLE and preserves refresh token when refreshApi fails with network failure', async () => {
   mockStorage.clear()
   tokenStorage.setRefreshToken('token-before-disconnect')
 
@@ -138,10 +138,11 @@ test('bootstrapOutage: triggerAuthBootstrap sets SESSION_EXPIRED when refreshApi
     await triggerAuthBootstrap(store.dispatch)
     const state = store.getState().auth
 
-    assert.strictEqual(state.bootstrapError?.type, 'SESSION_EXPIRED')
+    assert.strictEqual(state.bootstrapError?.type, 'SERVICE_UNAVAILABLE')
     assert.ok(state.bootstrapError.message.includes('Mất kết nối'))
     assert.strictEqual(state.isBootstrapping, false)
-    assert.strictEqual(tokenStorage.hasRefreshToken(), false)
+    assert.strictEqual(tokenStorage.hasRefreshToken(), true)
+    assert.strictEqual(tokenStorage.getRefreshToken(), 'token-before-disconnect')
   } finally {
     globalThis.fetch = originalFetch
   }

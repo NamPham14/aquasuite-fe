@@ -573,3 +573,264 @@ test('Integration Race 4: Account switch or logout occurring WHILE retry request
     globalThis.fetch = originalFetch
   }
 })
+
+test('Integration Smoking Gun Fix: POST /auth/refresh does NOT attach expired Authorization Bearer header', async () => {
+  mockStorage.clear()
+  _resetActiveRefreshForTesting()
+  const store = createTestStore()
+
+  store.dispatch(startSession()) // gen = 1
+  store.dispatch(
+    setCredentials({
+      user: { id: '1', username: 'user1', email: 'u1@test.com', roles: ['SHOP_OWNER'] },
+      accessToken: 'expired-access-token-30m',
+      generation: 1,
+    }),
+  )
+  tokenStorage.setRefreshToken('valid-refresh-token-1')
+
+  let refreshAuthHeader: string | null = 'UNSET'
+
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = getUrl(input)
+    const authHeader = getAuthHeader(input, init)
+
+    if (url.includes('/api/v1/orders/list')) {
+      if (authHeader === 'Bearer expired-access-token-30m') {
+        return new Response(
+          JSON.stringify({ success: false, code: 'AUTH_001', message: 'Access token expired' }),
+          { status: 401, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+      if (authHeader === 'Bearer fresh-access-token-2') {
+        return new Response(
+          JSON.stringify({ success: true, code: 'SUCCESS', data: { items: ['order-1'] } }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
+    if (url.includes('/api/v1/auth/refresh')) {
+      refreshAuthHeader = authHeader
+      // Simulate strict resource server rejecting /auth/refresh if expired Bearer token is sent
+      if (authHeader !== null) {
+        return new Response(
+          JSON.stringify({ success: false, code: 'AUTH_001', message: 'Expired Bearer header rejected by filter' }),
+          { status: 401, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+      return new Response(
+        JSON.stringify({
+          success: true,
+          code: 'SUCCESS',
+          message: 'OK',
+          data: {
+            access_token: 'fresh-access-token-2',
+            refresh_token: 'fresh-refresh-token-2',
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
+
+    return new Response('{}', { status: 200 })
+  }
+
+  try {
+    const fakeApi = {
+      getState: store.getState,
+      dispatch: store.dispatch,
+      signal: new AbortController().signal,
+      abort: () => {},
+      extra: undefined,
+      endpoint: 'getOrders',
+      type: 'query' as const,
+    }
+
+    const res = await reauthBaseQuery('/orders/list', fakeApi as any, {})
+
+    assert.strictEqual(refreshAuthHeader, null, 'POST /auth/refresh must not carry Authorization header')
+    assert.deepStrictEqual((res.data as any)?.data?.items, ['order-1'])
+    assert.strictEqual(store.getState().auth.isAuthenticated, true)
+    assert.strictEqual(store.getState().auth.accessToken, 'fresh-access-token-2')
+    assert.strictEqual(tokenStorage.getRefreshToken(), 'fresh-refresh-token-2')
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('Integration Staggered 401s: Late 401 arriving after refresh already updated accessToken retries directly without a second /auth/refresh call', async () => {
+  mockStorage.clear()
+  _resetActiveRefreshForTesting()
+  const store = createTestStore()
+
+  store.dispatch(startSession()) // gen = 1
+  store.dispatch(
+    setCredentials({
+      user: { id: '1', username: 'user1', email: 'u1@test.com', roles: ['ACCOUNTANT'] },
+      accessToken: 'expired-access-1',
+      generation: 1,
+    }),
+  )
+  tokenStorage.setRefreshToken('refresh-1')
+
+  let refreshCallCount = 0
+  let resolveSlow401!: (res: Response) => void
+  const slow401Deferred = new Promise<Response>((resolve) => {
+    resolveSlow401 = resolve
+  })
+
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = getUrl(input)
+    const authHeader = getAuthHeader(input, init)
+
+    if (url.includes('/api/v1/fast-endpoint')) {
+      if (authHeader === 'Bearer expired-access-1') {
+        return new Response(JSON.stringify({ code: 'AUTH_001' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      if (authHeader === 'Bearer refreshed-access-2') {
+        return new Response(
+          JSON.stringify({ success: true, data: { fast: true } }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
+    if (url.includes('/api/v1/slow-endpoint')) {
+      if (authHeader === 'Bearer expired-access-1') {
+        return slow401Deferred
+      }
+      if (authHeader === 'Bearer refreshed-access-2') {
+        return new Response(
+          JSON.stringify({ success: true, data: { slow: true } }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        )
+      }
+    }
+
+    if (url.includes('/api/v1/auth/refresh')) {
+      refreshCallCount++
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            access_token: 'refreshed-access-2',
+            refresh_token: 'refresh-2',
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
+
+    return new Response('{}', { status: 200 })
+  }
+
+  try {
+    const fakeApi = {
+      getState: store.getState,
+      dispatch: store.dispatch,
+      signal: new AbortController().signal,
+      abort: () => {},
+      extra: undefined,
+      endpoint: 'testEndpoint',
+      type: 'query' as const,
+    }
+
+    // Start slow request first (captures requestAccessToken = 'expired-access-1')
+    const slowPromise = reauthBaseQuery('/slow-endpoint', fakeApi as any, {})
+    // Fast request gets 401, refreshes token to 'refreshed-access-2', and finishes
+    const fastRes = await reauthBaseQuery('/fast-endpoint', fakeApi as any, {})
+    assert.strictEqual((fastRes.data as any)?.data?.fast, true)
+    assert.strictEqual(refreshCallCount, 1)
+    assert.strictEqual(store.getState().auth.accessToken, 'refreshed-access-2')
+
+    // Now the slow request's initial 401 arrives AFTER activeRefresh has already completed and cleared
+    resolveSlow401(
+      new Response(JSON.stringify({ code: 'AUTH_001' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    const slowRes = await slowPromise
+    // Must retry with 'refreshed-access-2' and NOT call /auth/refresh a second time!
+    assert.strictEqual(refreshCallCount, 1, 'Must not trigger a duplicate refresh request')
+    assert.strictEqual((slowRes.data as any)?.data?.slow, true)
+    assert.strictEqual(store.getState().auth.isAuthenticated, true)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('Integration Transient vs Definitive Refresh Failure: 503 preserves session while 401 AUTH_005 clears session', async () => {
+  mockStorage.clear()
+  _resetActiveRefreshForTesting()
+  const store = createTestStore()
+
+  store.dispatch(startSession()) // gen = 1
+  store.dispatch(
+    setCredentials({
+      user: { id: '1', username: 'user1', email: 'u1@test.com', roles: ['SALES_STAFF'] },
+      accessToken: 'expired-access-token',
+      generation: 1,
+    }),
+  )
+  tokenStorage.setRefreshToken('refresh-token-valid')
+
+  let refreshStatus = 503
+
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = async (input: RequestInfo | URL): Promise<Response> => {
+    const url = getUrl(input)
+    if (url.includes('/api/v1/orders/check')) {
+      return new Response(JSON.stringify({ code: 'AUTH_001' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    if (url.includes('/api/v1/auth/refresh')) {
+      if (refreshStatus === 503) {
+        return new Response(JSON.stringify({ code: 'AUTH_009', message: 'Service unavailable' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      return new Response(JSON.stringify({ code: 'AUTH_005', message: 'Refresh token expired' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    return new Response('{}', { status: 200 })
+  }
+
+  try {
+    const fakeApi = {
+      getState: store.getState,
+      dispatch: store.dispatch,
+      signal: new AbortController().signal,
+      abort: () => {},
+      extra: undefined,
+      endpoint: 'checkOrder',
+      type: 'query' as const,
+    }
+
+    // 1. Transient 503 on refresh -> session and refresh token are preserved
+    await reauthBaseQuery('/orders/check', fakeApi as any, {})
+    assert.strictEqual(store.getState().auth.isAuthenticated, true, 'Transient 503 must not log user out')
+    assert.strictEqual(tokenStorage.getRefreshToken(), 'refresh-token-valid', 'Refresh token must remain in storage')
+
+    // 2. Definitive 401 AUTH_005 on refresh -> session and refresh token are wiped
+    refreshStatus = 401
+    await reauthBaseQuery('/orders/check', fakeApi as any, {})
+    assert.strictEqual(store.getState().auth.isAuthenticated, false, 'Expired refresh token must log user out')
+    assert.strictEqual(store.getState().auth.accessToken, null)
+    assert.strictEqual(tokenStorage.hasRefreshToken(), false)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})

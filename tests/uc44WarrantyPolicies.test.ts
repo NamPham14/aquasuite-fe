@@ -165,3 +165,45 @@ test('UC-44 warrantyPolicyApi: getWarrantyPolicyReferenceData gọi đúng endpo
   const req = requests.find((r) => /warranty-policies\/reference-data/.test(r.url))
   assert.ok(req, 'Phải gọi endpoint /warranty-policies/reference-data')
 })
+
+test('UC-44 WarrantyPoliciesPage: chính sách INACTIVE hiển thị nút Áp dụng lại trực tiếp trên dòng', async () => {
+  const { register } = await import('node:module')
+  register('./loader.mjs', import.meta.url)
+  const React = await import('react')
+  const { renderToStaticMarkup } = await import('react-dom/server')
+  const { Provider } = await import('react-redux')
+  const { MemoryRouter } = await import('react-router-dom')
+  const { authReducer, setCredentials } = await import('../src/features/iam/model/authSlice.ts')
+  const { WarrantyPoliciesPage } = await import('../src/pages/management/WarrantyPoliciesPage.tsx')
+
+  const store = configureStore({
+    reducer: { [baseApi.reducerPath]: baseApi.reducer, auth: authReducer },
+    middleware: (gDM) => gDM().concat(baseApi.middleware),
+  })
+  store.dispatch(setCredentials({
+    user: { id: 'owner-1', username: 'owner', email: 'o@a.vn', roles: ['SHOP_OWNER'] },
+    accessToken: 'tok',
+    generation: store.getState().auth.sessionGeneration,
+  }))
+  await store.dispatch(warrantyPolicyApi.util.upsertQueryData('getWarrantyPolicies', { keyword: undefined, status: undefined, page: 0, size: 10 }, {
+    items: [
+      mockPolicy,
+      { ...mockPolicy, policyId: 'policy-002', policyCode: 'WP-2026-002', status: 'INACTIVE' },
+    ],
+    page: 0,
+    size: 10,
+    totalElements: 2,
+    totalPages: 1,
+  }))
+
+  const html = renderToStaticMarkup(
+    React.createElement(Provider, { store } as React.ComponentProps<typeof Provider>,
+      React.createElement(MemoryRouter, null, React.createElement(WarrantyPoliciesPage)),
+    ),
+  )
+  assert.ok(html.includes('Ngừng áp dụng'), 'Chính sách ACTIVE phải có nút Ngừng áp dụng')
+  assert.ok(html.includes('Áp dụng lại'), 'Chính sách INACTIVE phải có nút Áp dụng lại trực tiếp')
+  assert.ok(html.includes('Số biến thể') && !html.includes('Số variant'), 'Cột tham chiếu phải Việt hóa thành Số biến thể')
+  assert.doesNotMatch(html, /UC-\d+/, 'Trang Chính sách bảo hành không được lộ mã UC-*')
+  store.dispatch(baseApi.util.resetApiState())
+})

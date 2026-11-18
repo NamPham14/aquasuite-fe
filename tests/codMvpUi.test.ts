@@ -52,7 +52,8 @@ test('COD_REVIEW debt shows responsibility and disables customer collection acti
   const html = render(store, React.createElement(CustomerDebtDetailDialog, { customerId: 'customer', onClose() {} }))
   assert.match(html, /Shipper còn giữ/)
   assert.match(html, /Khách còn phải trả/)
-  for (const label of ['Tải sao kê PDF', 'Gửi sao kê', 'Nhắc nợ', 'Ghi nhận cuộc gọi', 'Kiểm tra tín dụng']) {
+  assert.ok(!html.includes('Ghi nhận cuộc gọi'), 'Standalone call button should be removed')
+  for (const label of ['Tải sao kê PDF', 'Gửi sao kê', 'Nhắc nợ', 'Kiểm tra tín dụng']) {
     const button = html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g)?.find((element) => element.includes(label))
     assert.ok(button?.includes('disabled=""'), label)
   }

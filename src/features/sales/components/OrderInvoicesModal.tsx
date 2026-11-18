@@ -671,14 +671,14 @@ export function OrderInvoicesModal({
             </div>
           ) : (
             <>
-              {/* Alert Banner: UC-26 Lock */}
+              {/* Alert Banner: Khóa do có yêu cầu điều chỉnh / hủy đơn */}
               {selectedInvoice.lockedByModificationRequest && (
                 <div className="flex items-start gap-2.5 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800">
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
                   <div>
-                    <div className="font-bold">Đơn hàng đang bị khóa bởi Yêu cầu điều chỉnh / hủy (UC-26)</div>
+                    <div className="font-bold">Đơn hàng đang bị khóa bởi Yêu cầu điều chỉnh / hủy đơn</div>
                     <div className="text-[11px] mt-0.5">
-                      Hiện có yêu cầu sửa/hủy đơn đang chờ duyệt. Hóa đơn tạm thời bị khóa chỉnh sửa và phát hành cho đến khi yêu cầu UC-26 được xử lý xong.
+                      Hiện có yêu cầu sửa/hủy đơn đang chờ duyệt. Hóa đơn tạm thời bị khóa chỉnh sửa và phát hành cho đến khi yêu cầu điều chỉnh / hủy đơn được xử lý xong.
                     </div>
                   </div>
                 </div>

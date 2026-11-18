@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Outlet, NavLink, Link } from 'react-router-dom'
+import { Outlet, NavLink, Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -14,6 +14,7 @@ import {
   Droplets,
   ShieldCheck,
   ChevronRight,
+  ChevronDown,
   UsersRound,
   KeyRound,
   HandCoins,
@@ -23,6 +24,12 @@ import {
   WalletCards,
   Wrench,
   ClipboardCheck,
+  BadgeCheck,
+  ReceiptText,
+  PackageCheck,
+  ClipboardList,
+  ScrollText,
+  UserCog,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 
@@ -31,13 +38,16 @@ interface NavItem {
   to: string
   icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>
   exact?: boolean
+  /** Đường dẫn con tách thành mục menu riêng nên không tô sáng mục cha khi đang ở đường dẫn đó. */
+  excludePrefix?: string
   /** Nếu có, chỉ hiển thị mục này cho người dùng có một trong các vai trò liệt kê. */
   roles?: string[]
 }
 
-const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
+const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
   {
     group: 'Tổng quan',
+    pinned: true,
     items: [
       {
         name: 'Bảng điều khiển',
@@ -47,66 +57,91 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
     ],
   },
   {
-    group: 'Quản lý danh mục',
-    items: [
-      {
-        name: 'Sản phẩm',
-        to: '/app/products',
-        icon: Package,
-      },
-      {
-        name: 'Danh mục',
-        to: '/app/categories',
-        icon: FolderTree,
-      },
-      {
-        name: 'Thương hiệu',
-        to: '/app/brands',
-        icon: Tags,
-      },
-      { name: 'Combo', to: '/app/combos', icon: Layers },
-      {
-        name: 'Tồn kho',
-        to: '/app/inventory',
-        icon: Warehouse,
-      },
-    ],
-  },
-  {
     group: 'Bán hàng & Đơn hàng',
     items: [
-      { name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins },
       { name: 'Đơn hàng', to: '/app/orders', icon: ShoppingCart },
-      { name: 'Yêu cầu đổi / hủy đơn', to: '/app/order-modification-requests', icon: ClipboardCheck, roles: ['SALES_STAFF', 'ACCOUNTANT', 'SHOP_OWNER'] },
-      { name: 'Phiếu xuất kho', to: '/app/issue-notes', icon: Truck, roles: ['ACCOUNTANT', 'SHOP_OWNER'] },
-      { name: 'Quản lý giao hàng', to: '/app/deliveries', icon: Truck, roles: ['ACCOUNTANT', 'SHOP_OWNER'] },
-      { name: 'Đơn giao của tôi', to: '/app/my-deliveries', icon: Truck, roles: ['SHIPPER'] },
       { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
-      { name: 'Công nợ khách hàng', to: '/app/customer-debts', icon: WalletCards, roles: ['ACCOUNTANT', 'SHOP_OWNER'] },
-      { name: 'Xác minh thanh toán', to: '/app/payment-verifications', icon: ShieldCheck, roles: ['ACCOUNTANT'] },
-      { name: 'Phân bổ tiền thu', to: '/app/payment-allocations', icon: WalletCards, roles: ['ACCOUNTANT'] },
-      { name: 'Thu & bàn giao COD', to: '/app/cod-collections', icon: HandCoins, roles: ['SHIPPER', 'ACCOUNTANT', 'SALES_STAFF', 'SHOP_OWNER'] },
-    ],
-  },
-  {
-    group: 'Mua hàng & Cung ứng',
-    items: [
+      { name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins },
       {
-        name: 'Đơn mua hàng (PO)',
-        to: '/app/purchase-orders',
-        icon: Truck,
+        name: 'Yêu cầu đổi / hủy đơn',
+        to: '/app/order-modification-requests',
+        icon: ClipboardCheck,
+        roles: ['SALES_STAFF', 'ACCOUNTANT', 'SHOP_OWNER'],
       },
     ],
   },
   {
-    group: 'Bảo hành & Dịch vụ',
+    group: 'Tài chính & Công nợ',
     items: [
-      { name: 'Công việc kỹ thuật', to: '/app/technical-jobs', icon: Wrench, roles: ['SHOP_OWNER', 'TECHNICAL_STAFF'] },
-      { name: 'Chính sách bảo hành', to: '/app/warranty-policies', icon: Wrench, roles: ['SHOP_OWNER'] },
+      {
+        name: 'Xác minh thanh toán',
+        to: '/app/payment-verifications',
+        icon: BadgeCheck,
+        roles: ['ACCOUNTANT'],
+      },
+      {
+        name: 'Phân bổ tiền thu',
+        to: '/app/payment-allocations',
+        icon: ReceiptText,
+        roles: ['ACCOUNTANT'],
+      },
+      {
+        name: 'Công nợ khách hàng',
+        to: '/app/customer-debts',
+        icon: WalletCards,
+        excludePrefix: '/app/customer-debts/credit-approvals',
+        roles: ['ACCOUNTANT', 'SHOP_OWNER'],
+      },
+      {
+        name: 'Duyệt hạn mức tín dụng',
+        to: '/app/customer-debts/credit-approvals',
+        icon: ShieldCheck,
+        roles: ['SHOP_OWNER'],
+      },
+      {
+        name: 'Thu & bàn giao COD',
+        to: '/app/cod-collections',
+        icon: HandCoins,
+        roles: ['SHIPPER', 'ACCOUNTANT', 'SALES_STAFF', 'SHOP_OWNER'],
+      },
     ],
   },
   {
-    group: 'Dịch vụ & Hậu mãi',
+    group: 'Kho vận & Cung ứng',
+    items: [
+      { name: 'Tồn kho', to: '/app/inventory', icon: Warehouse },
+      {
+        name: 'Phiếu xuất kho',
+        to: '/app/issue-notes',
+        icon: PackageCheck,
+        roles: ['ACCOUNTANT', 'SHOP_OWNER'],
+      },
+      {
+        name: 'Quản lý giao hàng',
+        to: '/app/deliveries',
+        icon: Truck,
+        roles: ['ACCOUNTANT', 'SHOP_OWNER'],
+      },
+      {
+        name: 'Đơn giao của tôi',
+        to: '/app/my-deliveries',
+        icon: Truck,
+        roles: ['SHIPPER'],
+      },
+      { name: 'Đơn mua hàng (PO)', to: '/app/purchase-orders', icon: ClipboardList },
+    ],
+  },
+  {
+    group: 'Sản phẩm & Danh mục',
+    items: [
+      { name: 'Sản phẩm', to: '/app/products', icon: Package },
+      { name: 'Combo', to: '/app/combos', icon: Layers },
+      { name: 'Danh mục', to: '/app/categories', icon: FolderTree },
+      { name: 'Thương hiệu', to: '/app/brands', icon: Tags },
+    ],
+  },
+  {
+    group: 'Bảo hành & Kỹ thuật',
     items: [
       {
         name: 'Thẻ bảo hành điện tử',
@@ -114,13 +149,25 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
         icon: ShieldCheck,
         roles: ['SHOP_OWNER', 'SALES_STAFF', 'TECHNICAL_STAFF'],
       },
+      {
+        name: 'Công việc kỹ thuật',
+        to: '/app/technical-jobs',
+        icon: Wrench,
+        roles: ['SHOP_OWNER', 'TECHNICAL_STAFF'],
+      },
+      {
+        name: 'Chính sách bảo hành',
+        to: '/app/warranty-policies',
+        icon: ScrollText,
+        roles: ['SHOP_OWNER'],
+      },
     ],
   },
   {
-    group: 'Quản lý truy cập',
+    group: 'Hệ thống & Phân quyền',
     items: [
       { name: 'Tài khoản người dùng', to: '/app/users', icon: UsersRound },
-      { name: 'Vai trò', to: '/app/roles', icon: UsersRound },
+      { name: 'Vai trò', to: '/app/roles', icon: UserCog },
       { name: 'Quyền', to: '/app/permissions', icon: KeyRound },
     ],
   },
@@ -128,48 +175,95 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
 
 function NavList({ navId, onItemClick, dark = false }: { navId: string; onItemClick?: () => void; dark?: boolean }) {
   const { user } = useAuth()
+  const location = useLocation()
   const roles = user?.roles ?? []
   const canSee = (item: NavItem) => !item.roles || item.roles.some((r) => roles.includes(r))
-  return (
-    <nav className="space-y-1 px-3 py-4" aria-label="Menu điều hướng chính" id={navId}>
-      {NAV_ITEMS.map((section) => ({ section, visible: section.items.filter(canSee) }))
-        .filter(({ visible }) => visible.length > 0)
-        .map(({ section, visible }) => (
-        <div key={section.group}>
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
 
-          <div className="space-y-1">
-            {visible.map((item) => {
-              const Icon = item.icon
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={onItemClick}
-                  className={({ isActive }) =>
-                    `group flex items-center gap-3 px-3 py-2.5 text-sm rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 ${
-                      isActive
-                        ? dark ? 'bg-sky-700 text-white font-semibold' : 'bg-sky-100 text-sky-800 font-semibold'
-                        : dark ? 'text-slate-100 hover:bg-slate-700' : 'text-slate-700 hover:bg-slate-100'
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <Icon
-                        className={`w-4 h-4 shrink-0 transition-colors ${
-                          isActive ? (dark ? 'text-white' : 'text-sky-600') : (dark ? 'text-slate-300' : 'text-slate-500')
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <span>{item.name}</span>
-                    </>
-                  )}
-                </NavLink>
-              )
-            })}
+  const toggleGroup = (groupName: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [groupName]: !prev[groupName] }))
+  }
+
+  const visibleSections = NAV_ITEMS.map((section) => ({ section, visible: section.items.filter(canSee) }))
+    .filter(({ visible }) => visible.length > 0)
+
+  return (
+    <nav className="space-y-3 px-3 py-4" aria-label="Menu điều hướng chính" id={navId}>
+      {visibleSections.map(({ section, visible }, index) => {
+        const hasActiveItem = visible.some((item) => {
+          if (item.excludePrefix && location.pathname.startsWith(item.excludePrefix)) return false
+          return location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)
+        })
+        const isCollapsed = !section.pinned && !hasActiveItem && Boolean(collapsedGroups[section.group])
+
+        return (
+          <div
+            key={section.group}
+            className={index > 0 ? (dark ? 'border-t border-slate-800/90 pt-3' : 'border-t border-slate-200/80 pt-3') : ''}
+          >
+            {!section.pinned && (
+              <button
+                type="button"
+                onClick={() => toggleGroup(section.group)}
+                aria-expanded={!isCollapsed}
+                className={`mb-1.5 flex w-full items-center justify-between rounded px-2.5 py-1 text-left text-[11px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                  dark
+                    ? hasActiveItem
+                      ? 'text-sky-300 hover:text-white'
+                      : 'text-slate-400 hover:text-slate-200'
+                    : hasActiveItem
+                      ? 'text-sky-700 hover:text-sky-900'
+                      : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <span>{section.group}</span>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 shrink-0 transition-transform ${isCollapsed ? '-rotate-90' : 'rotate-0'}`}
+                  aria-hidden="true"
+                />
+              </button>
+            )}
+
+            {!isCollapsed && (
+              <div className="space-y-1">
+                {visible.map((item) => {
+                  const Icon = item.icon
+                  const shouldEndMatch = Boolean(
+                    item.exact || (item.excludePrefix && location.pathname.startsWith(item.excludePrefix)),
+                  )
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={shouldEndMatch}
+                      onClick={onItemClick}
+                      className={({ isActive }) =>
+                        `group flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                          isActive
+                            ? dark ? 'bg-sky-700 text-white font-semibold shadow-sm' : 'bg-sky-100 text-sky-800 font-semibold'
+                            : dark ? 'text-slate-200 hover:bg-slate-800 hover:text-white' : 'text-slate-700 hover:bg-slate-100'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <Icon
+                            className={`w-4 h-4 shrink-0 transition-colors ${
+                              isActive ? (dark ? 'text-white' : 'text-sky-600') : (dark ? 'text-slate-400 group-hover:text-slate-200' : 'text-slate-500')
+                            }`}
+                            aria-hidden="true"
+                          />
+                          <span className="truncate">{item.name}</span>
+                        </>
+                      )}
+                    </NavLink>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        )
+      })}
     </nav>
   )
 }
@@ -277,7 +371,7 @@ export function ManagementLayout() {
     <div className="min-h-screen bg-slate-50 flex">
       {/* Desktop Sidebar (fixed width, hidden on mobile) */}
       <aside
-        className="hidden md:flex flex-col w-56 bg-slate-900 border-r border-slate-800 shrink-0 sticky top-0 h-screen overflow-y-auto"
+        className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 shrink-0 sticky top-0 h-screen overflow-y-auto"
         aria-label="Sidebar điều hướng desktop"
       >
         {/* Brand Header */}

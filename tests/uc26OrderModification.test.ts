@@ -161,11 +161,56 @@ test('CreateOrderModificationRequestPayload type contract matches BE spec', () =
 
 // ─── UI permission tests ──────────────────────────────────────────────────────
 
-test('OrderModificationRequestsPage: SALES_STAFF sees Tạo yêu cầu button', async () => {
+test('OrderModificationRequestsPage: SALES_STAFF sees Tạo yêu cầu button and no UC-* codes', async () => {
   const store = storeForRoles(['SALES_STAFF'])
   await store.dispatch(orderModificationRequestApi.util.upsertQueryData('getOrderModificationRequests', { page: 1, size: 100 }, { items: [], totalElements: 0, totalPages: 0, page: 1, size: 100 }))
   const html = render(store)
   assert.ok(html.includes('Tạo yêu cầu'), 'SALES_STAFF should see the create request button')
+  assert.doesNotMatch(html, /UC-\d+/, 'OrderModificationRequestsPage should not expose UC-* codes')
+  store.dispatch(baseApi.util.resetApiState())
+})
+
+test('OrderModificationRequestsPage detail: renders Vietnamese Biến thể gốc / Biến thể đề nghị and no UC-* codes', async () => {
+  const { Routes, Route } = await import('react-router-dom')
+  const store = storeForRoles(['SHOP_OWNER'])
+  await store.dispatch(orderModificationRequestApi.util.upsertQueryData('getOrderModificationRequest', 'req-detail-1', {
+    id: 'req-detail-1',
+    orderId: 'ord-1',
+    customerId: 'cust-1',
+    requestType: 'ITEM_CHANGE',
+    requestStatus: 'PENDING_REVIEW',
+    customerReason: 'Đổi sang mẫu vòi khác',
+    items: [
+      {
+        id: 'line-1',
+        orderItemId: 'oi-1',
+        changeAction: 'SWAP',
+        originalVariantId: 'var-orig-12345678',
+        requestedVariantId: 'var-new-87654321',
+        originalQuantity: 2,
+        requestedQuantity: 2,
+      },
+    ],
+    createdAt: '2026-11-18T00:00:00Z',
+    updatedAt: '2026-11-18T00:00:00Z',
+    requestedBy: 'u1',
+  }))
+  const html = renderToStaticMarkup(
+    React.createElement(Provider, { store } as React.ComponentProps<typeof Provider>,
+      React.createElement(MemoryRouter, { initialEntries: ['/app/order-modification-requests/req-detail-1'] },
+        React.createElement(Routes, null,
+          React.createElement(Route, {
+            path: '/app/order-modification-requests/:requestId',
+            element: React.createElement(OrderModificationRequestsPage),
+          }),
+        ),
+      ),
+    ),
+  )
+  assert.ok(html.includes('Biến thể gốc'), 'Should display Vietnamese column header Biến thể gốc')
+  assert.ok(html.includes('Biến thể đề nghị'), 'Should display Vietnamese column header Biến thể đề nghị')
+  assert.ok(!html.includes('Variant gốc') && !html.includes('Variant đề nghị'), 'Should not display English Variant column headers')
+  assert.doesNotMatch(html, /UC-\d+/, 'Detail view should not expose internal UC-* codes')
   store.dispatch(baseApi.util.resetApiState())
 })
 

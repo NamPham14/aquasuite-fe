@@ -239,7 +239,7 @@ test('AC-03.1: Token Rotation — 401 trên query thực hiện rotation, lưu t
   }
 })
 
-test('AC-03.2: Lost Response / Network Failure — Khi refresh thất lạc, token cũ đã bị pop và KHÔNG retry token cũ (fail-closed)', async () => {
+test('AC-03.2: Transient Network Failure — Khi refresh gặp lỗi mạng tạm thời, giữ nguyên refresh token và phiên cục bộ để không tự động logout', async () => {
   mockStorage.clear()
   mockStorage.shouldFailSet = false
   _resetActiveRefreshForTesting()
@@ -286,14 +286,14 @@ test('AC-03.2: Lost Response / Network Failure — Khi refresh thất lạc, tok
     await reauthBaseQuery('/orders', fakeApi as any, {})
 
     // PASS Verification:
-    // 1. Refresh token đã bị pop TRƯỚC khi gửi (fail-closed); không còn tồn tại trong storage
-    assert.strictEqual(tokenStorage.getRefreshToken(), null)
-    assert.strictEqual(tokenStorage.hasRefreshToken(), false)
-    // 2. Không retry mù: chỉ gửi 1 lần duy nhất
+    // 1. Không retry mù trong cùng một lượt: chỉ gửi 1 lần duy nhất
     assert.strictEqual(refreshAttempts, 1)
-    // 3. Local session bị kết thúc (fail-closed), yêu cầu login lại
-    assert.strictEqual(store.getState().auth.isAuthenticated, false)
-    assert.strictEqual(store.getState().auth.accessToken, null)
+    // 2. Refresh token được đọc bằng getRefreshToken() nên vẫn được bảo toàn trong storage khi mạng lỗi tạm thời
+    assert.strictEqual(tokenStorage.getRefreshToken(), 'token-lost-in-flight')
+    assert.strictEqual(tokenStorage.hasRefreshToken(), true)
+    // 3. Local session được giữ nguyên (không đá văng user ra /login khi rớt mạng thoáng qua)
+    assert.strictEqual(store.getState().auth.isAuthenticated, true)
+    assert.strictEqual(store.getState().auth.accessToken, 'stale-access-token')
   } finally {
     globalThis.fetch = originalFetch
   }
