@@ -23,6 +23,7 @@ import {
   Truck,
   WalletCards,
   Wrench,
+  LifeBuoy,
   ClipboardCheck,
   BadgeCheck,
   ReceiptText,
@@ -148,6 +149,12 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
         to: '/app/warranty-records',
         icon: ShieldCheck,
         roles: ['SHOP_OWNER', 'SALES_STAFF', 'TECHNICAL_STAFF'],
+      },
+      {
+        name: 'Yêu cầu bảo hành',
+        to: '/app/warranty-tickets',
+        icon: LifeBuoy,
+        roles: ['SHOP_OWNER', 'TECHNICAL_STAFF'],
       },
       {
         name: 'Công việc kỹ thuật',

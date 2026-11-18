@@ -55,6 +55,8 @@ export function ClaimWarrantyModal({
   const [mediaList, setMediaList] = useState<TicketMedia[]>([])
   const [isUploadingMedia, setIsUploadingMedia] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
+  // Xác nhận chủ động khi thẻ đã hết hạn (bắt buộc tích mới cho gửi — khớp BE SVD_033).
+  const [acknowledgeExpired, setAcknowledgeExpired] = useState(false)
 
   const {
     register,
@@ -98,6 +100,7 @@ export function ClaimWarrantyModal({
         preferredSlot: values.preferredSlot as PreferredSlot | null,
         siteAddress: values.siteAddress.trim(),
         media: mediaList,
+        acknowledgeExpired: claimForm?.expired ? acknowledgeExpired : undefined,
       }).unwrap()
 
       toast.success(
@@ -116,6 +119,8 @@ export function ClaimWarrantyModal({
   const maxDateStr = getMaxDateString()
   const canSubmit = claimForm?.canSubmit ?? true
   const isBusy = isSubmitting || isUploadingMedia
+  // Thẻ hết hạn: phải tích xác nhận mới cho gửi (khớp ràng buộc BE).
+  const expiredBlocked = !!claimForm?.expired && !acknowledgeExpired
 
   return (
     <ManagementDialog
@@ -154,7 +159,7 @@ export function ClaimWarrantyModal({
                 ? 'Đang gửi yêu cầu...'
                 : 'Gửi yêu cầu bảo hành'
           }
-          submitDisabled={!canSubmit || isBusy}
+          submitDisabled={!canSubmit || isBusy || expiredBlocked}
           closeDisabled={isBusy}
         >
           {/* Cảnh báo lỗi từ server */}
@@ -184,6 +189,16 @@ export function ClaimWarrantyModal({
                 <p className="mt-0.5 text-amber-700">
                   Thiết bị của bạn đã quá hạn bảo hành tiêu chuẩn. Bạn vẫn có thể gửi yêu cầu hỗ trợ, cửa hàng sẽ liên hệ trao đổi phương án và chi phí sửa chữa phù hợp.
                 </p>
+                <label className="mt-2.5 flex cursor-pointer items-start gap-2 font-medium text-amber-900">
+                  <input
+                    type="checkbox"
+                    checked={acknowledgeExpired}
+                    onChange={(e) => setAcknowledgeExpired(e.target.checked)}
+                    disabled={isBusy}
+                    className="mt-0.5 h-3.5 w-3.5 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                  />
+                  <span>Tôi hiểu thẻ đã hết hạn và vẫn muốn gửi yêu cầu (có thể phát sinh chi phí sửa chữa).</span>
+                </label>
               </div>
             </div>
           )}

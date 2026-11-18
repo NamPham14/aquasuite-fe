@@ -4,6 +4,8 @@ import type {
   CancelWarrantyTicketPayload,
   ClaimFormData,
   CreateWarrantyTicketPayload,
+  DispatchWarrantyTicketPayload,
+  RejectWarrantyTicketPayload,
   TicketMedia,
   WarrantyTicketDetail,
   WarrantyTicketFilterParams,
@@ -100,6 +102,49 @@ export const warrantyTicketApi = baseApi.injectEndpoints({
         { type: 'WarrantyRecord', id: 'LIST' },
       ],
     }),
+
+    // ===== Nội bộ cửa hàng (SHOP_OWNER / TECHNICAL_STAFF) — FE-13 Giai đoạn 2b =====
+
+    /** Danh sách toàn bộ yêu cầu bảo hành cho nhân viên/chủ (GET /warranty-tickets). */
+    getManagedWarrantyTickets: builder.query<PageResponse<WarrantyTicketListItem>, WarrantyTicketFilterParams | void>({
+      query: (params) => ({
+        url: '/warranty-tickets',
+        params: cleanTicketParams(params ?? undefined),
+      }),
+      transformResponse: normalizeTicketPageResponse,
+      providesTags: (result) => [
+        { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
+        ...(result?.items?.map(({ ticketId }) => ({ type: 'WarrantyTicket' as const, id: ticketId })) ?? []),
+      ],
+    }),
+
+    /** Chi tiết một yêu cầu bảo hành (phạm vi nội bộ, GET /warranty-tickets/{id}). */
+    getManagedWarrantyTicketDetail: builder.query<WarrantyTicketDetail, string>({
+      query: (id) => `/warranty-tickets/${id}`,
+      transformResponse: (res: any) => res?.data ?? res,
+      providesTags: (_res, _err, id) => [{ type: 'WarrantyTicket', id }],
+    }),
+
+    /** Chủ cửa hàng "bắn job" sửa chữa bảo hành (POST /warranty-tickets/{id}/dispatch). */
+    dispatchWarrantyTicket: builder.mutation<WarrantyTicketDetail, { id: string; body: DispatchWarrantyTicketPayload }>({
+      query: ({ id, body }) => ({ url: `/warranty-tickets/${id}/dispatch`, method: 'POST', body }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
+        { type: 'WarrantyTicket', id },
+        { type: 'TechnicalJob', id: 'LIST' },
+      ],
+    }),
+
+    /** Chủ cửa hàng từ chối yêu cầu bảo hành tại bàn (POST /warranty-tickets/{id}/reject). */
+    rejectManagedWarrantyTicket: builder.mutation<WarrantyTicketDetail, { id: string; body: RejectWarrantyTicketPayload }>({
+      query: ({ id, body }) => ({ url: `/warranty-tickets/${id}/reject`, method: 'POST', body }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, { id }) => [
+        { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
+        { type: 'WarrantyTicket', id },
+      ],
+    }),
   }),
 })
 
@@ -110,5 +155,9 @@ export const {
   useGetMyWarrantyTicketsQuery,
   useGetMyWarrantyTicketDetailQuery,
   useCancelWarrantyTicketMutation,
+  useGetManagedWarrantyTicketsQuery,
+  useGetManagedWarrantyTicketDetailQuery,
+  useDispatchWarrantyTicketMutation,
+  useRejectManagedWarrantyTicketMutation,
 } = warrantyTicketApi
 

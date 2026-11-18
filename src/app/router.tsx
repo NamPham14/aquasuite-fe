@@ -16,6 +16,7 @@ import { CombosPage } from '../pages/management/CombosPage'
 import { DepositsPage } from '../pages/management/DepositsPage'
 import { InventoryPage } from '../pages/management/InventoryPage'
 import { TechnicalJobsPage } from '../pages/management/TechnicalJobsPage'
+import { WarrantyTicketsPage } from '../pages/management/WarrantyTicketsPage'
 import { SystemInfoPage } from '../pages/management/SystemInfoPage'
 import { RolesPage } from '../pages/management/RolesPage'
 import { PermissionsPage } from '../pages/management/PermissionsPage'
@@ -139,6 +140,10 @@ export const routeConfig: RouteObject[] = [
           {
             path: 'technical-jobs',
             element: <TechnicalJobsPage />,
+          },
+          {
+            path: 'warranty-tickets',
+            element: <WarrantyTicketsPage />,
           },
           {
             path: 'quotations',
