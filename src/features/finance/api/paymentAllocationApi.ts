@@ -15,8 +15,8 @@ function dataOf<T>(response: ApiResponse<T> | T): T {
 
 export const paymentAllocationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getUnallocatedReceipts: builder.query<PaymentAllocationReceiptPage, { page?: number; size?: number }>({
-      query: ({ page = 0, size = 20 } = {}) => ({ url: '/finance/receipts/unallocated', params: { page, size } }),
+    getUnallocatedReceipts: builder.query<PaymentAllocationReceiptPage, { page?: number; size?: number; view?: 'UNALLOCATED' | 'ALLOCATED' | 'ALL' }>({
+      query: ({ page = 0, size = 20, view = 'UNALLOCATED' } = {}) => ({ url: '/finance/receipts/unallocated', params: { page, size, view } }),
       transformResponse: (response: unknown) => dataOf<PaymentAllocationReceiptPage>(response as ApiResponse<PaymentAllocationReceiptPage>),
       providesTags: [{ type: 'PaymentAllocation', id: 'QUEUE' }],
     }),
