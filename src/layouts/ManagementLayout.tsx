@@ -82,7 +82,7 @@ const NAV_ITEMS: { group: string; items: NavItem[] }[] = [
       { name: 'Quản lý giao hàng', to: '/app/deliveries', icon: Truck, roles: ['ACCOUNTANT', 'SHOP_OWNER'] },
       { name: 'Đơn giao của tôi', to: '/app/my-deliveries', icon: Truck, roles: ['SHIPPER'] },
       { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
-      { name: 'Công nợ khách hàng', to: '/app/customer-debts', icon: WalletCards },
+      { name: 'Công nợ khách hàng', to: '/app/customer-debts', icon: WalletCards, roles: ['ACCOUNTANT', 'SHOP_OWNER'] },
       { name: 'Xác minh thanh toán', to: '/app/payment-verifications', icon: ShieldCheck, roles: ['ACCOUNTANT'] },
       { name: 'Phân bổ tiền thu', to: '/app/payment-allocations', icon: WalletCards, roles: ['ACCOUNTANT'] },
       { name: 'Thu & bàn giao COD', to: '/app/cod-collections', icon: HandCoins, roles: ['SHIPPER', 'ACCOUNTANT', 'SALES_STAFF', 'SHOP_OWNER'] },

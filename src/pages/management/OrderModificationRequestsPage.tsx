@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Check, ChevronLeft, Eye, FileText, Mail, ReceiptText, Search, Send, X } from 'lucide-react'
+import { Check, ChevronLeft, Eye, FileText, Mail, Plus, ReceiptText, Search, Send, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { normalizeApiError } from '../../shared/api/apiError.ts'
 import { ManagementDialog, managementFieldClass } from '../../shared/ui/ManagementDialog.tsx'
@@ -8,6 +8,7 @@ import { ActivityLogPanel } from '../../features/audit'
 import { useAuth } from '../../features/iam/hooks/useAuth.ts'
 import {
   useApproveOrderModificationRequestMutation,
+  useCreateOrderModificationRequestMutation,
   useGetOrderModificationRequestQuery,
   useGetOrderModificationRequestsQuery,
   useRecordOrderModificationTaxResultMutation,
@@ -23,6 +24,8 @@ import {
 import { useGetDeliveriesQuery } from '../../features/fulfillment/api/deliveryApi.ts'
 import { deliveryStatuses } from '../../features/fulfillment/types/delivery.types.ts'
 import type {
+  CreateOrderModificationItemPayload,
+  CreateOrderModificationRequestPayload,
   OrderModificationRequestResponse,
   OrderModificationRequestStatus,
   OrderModificationRequestType,
@@ -74,6 +77,10 @@ function OrderModificationRequestList() {
   const [keyword, setKeyword] = useState('')
   const [type, setType] = useState<'' | OrderModificationRequestType>('')
   const [status, setStatus] = useState<'' | OrderModificationRequestStatus>('')
+  const [showCreate, setShowCreate] = useState(false)
+  const { user } = useAuth()
+  const roles = user?.roles ?? []
+  const canCreate = roles.includes('SALES_STAFF') || roles.includes('SHOP_OWNER')
   const requestsQuery = useGetOrderModificationRequestsQuery({ page: 1, size: 100 })
   const ordersQuery = useGetSalesOrdersQuery({ page: 1, size: 100 })
   const orders = useMemo(() => new Map((ordersQuery.data?.items ?? []).map((order) => [order.orderId, order])), [ordersQuery.data])
@@ -94,8 +101,13 @@ function OrderModificationRequestList() {
   return <main className="mx-auto w-full max-w-[1360px] space-y-4 pb-12">
     <header className="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
       <nav className="mb-1 text-xs text-slate-500">Trang chủ <span className="mx-1 text-slate-300">/</span> Bán hàng <span className="mx-1 text-slate-300">/</span><span className="font-semibold text-sky-700">Yêu cầu đổi / hủy đơn</span></nav>
-      <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Xử lý yêu cầu đổi / hủy đơn hàng</h1>
-      <p className="mt-1 text-sm text-slate-500">Duyệt hoặc từ chối yêu cầu thay đổi địa chỉ, đổi hàng và hủy đơn chưa hoàn tất giao hàng.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Xử lý yêu cầu đổi / hủy đơn hàng</h1>
+          <p className="mt-1 text-sm text-slate-500">Duyệt hoặc từ chối yêu cầu thay đổi địa chỉ, đổi hàng và hủy đơn chưa hoàn tất giao hàng.</p>
+        </div>
+        {canCreate && <button type="button" className={primaryButton} onClick={() => setShowCreate(true)}><Plus className="h-4 w-4" />Tạo yêu cầu đổi / hủy đơn</button>}
+      </div>
     </header>
 
     <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -117,6 +129,7 @@ function OrderModificationRequestList() {
       {requestsQuery.isError ? <ErrorBox error={requestsQuery.error} /> : requestsQuery.isLoading ? <p className="p-8 text-center text-sm text-slate-500">Đang tải yêu cầu…</p> : <div className="overflow-x-auto"><table className="min-w-[1080px] w-full text-sm"><thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Mã yêu cầu</th><th className="px-4 py-3">Đơn / khách</th><th className="px-4 py-3">Loại yêu cầu</th><th className="px-4 py-3">Lý do yêu cầu</th><th className="px-4 py-3 text-right">Giá trị đơn</th><th className="px-4 py-3">Trạng thái</th><th className="px-4 py-3">Ngày gửi</th><th className="px-4 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-200">{visible.map((request) => { const order = orders.get(request.orderId); return <tr key={request.id} className="align-top hover:bg-slate-50"><td className="px-4 py-3"><span className="font-mono text-xs font-semibold text-sky-800" title={request.id}>{shortId(request.id)}</span></td><td className="px-4 py-3"><Link to={`/app/orders/${request.orderId}`} className="font-semibold text-sky-800 hover:underline">{order?.orderCode ?? shortId(request.orderId)}</Link><p className="mt-1 text-xs text-slate-500">{order?.customerName ?? shortId(request.customerId)}{order?.customerPhone ? ` · ${order.customerPhone}` : ''}</p>{order?.quotationId && <Link className="mt-1 inline-block text-xs text-slate-500 hover:text-sky-700 hover:underline" to={`/app/quotations/${order.quotationId}`}>Từ báo giá {order.quotationCode ?? ''}</Link>}</td><td className="px-4 py-3 font-medium text-slate-700">{TYPE_LABEL[request.requestType]}</td><td className="max-w-[260px] px-4 py-3 text-xs leading-5 text-slate-600"><span className="line-clamp-3">{request.customerReason}</span></td><td className="px-4 py-3 text-right font-semibold tabular-nums">{order ? money(order.totalAmount) : '—'}</td><td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ring-1 ${statusClass(request.requestStatus)}`}>{STATUS_LABEL[request.requestStatus]}</span><p className="mt-1 text-xs text-slate-500">Đơn: {order?.orderStatus ?? 'Tra cứu chi tiết'}</p></td><td className="px-4 py-3 text-xs text-slate-600">{dateTime(request.createdAt)}</td><td className="px-4 py-3 text-right"><Link className={secondaryButton} to={`/app/order-modification-requests/${request.id}`}><Eye className="h-4 w-4" />Xem chi tiết</Link></td></tr>})}</tbody></table>{!visible.length && <p className="p-10 text-center text-sm text-slate-500">Không có yêu cầu nào khớp bộ lọc hiện tại.</p>}</div>}
     </section>
     <ActivityLogPanel entityType="ORDER_MODIFICATION_REQUEST" title="Nhật ký hoạt động" description="Các quyết định duyệt, từ chối, ghi kết quả hóa đơn và email kết quả được lưu tự động." emptyMessage="Chưa có hoạt động UC-26 được ghi nhận." />
+    {showCreate && <CreateRequestDialog onClose={() => setShowCreate(false)} onSuccess={() => setShowCreate(false)} />}
   </main>
 }
 
@@ -136,7 +149,7 @@ function OrderModificationRequestDetail({ requestId }: { requestId: string }) {
   const roles = user?.roles ?? []
   const isAccountant = roles.includes('ACCOUNTANT')
   const canReview = roles.includes('SALES_STAFF') || roles.includes('SHOP_OWNER')
-  const canApprove = roles.includes('SHOP_OWNER') || request?.requestType === 'ADDRESS_CHANGE'
+  const canApprove = roles.includes('SHOP_OWNER') || (roles.includes('SALES_STAFF') && request?.requestType === 'ADDRESS_CHANGE')
   const canEmail = canReview && Boolean(request && ['APPROVED', 'REJECTED'].includes(request.requestStatus))
 
   if (requestQuery.isLoading) return <main className="mx-auto max-w-[1260px] p-6 text-sm text-slate-500">Đang tải yêu cầu…</main>
@@ -215,4 +228,99 @@ function TaxResultDialog({ request, invoices, onClose, onSuccess }: { request: O
   const [record, state] = useRecordOrderModificationTaxResultMutation()
   const submit = async (event: FormEvent) => { event.preventDefault(); try { await record({ requestId: request.id, body: { taxResultReference: reference.trim(), resultingInvoiceId: invoiceId.trim(), replacementOrderId: replacementOrderId.trim() || undefined } }).unwrap(); toast.success('Đã ghi nhận kết quả hóa đơn.'); onSuccess() } catch (error) { toast.error(normalizeApiError(error).message) } }
   return <ManagementDialog title="Ghi kết quả hóa đơn điều chỉnh / thay thế" onClose={onClose} closeDisabled={state.isLoading}><form onSubmit={submit} className="space-y-4 p-5"><p className="rounded-lg bg-orange-50 p-3 text-sm text-orange-800">Chỉ Kế toán thực hiện bước này sau khi thao tác hóa đơn thuế bên ngoài hoàn tất. Nếu hoàn tiền còn chờ xác minh, yêu cầu vẫn giữ trạng thái chờ.</p><label className="block text-sm font-semibold text-slate-700">Mã tra cứu kết quả thuế<input required value={reference} onChange={(event) => setReference(event.target.value)} maxLength={100} className={managementFieldClass} placeholder="Mã hóa đơn điều chỉnh/thay thế hoặc mã tra cứu" /></label><label className="block text-sm font-semibold text-slate-700">Hóa đơn cửa hàng kết quả<select value={invoiceId} onChange={(event) => setInvoiceId(event.target.value)} className={managementFieldClass} required><option value="">Chọn hóa đơn cửa hàng</option>{invoices.map((invoice) => <option key={invoice.invoiceId} value={invoice.invoiceId}>{invoice.invoiceCode} · {invoice.status}</option>)}</select><span className="mt-1 block text-xs font-normal text-slate-500">Nếu hóa đơn thuộc đơn thay thế, nhập UUID ở trường bên dưới và dùng UUID hóa đơn kết quả đã được tạo.</span></label><label className="block text-sm font-semibold text-slate-700">ID đơn thay thế <span className="font-normal text-slate-500">(nếu áp dụng)</span><input value={replacementOrderId} onChange={(event) => setReplacementOrderId(event.target.value)} className={managementFieldClass} placeholder="UUID đơn mới" /></label><div className="flex justify-end gap-2 border-t border-slate-100 pt-4"><button type="button" className={secondaryButton} onClick={onClose} disabled={state.isLoading}>Hủy</button><button type="submit" className={primaryButton} disabled={state.isLoading || !reference.trim() || !invoiceId.trim()}><Send className="h-4 w-4" />{state.isLoading ? 'Đang lưu…' : 'Ghi nhận kết quả'}</button></div></form></ManagementDialog>
+}
+
+function CreateRequestDialog({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [orderId, setOrderId] = useState('')
+  const [requestType, setRequestType] = useState<OrderModificationRequestType>('ADDRESS_CHANGE')
+  const [customerReason, setCustomerReason] = useState('')
+  const [requestedDeliveryAddress, setRequestedDeliveryAddress] = useState('')
+  const [items, setItems] = useState<CreateOrderModificationItemPayload[]>([])
+  const [create, createState] = useCreateOrderModificationRequestMutation()
+  const ordersQuery = useGetSalesOrdersQuery({ page: 1, size: 100 })
+  const processingOrders = useMemo(() => (ordersQuery.data?.items ?? []).filter((order) => order.orderStatus === 'PROCESSING'), [ordersQuery.data])
+  const selectedOrderQuery = useGetSalesOrderByIdQuery(orderId, { skip: !orderId || requestType !== 'ITEM_CHANGE' })
+  const orderItems = selectedOrderQuery.data?.items ?? []
+
+  function addItem() { setItems((prev) => [...prev, { orderItemId: '', changeAction: 'REDUCE', requestedQuantity: undefined, requestedVariantId: undefined }]) }
+  function removeItem(index: number) { setItems((prev) => prev.filter((_, i) => i !== index)) }
+  function updateItem(index: number, patch: Partial<CreateOrderModificationItemPayload>) {
+    setItems((prev) => prev.map((item, i) => i === index ? { ...item, ...patch } : item))
+  }
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!orderId || !customerReason.trim()) return
+    const payload: CreateOrderModificationRequestPayload = {
+      orderId,
+      requestType,
+      customerReason: customerReason.trim(),
+      requestedDeliveryAddress: requestType === 'ADDRESS_CHANGE' ? requestedDeliveryAddress.trim() || undefined : undefined,
+      items: requestType === 'ITEM_CHANGE' ? items.filter((item) => item.orderItemId) : undefined,
+    }
+    try {
+      await create(payload).unwrap()
+      toast.success('Đã tạo yêu cầu đổi / hủy đơn.')
+      onSuccess()
+    } catch (error) {
+      toast.error(normalizeApiError(error).message)
+    }
+  }
+
+  return <ManagementDialog title="Tạo yêu cầu đổi / hủy đơn" onClose={onClose} closeDisabled={createState.isLoading} size="wide">
+    <form onSubmit={submit} className="space-y-4 p-5">
+      <p className="rounded-lg bg-sky-50 p-3 text-sm text-sky-900">Tiếp nhận yêu cầu từ khách hoặc nhà thầu. Hệ thống sẽ chuyển phiếu cho quản lý duyệt.</p>
+      <label className="block text-sm font-semibold text-slate-700">Đơn hàng (trạng thái PROCESSING) *
+        <select required value={orderId} onChange={(event) => { setOrderId(event.target.value); setItems([]) }} className={managementFieldClass}>
+          <option value="">Chọn đơn hàng đang xử lý…</option>
+          {processingOrders.map((order) => <option key={order.orderId} value={order.orderId}>{order.orderCode} · {order.customerName}</option>)}
+        </select>
+      </label>
+      <label className="block text-sm font-semibold text-slate-700">Loại yêu cầu *
+        <select value={requestType} onChange={(event) => { setRequestType(event.target.value as OrderModificationRequestType); setItems([]) }} className={managementFieldClass}>
+          <option value="ADDRESS_CHANGE">Đổi địa chỉ giao hàng</option>
+          <option value="FULL_CANCELLATION">Hủy toàn bộ đơn</option>
+          <option value="ITEM_CHANGE">Đổi hàng / giảm dòng</option>
+        </select>
+      </label>
+      {requestType === 'ADDRESS_CHANGE' && <label className="block text-sm font-semibold text-slate-700">Địa chỉ giao mới *
+        <input required value={requestedDeliveryAddress} onChange={(event) => setRequestedDeliveryAddress(event.target.value)} className={managementFieldClass} placeholder="Địa chỉ giao hàng mới của khách" />
+      </label>}
+      {requestType === 'ITEM_CHANGE' && orderId && <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-slate-700">Dòng hàng thay đổi</span>
+          <button type="button" className={secondaryButton} onClick={addItem}><Plus className="h-3 w-3" />Thêm dòng</button>
+        </div>
+        {items.map((item, index) => <div key={index} className="grid gap-2 rounded-lg border border-slate-200 p-3 sm:grid-cols-4">
+          <label className="text-xs font-semibold text-slate-700">Dòng hàng *
+            <select required value={item.orderItemId} onChange={(event) => updateItem(index, { orderItemId: event.target.value })} className={managementFieldClass}>
+              <option value="">Chọn dòng hàng…</option>
+              {orderItems.map((oi: { orderItemId: string; variantName?: string; variantCode?: string }) => <option key={oi.orderItemId} value={oi.orderItemId}>{oi.variantName ?? oi.variantCode ?? oi.orderItemId}</option>)}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-slate-700">Thao tác *
+            <select value={item.changeAction} onChange={(event) => updateItem(index, { changeAction: event.target.value as 'REDUCE' | 'REMOVE' | 'SWAP' })} className={managementFieldClass}>
+              <option value="REDUCE">Giảm số lượng</option>
+              <option value="REMOVE">Bỏ dòng hàng</option>
+              <option value="SWAP">Đổi sang SKU khác</option>
+            </select>
+          </label>
+          {item.changeAction === 'REDUCE' && <label className="text-xs font-semibold text-slate-700">Số lượng mới
+            <input type="number" min="0.001" step="0.001" value={item.requestedQuantity ?? ''} onChange={(event) => updateItem(index, { requestedQuantity: Number(event.target.value) || undefined })} className={managementFieldClass} placeholder="SL mới" />
+          </label>}
+          {item.changeAction === 'SWAP' && <label className="text-xs font-semibold text-slate-700">Variant ID thay thế
+            <input value={item.requestedVariantId ?? ''} onChange={(event) => updateItem(index, { requestedVariantId: event.target.value || undefined })} className={managementFieldClass} placeholder="UUID variant mới" />
+          </label>}
+          <div className="flex items-end"><button type="button" className="inline-flex h-9 items-center gap-1 rounded-md border border-rose-300 bg-white px-2 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => removeItem(index)}><X className="h-3 w-3" />Xóa</button></div>
+        </div>)}
+      </div>}
+      <label className="block text-sm font-semibold text-slate-700">Lý do từ khách hàng *
+        <textarea required maxLength={2000} value={customerReason} onChange={(event) => setCustomerReason(event.target.value)} className={`${managementFieldClass} min-h-24`} placeholder="Ghi rõ lý do khách hoặc nhà thầu yêu cầu thay đổi" />
+      </label>
+      <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+        <button type="button" className={secondaryButton} onClick={onClose} disabled={createState.isLoading}>Hủy</button>
+        <button type="submit" className={primaryButton} disabled={createState.isLoading || !orderId || !customerReason.trim()}>{createState.isLoading ? 'Đang tạo…' : 'Tạo yêu cầu'}</button>
+      </div>
+    </form>
+  </ManagementDialog>
 }

@@ -52,3 +52,18 @@ export interface RecordOrderModificationTaxResultRequest {
   resultingInvoiceId: string
   replacementOrderId?: string
 }
+
+export interface CreateOrderModificationItemPayload {
+  orderItemId: string
+  changeAction: 'REDUCE' | 'REMOVE' | 'SWAP'
+  requestedQuantity?: number
+  requestedVariantId?: string
+}
+
+export interface CreateOrderModificationRequestPayload {
+  orderId: string
+  requestType: OrderModificationRequestType
+  customerReason: string
+  requestedDeliveryAddress?: string
+  items?: CreateOrderModificationItemPayload[]
+}

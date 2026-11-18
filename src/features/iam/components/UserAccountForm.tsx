@@ -36,6 +36,7 @@ export function UserAccountForm({
   apiFieldErrors = {},
   onClose,
   onSubmit,
+  currentUserId,
 }: {
   account?: UserAccount
   roles: AssignableRole[]
@@ -45,10 +46,14 @@ export function UserAccountForm({
   apiFieldErrors?: Record<string, string>
   onClose: () => void
   onSubmit: (values: UserAccountFormValues) => Promise<void>
+  /** ID của người dùng đang đăng nhập, dùng để khóa checkbox vai trò Chủ cửa hàng khi tự chỉnh sửa. */
+  currentUserId?: string
 }) {
   const [values, setValues] = useState<UserAccountFormValues>(() => initialValues(account))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const editing = account !== undefined
+  // Khi chỉnh sửa tài khoản của chính mình, không cho phép bỏ vai trò Chủ cửa hàng
+  const isSelf = editing && (account.currentUser === true || (currentUserId != null && account.id === currentUserId))
 
   function update<K extends keyof UserAccountFormValues>(field: K, value: UserAccountFormValues[K]) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -189,6 +194,9 @@ export function UserAccountForm({
               const meta = ROLE_META[role.code]
               const displayLabel = meta?.label ?? role.code
               const displayDesc = role.description || meta?.desc
+              // Khóa checkbox vai trò Chủ cửa hàng khi đang sửa chính tài khoản của mình
+              const isShopOwnerCheckbox = role.code === 'SHOP_OWNER' || role.code === 'STORE_OWNER'
+              const disabledForSelf = isSelf && isShopOwnerCheckbox
               return (
                 <label
                   key={role.id}
@@ -198,12 +206,17 @@ export function UserAccountForm({
                     type="checkbox"
                     checked={values.roleIds.includes(role.id)}
                     onChange={() => toggleRole(role.id)}
-                    disabled={pending}
+                    disabled={pending || disabledForSelf}
                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-sky-700 focus:ring-sky-600"
                   />
                   <span>
                     <span className="block font-semibold text-slate-900">{displayLabel}</span>
                     {displayDesc ? <span className="block text-[11.5px] text-slate-500">{displayDesc}</span> : null}
+                    {disabledForSelf && (
+                      <span className="block text-[11.5px] font-medium text-amber-700">
+                        Không thể tự bỏ vai trò Chủ cửa hàng của chính mình.
+                      </span>
+                    )}
                   </span>
                 </label>
               )

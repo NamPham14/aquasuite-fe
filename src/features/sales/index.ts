@@ -45,3 +45,7 @@ export * from './schemas/onlineCheckout.schema'
 export * from './api/onlineCheckoutApi'
 export * from './hooks/useOnlineCheckout'
 export * from './components/PayosCheckoutPanel'
+
+// Order Modification Requests (UC-26)
+export * from './api/orderModificationRequestApi'
+export * from './types/orderModificationRequest.types'

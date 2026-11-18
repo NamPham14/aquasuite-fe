@@ -37,6 +37,7 @@ import { ManagementDialog, ManagementFormField, managementFieldClass } from '../
 import { ManagementFilterBar, ManagementPageHeader, ManagementSearch, ManagementSelect } from '../../shared/ui/ManagementPage.tsx'
 import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable.tsx'
 import { ActivityLogPanel } from '../../features/audit'
+import { useAuth } from '../../features/iam/hooks/useAuth'
 
 const pageSize = 10
 const primaryButton =
@@ -146,6 +147,12 @@ export function ProductVariantsPage() {
   const [sortBy, setSortBy] = useState('default')
   const [page, setPage] = useState(0)
   const [dialog, setDialog] = useState<DialogState>(null)
+
+  // Phân quyền hiển thị giá nhập / biên lợi nhuận và chức năng quản lý biến thể
+  const { user } = useAuth()
+  const userRoles = user?.roles ?? []
+  const canViewCost = userRoles.some((r) => r === 'SHOP_OWNER' || r === 'ACCOUNTANT')
+  const canManageVariants = userRoles.some((r) => r === 'SHOP_OWNER')
 
   const params = useMemo(
     () => ({
@@ -277,18 +284,19 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
         </span>
       ),
     },
-    {
-      key: 'cost',
+    // Cột Giá nhập chỉ hiển thị cho SHOP_OWNER và ACCOUNTANT
+    ...(canViewCost ? [{
+      key: 'cost' as const,
       header: 'Giá nhập',
-      align: 'left',
+      align: 'left' as const,
       headerClassName: 'w-[11%]',
-      cell: (item) =>
+      cell: (item: ProductVariant) =>
         item.costPrice != null ? (
           <span className="whitespace-nowrap font-semibold tabular-nums text-slate-900">{money(item.costPrice)}</span>
         ) : (
           <span className="text-[13px] font-medium italic text-slate-400">Chưa nhập</span>
         ),
-    },
+    }] : []),
     {
       key: 'stock',
       header: 'Tồn kho WH_MAIN',
@@ -307,10 +315,13 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
     },
     {
       key: 'retail',
-      header: 'Giá bán & lãi dự kiến',
+      header: canViewCost ? 'Giá bán & lãi dự kiến' : 'Giá bán niêm yết',
       align: 'right',
       headerClassName: 'w-[13%]',
-      cell: (item) => <MarginInfo costPrice={item.costPrice} sellingPrice={item.sellingPrice} />,
+      // Khi không có quyền xem giá nhập, ẩn thông tin biên lợi nhuận
+      cell: (item) => canViewCost
+        ? <MarginInfo costPrice={item.costPrice} sellingPrice={item.sellingPrice} />
+        : <span className="whitespace-nowrap font-bold tabular-nums text-slate-900">{money(item.sellingPrice)}</span>,
     },
     {
       key: 'status',
@@ -319,12 +330,13 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
       headerClassName: 'w-[11%]',
       cell: (item) => <StatusBadge status={item.status} missingPrice={item.sellingPrice == null} />,
     },
-    {
-      key: 'actions',
+    // Cột thao tác chỉ hiển thị cho SHOP_OWNER
+    ...(canManageVariants ? [{
+      key: 'actions' as const,
       header: 'Thao tác',
-      align: 'right',
+      align: 'right' as const,
       headerClassName: 'w-[8%]',
-      cell: (item) => (
+      cell: (item: ProductVariant) => (
         <div className="flex items-center justify-end gap-1">
           <button
             type="button"
@@ -362,7 +374,7 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
           </button>
         </div>
       ),
-    },
+    }] : []),
   ]
 
   return (
@@ -435,16 +447,18 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
         <p className="text-[13.5px] text-slate-600">
           SKU là mã duy nhất toàn hệ thống. Giá bán để trống sẽ tự động chuyển về <strong>Ngừng kinh doanh</strong>.
         </p>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className={secondaryButton} disabled={product.data?.productType === 'BUNDLE'} onClick={() => setDialog({ kind: 'matrix' })}>
-            <Grid2X2 className="h-4 w-4" aria-hidden="true" />
-            Tạo ma trận biến thể
-          </button>
-          <button type="button" className={primaryButton} disabled={product.data?.productType === 'BUNDLE'} onClick={() => setDialog({ kind: 'create' })}>
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Thêm biến thể
-          </button>
-        </div>
+        {canManageVariants && (
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={secondaryButton} disabled={product.data?.productType === 'BUNDLE'} onClick={() => setDialog({ kind: 'matrix' })}>
+              <Grid2X2 className="h-4 w-4" aria-hidden="true" />
+              Tạo ma trận biến thể
+            </button>
+            <button type="button" className={primaryButton} disabled={product.data?.productType === 'BUNDLE'} onClick={() => setDialog({ kind: 'create' })}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Thêm biến thể
+            </button>
+          </div>
+        )}
       </div>
 
       <ManagementFilterBar>
@@ -471,9 +485,9 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
         <ManagementSelect id="variant-sort" label="Sắp xếp" value={sortBy} onChange={(value) => { setSortBy(value); setPage(0) }}>
           <option value="default">Mới cập nhật</option>
           <option value="sku">Mã SKU</option>
-          <option value="costPrice">Giá nhập</option>
+          {canViewCost && <option value="costPrice">Giá nhập</option>}
           <option value="sellingPrice">Giá bán</option>
-          <option value="profit">Lợi nhuận</option>
+          {canViewCost && <option value="profit">Lợi nhuận</option>}
         </ManagementSelect>
         <button
           type="button"
@@ -552,18 +566,24 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
                       <dd className="text-right text-slate-700">
                         {item.unit} {item.conversionRate !== 1 ? `· × ${item.conversionRate}` : ''}
                       </dd>
-                      <dt className="font-semibold uppercase tracking-wider text-slate-500">Giá nhập</dt>
-                      <dd className="text-right font-medium text-slate-800">
-                        {item.costPrice != null ? money(item.costPrice) : 'Chưa nhập'}
-                      </dd>
+                      {canViewCost && <>
+                        <dt className="font-semibold uppercase tracking-wider text-slate-500">Giá nhập</dt>
+                        <dd className="text-right font-medium text-slate-800">
+                          {item.costPrice != null ? money(item.costPrice) : 'Chưa nhập'}
+                        </dd>
+                      </>}
                       <dt className="font-semibold uppercase tracking-wider text-slate-500">Giá bán</dt>
                       <dd className="text-right">
-                        <MarginInfo costPrice={item.costPrice} sellingPrice={item.sellingPrice} />
+                        {canViewCost
+                          ? <MarginInfo costPrice={item.costPrice} sellingPrice={item.sellingPrice} />
+                          : <span className="font-bold tabular-nums text-slate-900">{money(item.sellingPrice)}</span>
+                        }
                       </dd>
                       <dt className="font-semibold uppercase tracking-wider text-slate-500">Tồn WH_MAIN</dt>
                       <dd className="text-right text-slate-700">{item.onHandQty ?? 0} tồn · {item.availableQty ?? 0} khả dụng</dd>
                     </dl>
 
+                    {canManageVariants && (
                     <div className="flex items-center gap-1.5 pt-1">
                       <button
                         type="button"
@@ -597,6 +617,7 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </div>
+                    )}
                   </article>
                 ))
               )}

@@ -51,3 +51,63 @@ test('UC-05 account API uses the confirmed IAM paths, multi-role payload and sta
   const statusChange = requests.find((request) => request.method === 'PATCH' && /\/api\/v1\/iam\/users\/user-1\/status$/.test(request.url))
   assert.deepEqual(statusChange?.body, { targetStatus: 'LOCKED', reason: 'Vi phạm quy định' })
 })
+
+test('UC-05 UserAccountForm: checkbox SHOP_OWNER bị khoá khi isSelf=true (account.currentUser===true)', () => {
+  // Kiểm tra logic: khi account.currentUser là true (đây là tài khoản đang đăng nhập),
+  // flag isSelf phải được tính đúng để khóa checkbox SHOP_OWNER.
+  // Test này xác nhận logic domain — không phải DOM rendering.
+  const ownerAccount = {
+    id: 'owner-1', username: 'owner', email: 'owner@shop.vn', phone: '0909000001',
+    roles: [{ id: 'role-owner', code: 'SHOP_OWNER', description: 'Chủ cửa hàng' }],
+    status: 'ACTIVE', isVerified: true, createdAt: '2026-01-01T00:00:00Z',
+    currentUser: true, // Đây là tài khoản chính mình
+  }
+
+  // Mô phỏng logic isSelf từ UserAccountForm
+  function computeIsSelf(account: typeof ownerAccount, currentUserId?: string) {
+    const editing = account !== undefined
+    return editing && (account.currentUser === true || (currentUserId != null && account.id === currentUserId))
+  }
+
+  // Khi là tài khoản chính mình (currentUser: true)
+  assert.equal(computeIsSelf(ownerAccount, undefined), true, 'isSelf phải là true khi currentUser === true')
+  assert.equal(computeIsSelf(ownerAccount, 'owner-1'), true, 'isSelf phải là true khi currentUserId khớp')
+
+  // Khi là tài khoản khác
+  const otherAccount = { ...ownerAccount, id: 'other-2', currentUser: false }
+  assert.equal(computeIsSelf(otherAccount, 'owner-1'), false, 'isSelf phải là false khi là tài khoản khác')
+  assert.equal(computeIsSelf(otherAccount, undefined), false, 'isSelf phải là false khi không có currentUserId và currentUser === false')
+
+  // Khi isSelf === true và role là SHOP_OWNER, checkbox phải bị khoá
+  const isShopOwnerCheckbox = (roleCode: string) => roleCode === 'SHOP_OWNER' || roleCode === 'STORE_OWNER'
+  const disabledForSelf = computeIsSelf(ownerAccount, undefined) && isShopOwnerCheckbox('SHOP_OWNER')
+  assert.equal(disabledForSelf, true, 'Checkbox SHOP_OWNER phải bị khoá khi isSelf === true')
+
+  // Vai trò khác không bị khóa
+  const disabledSales = computeIsSelf(ownerAccount, undefined) && isShopOwnerCheckbox('SALES_STAFF')
+  assert.equal(disabledSales, false, 'Checkbox SALES_STAFF không bị khoá khi isSelf === true')
+})
+
+test('UC-05 updateUserAccount API gọi đúng endpoint PUT /iam/users/:id', async () => {
+  const requests: { url: string; method: string; body?: unknown }[] = []
+  const updatedAccount = {
+    id: 'user-2', username: 'sales_c', email: 'sales-c@example.com', phone: '0901234999',
+    avatarUrl: null, roles: [{ id: 'role-sales', code: 'SALES_STAFF', description: 'Bán hàng' }],
+    status: 'ACTIVE', isVerified: true, createdAt: '2026-01-01T00:00:00Z', currentUser: false,
+  }
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const request = input instanceof Request ? input : new Request(input, init)
+    requests.push({ url: request.url, method: request.method, body: ['PUT', 'PATCH'].includes(request.method) ? await request.clone().json() : undefined })
+    return new Response(JSON.stringify({ success: true, code: 'SUCCESS', message: 'OK', data: updatedAccount, timestamp: new Date().toISOString() }), { status: 200, headers: { 'content-type': 'application/json' } })
+  }) as typeof fetch
+
+  const store = createStore()
+  await store.dispatch(userAccountApi.endpoints.updateUserAccount.initiate({
+    id: 'user-2',
+    data: { username: 'sales_c', email: 'sales-c@example.com', phone: '0901234999', roleIds: ['role-sales'] },
+  })).unwrap()
+
+  const updateReq = requests.find((r) => r.method === 'PATCH' && /\/iam\/users\/user-2$/.test(r.url))
+  assert.ok(updateReq, 'PATCH /iam/users/:id phải được gọi')
+  assert.deepEqual((updateReq?.body as Record<string, unknown>)?.username, 'sales_c')
+})

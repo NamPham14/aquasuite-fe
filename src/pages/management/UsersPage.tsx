@@ -638,6 +638,7 @@ function UsersContent() {
             apiFieldErrors={formFieldErrors}
             onClose={() => setDialog(null)}
             onSubmit={saveAccount}
+            currentUserId={dialog.account.currentUser ? dialog.account.id : undefined}
           />
         </ManagementDialog>
       )}

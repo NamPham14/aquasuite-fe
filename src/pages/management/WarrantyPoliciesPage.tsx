@@ -79,7 +79,7 @@ export function WarrantyPoliciesPage() {
       const payload = { ...form, policyName: form.policyName.trim(), coverageConditions: form.coverageConditions.trim() }
       if (dialog === 'create') await createPolicy(payload).unwrap()
       if (dialog === 'edit' && selected) await updatePolicy({ policyId: selected.policyId, body: payload }).unwrap()
-      toast.success(dialog === 'create' ? 'Warranty policy created successfully.' : 'Warranty policy updated successfully.')
+      toast.success(dialog === 'create' ? 'Tạo chính sách bảo hành thành công.' : 'Cập nhật chính sách bảo hành thành công.')
       setDialog(null)
     } catch (error) { setFormError(normalizeApiError(error).message) }
   }

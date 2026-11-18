@@ -1,5 +1,5 @@
-import { baseApi } from '../../../shared/api/baseApi'
-import type { ApiResponse, PageResponse } from '../../../shared/api/types'
+import { baseApi } from '../../../shared/api/baseApi.ts'
+import type { ApiResponse, PageResponse } from '../../../shared/api/types.ts'
 import type {
   UpsertWarrantyPolicyRequest,
   WarrantyPolicy,
@@ -7,7 +7,7 @@ import type {
   WarrantyPolicyReferenceData,
   WarrantyPolicyStatus,
   WarrantyPolicyAuditLog,
-} from '../types/warrantyPolicy.types'
+} from '../types/warrantyPolicy.types.ts'
 
 function dataOf<T>(response: ApiResponse<T>): T {
   if (response.data === undefined) throw new Error('Phản hồi chính sách bảo hành thiếu dữ liệu.')

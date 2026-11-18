@@ -9,7 +9,7 @@ export const customerDebtApi = baseApi.injectEndpoints({
     uploadCreditProfileEvidence: builder.mutation<{ identityDocumentObjectKey: string }, { customerId: string; data: FormData }>({ query: ({ customerId, data }) => ({ url: `/crm/customers/${customerId}/credit-profile-evidence`, method: 'POST', body: data }), transformResponse: dataOf<{ identityDocumentObjectKey: string }> }),
     getCreditProfileEvidence: builder.query<Blob, string>({ query: (requestId) => ({ url: `/crm/credit-profile-requests/${requestId}/identity-document`, responseHandler: (response) => response.blob() }) }),
     getCustomerDebtStats: builder.query<DebtDashboardStats, void>({ query: () => '/finance/customer-debts/stats', transformResponse: dataOf<DebtDashboardStats>, providesTags: [{ type: 'CustomerDebt', id: 'STATS' }] }),
-    getCustomerDebts: builder.query<CustomerDebtPage, { keyword?: string; customerType?: string; debtStatus?: string; page: number; size: number }>({
+    getCustomerDebts: builder.query<CustomerDebtPage, { keyword?: string; customerType?: string; debtStatus?: string; sortBy?: string; direction?: 'asc' | 'desc'; page: number; size: number }>({
       query: (params) => ({ url: '/finance/customer-debts', params }), transformResponse: dataOf<CustomerDebtPage>,
       providesTags: (result) => [{ type: 'CustomerDebt', id: 'LIST' }, ...(result?.content.map((item) => ({ type: 'CustomerDebt' as const, id: item.customerId })) ?? [])],
     }),

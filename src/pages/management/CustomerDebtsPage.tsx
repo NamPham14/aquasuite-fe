@@ -24,8 +24,10 @@ export function CustomerDebtsPage() {
   const [keyword, setKeyword] = useState('')
   const [customerType, setCustomerType] = useState('')
   const [debtStatus, setDebtStatus] = useState<DebtStatus | ''>('')
+  const [sortBy, setSortBy] = useState('')
+  const [direction, setDirection] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState(0)
-  const query = useMemo(() => ({ keyword: keyword.trim() || undefined, customerType: customerType || undefined, debtStatus: debtStatus || undefined, page, size: pageSize }), [keyword, customerType, debtStatus, page])
+  const query = useMemo(() => ({ keyword: keyword.trim() || undefined, customerType: customerType || undefined, debtStatus: debtStatus || undefined, sortBy: sortBy || undefined, direction: sortBy ? direction : undefined, page, size: pageSize }), [keyword, customerType, debtStatus, sortBy, direction, page])
   const list = useGetCustomerDebtsQuery(query)
   const stats = useGetCustomerDebtStatsQuery()
   const rows = list.data?.content ?? []
@@ -33,7 +35,7 @@ export function CustomerDebtsPage() {
 
   function openDetail(customerId: string, action?: 'credit' | 'reminder') { const path = `/app/customer-debts/${encodeURIComponent(customerId)}`; navigate(action ? `${path}?action=${action}` : path) }
   function changeStatus(status: DebtStatus | '') { setDebtStatus(status); setPage(0) }
-  function reset() { setKeyword(''); setCustomerType(''); changeStatus('') }
+  function reset() { setKeyword(''); setCustomerType(''); changeStatus(''); setSortBy(''); setDirection('desc') }
   function scrollToLog() { document.getElementById('customer-debt-activity')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
 
   return <main className="mx-auto w-full max-w-[1200px] space-y-3 pb-12">
@@ -62,6 +64,8 @@ export function CustomerDebtsPage() {
         <label className="min-w-0 lg:col-span-2"><span className="mb-1 block text-[11px] font-semibold text-slate-600">Tìm kiếm</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input type="search" value={keyword} onChange={(event) => { setKeyword(event.target.value); setPage(0) }} placeholder="Tìm theo mã khách, tên, số điện thoại…" disabled={list.isLoading} className="h-8 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-xs text-slate-900 outline-none transition focus:border-sky-700 focus:ring-1 focus:ring-sky-700 disabled:bg-slate-50" /></span></label>
         <Field label="Loại khách"><select value={customerType} onChange={(event) => { setCustomerType(event.target.value); setPage(0) }} disabled={list.isLoading}><option value="">Mọi loại khách</option><option value="CONTRACTOR">Nhà thầu</option><option value="PROJECT_CUSTOMER">Khách dự án</option><option value="RETAIL">Khách lẻ</option><option value="INSTALLER">Thợ lắp đặt</option></select></Field>
         <Field label="Trạng thái nợ"><select value={debtStatus} onChange={(event) => changeStatus(event.target.value as DebtStatus | '')} disabled={list.isLoading}><option value="">Mọi trạng thái nợ</option><option value="WITHIN_TERM">Trong hạn</option><option value="OVERDUE">Quá hạn — cần nhắc nợ</option><option value="CREDIT_BLOCKED">Chặn tín dụng</option><option value="BLACKLISTED">Danh sách đen</option><option value="NO_CREDIT">Không công nợ / không tín dụng</option><option value="COD_REVIEW">Chờ đối soát COD</option><option value="BLOCKED">Đã khóa</option></select></Field>
+        <Field label="Sắp xếp theo"><select value={sortBy} onChange={(event) => { setSortBy(event.target.value); setPage(0) }} disabled={list.isLoading}><option value="">Mặc định</option><option value="outstandingBalance">Dư nợ</option><option value="overdueBalance">Nợ quá hạn</option><option value="nearestDueDate">Ngày tới hạn</option><option value="customerName">Tên khách</option></select></Field>
+        <Field label="Chiều sắp xếp"><select value={direction} onChange={(event) => { setDirection(event.target.value as 'asc' | 'desc'); setPage(0) }} disabled={list.isLoading || !sortBy}><option value="desc">Giảm dần</option><option value="asc">Tăng dần</option></select></Field>
         <div className="flex items-end"><button type="button" className={`${secondaryButton} w-full sm:w-auto`} onClick={reset} disabled={list.isFetching}>Đặt lại lọc</button></div>
       </div>
     </section>
