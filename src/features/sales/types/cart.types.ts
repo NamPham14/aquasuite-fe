@@ -9,6 +9,7 @@ export interface CartItemResponse {
   sku: string
   productName: string
   variantName: string
+  imageUrl?: string | null
   unit: string
   quantity: number
   unitPrice: number
@@ -35,7 +36,10 @@ export interface AddCartItemRequest {
   quantity: number
 }
 
+export interface MergeCartItemsRequest {
+  items: AddCartItemRequest[]
+}
+
 export interface UpdateCartItemQuantityRequest {
   quantity: number
 }
-

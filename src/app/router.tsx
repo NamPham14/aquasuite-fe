@@ -4,6 +4,8 @@ import { LoginPage } from '../pages/auth/LoginPage'
 import { CustomerLoginPage } from '../pages/auth/CustomerLoginPage'
 import { CustomerRegisterPage } from '../pages/auth/CustomerRegisterPage'
 import { CustomerProfilePage } from '../pages/customer/CustomerProfilePage'
+import { CustomerHomePage } from '../pages/sales/CustomerHomePage'
+import { ProductDetailPage } from '../pages/sales/ProductDetailPage'
 import { CartPage } from '../pages/sales/CartPage'
 import { CheckoutPage } from '../pages/sales/CheckoutPage'
 import { CheckoutResultPage } from '../pages/sales/CheckoutResultPage'
@@ -57,6 +59,18 @@ export const routeConfig: RouteObject[] = [
   {
     element: <SalesLayout />,
     children: [
+      {
+        path: '/storefront',
+        element: <CustomerHomePage />,
+      },
+      {
+        path: '/home',
+        element: <Navigate to="/storefront" replace />,
+      },
+      {
+        path: '/products/:variantId',
+        element: <ProductDetailPage />,
+      },
       {
         path: '/cart',
         element: <CartPage />,

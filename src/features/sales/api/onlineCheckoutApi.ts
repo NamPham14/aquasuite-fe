@@ -141,6 +141,15 @@ function normalizeOnlineOrderCheckoutResponse(res: any): OnlineOrderCheckoutResp
 
 export const onlineCheckoutApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
+    getMyOnlineOrders: build.query<OnlineOrderCheckoutResponse[], void>({
+      query: () => '/sales/online-orders',
+      transformResponse: (res: unknown): OnlineOrderCheckoutResponse[] => {
+        const raw = (res as { data?: unknown })?.data ?? res
+        if (!Array.isArray(raw)) return []
+        return raw.map((item) => normalizeOnlineOrderCheckoutResponse({ data: item }))
+      },
+      providesTags: ['OnlineOrder'],
+    }),
     getCheckoutPreview: build.query<OnlineCheckoutPreviewResponse, void>({
       query: () => '/sales/online-orders/checkout-preview',
       transformResponse: normalizeCheckoutPreviewResponse,
@@ -180,6 +189,7 @@ export const onlineCheckoutApi = baseApi.injectEndpoints({
 })
 
 export const {
+  useGetMyOnlineOrdersQuery,
   useGetCheckoutPreviewQuery,
   usePlaceOnlineOrderMutation,
   useGetOnlineOrderDetailQuery,

@@ -3,10 +3,11 @@ import type {
   AddCartItemRequest,
   CartItemResponse,
   CartResponse,
+  MergeCartItemsRequest,
   UpdateCartItemQuantityRequest,
 } from '../types/cart.types.ts'
 
-function normalizeCartItem(raw: Record<string, unknown>): CartItemResponse {
+export function normalizeCartItem(raw: Record<string, unknown>): CartItemResponse {
   return {
     cartItemId: String(raw.cartItemId ?? ''),
     variantId: String(raw.variantId ?? ''),
@@ -14,6 +15,7 @@ function normalizeCartItem(raw: Record<string, unknown>): CartItemResponse {
     sku: String(raw.sku ?? ''),
     productName: String(raw.productName ?? ''),
     variantName: String(raw.variantName ?? ''),
+    imageUrl: raw.imageUrl ? String(raw.imageUrl) : null,
     unit: String(raw.unit ?? ''),
     quantity: Number(raw.quantity ?? 0),
     unitPrice: Number(raw.unitPrice ?? 0),
@@ -28,7 +30,7 @@ function normalizeCartItem(raw: Record<string, unknown>): CartItemResponse {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizeCartResponse(res: any): CartResponse {
+export function normalizeCartResponse(res: any): CartResponse {
   const payload = res?.data ?? res ?? {}
   const rawItems = Array.isArray(payload.items) ? payload.items : []
   return {
@@ -55,6 +57,16 @@ export const cartApi = baseApi.injectEndpoints({
     addCartItem: builder.mutation<CartResponse, AddCartItemRequest>({
       query: (body) => ({
         url: '/sales/cart/items',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: normalizeCartResponse,
+      invalidatesTags: [{ type: 'Cart', id: 'CURRENT' }],
+    }),
+
+    mergeCartItems: builder.mutation<CartResponse, MergeCartItemsRequest>({
+      query: (body) => ({
+        url: '/sales/cart/items/merge',
         method: 'POST',
         body,
       }),
@@ -98,8 +110,8 @@ export const cartApi = baseApi.injectEndpoints({
 export const {
   useGetCartQuery,
   useAddCartItemMutation,
+  useMergeCartItemsMutation,
   useUpdateCartItemQuantityMutation,
   useRemoveCartItemMutation,
   useClearCartMutation,
 } = cartApi
-

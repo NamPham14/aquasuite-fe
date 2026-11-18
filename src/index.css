@@ -1,1 +1,136 @@
 @import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@keyframes aquasuite-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) scale(1.04);
+  }
+}
+
+@keyframes aquasuite-float-reverse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(12px, 12px, 0) scale(0.96);
+  }
+}
+
+@keyframes aquasuite-aurora {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes aquasuite-shimmer {
+  0% {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-18deg);
+  }
+}
+
+@keyframes aquasuite-card-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes aquasuite-modal-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-aqua-float {
+  animation: aquasuite-float 8s ease-in-out infinite;
+}
+
+.animate-aqua-float-reverse {
+  animation: aquasuite-float-reverse 10s ease-in-out infinite;
+}
+
+.animate-aqua-aurora {
+  background-size: 200% 200%;
+  animation: aquasuite-aurora 10s ease infinite;
+}
+
+.animate-aqua-card-in {
+  animation: aquasuite-card-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-aqua-modal-in {
+  animation: aquasuite-modal-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.aqua-shine-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.aqua-shine-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.32),
+    transparent
+  );
+  transform: translateX(-140%) skewX(-18deg);
+  pointer-events: none;
+}
+
+.aqua-shine-btn:hover::after {
+  animation: aquasuite-shimmer 0.85s ease forwards;
+}
+
+.aqua-hero-grid {
+  background-image:
+    linear-gradient(to right, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.08) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-aqua-float,
+  .animate-aqua-float-reverse,
+  .animate-aqua-aurora,
+  .animate-aqua-card-in,
+  .animate-aqua-modal-in {
+    animation: none !important;
+  }
+
+  .aqua-shine-btn:hover::after {
+    animation: none !important;
+  }
+}
