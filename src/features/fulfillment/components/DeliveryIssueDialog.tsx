@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { ManagementDialog, ManagementForm } from '../../../shared/ui/ManagementDialog'
 import { normalizeApiError } from '../../../shared/api/apiError'
 import { useIssueDeliveryMutation } from '../api/deliveryIssueApi'
-import { isUncertainDeliveryError } from './deliveryIssueForm'
+import { deliveryErrorText, isUncertainDeliveryError } from './deliveryIssueForm'
 
 export function DeliveryIssueDialog({ id, action, onClose }: { id: string; action: 'confirm-issue' | 'cancel-draft'; onClose: () => void }) {
   const [send, { isLoading }] = useIssueDeliveryMutation()
@@ -19,11 +19,11 @@ export function DeliveryIssueDialog({ id, action, onClose }: { id: string; actio
       lock.current = true; setError('')
       setReviewReservation(false)
       try { await send({ id, action }).unwrap(); toast.success(confirm ? 'Đã xác nhận xuất kho.' : 'Đã hủy đợt giao nháp.'); onClose() }
-      catch (failure) { setUncertain(isUncertainDeliveryError(failure)); setError(normalizeApiError(failure).message); setReviewReservation(normalizeApiError(failure).code === 'FUL_006') }
+      catch (failure) { setUncertain(isUncertainDeliveryError(failure)); setError(deliveryErrorText(failure)); setReviewReservation(['FUL_006', 'INV_DISPATCH_004'].includes(normalizeApiError(failure).code ?? '')) }
       finally { lock.current = false }
     }}>
       <p className="text-sm text-slate-700">{confirm ? 'Xác nhận sẽ trừ tồn và tiêu thụ hàng giữ cho toàn bộ đợt giao. Khi thành công, phiếu chuyển sang Chờ phân công và không thể hủy nháp. Hệ thống kiểm tra lại số lượng, tồn kho và COD tại thời điểm xác nhận.' : 'Chỉ hủy phiếu còn ở trạng thái Nháp. Không trừ tồn hoặc giải phóng hàng giữ của đơn.'}</p>
-      {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
+      {error && <p role="alert" className="whitespace-pre-line text-sm text-rose-700">{error}</p>}
       {reviewReservation && confirm && <p className="text-sm text-slate-700"><a href="/app/deposits" target="_blank" rel="noopener noreferrer" className="font-semibold text-sky-700 underline">Mở Cọc &amp; hàng giữ</a> ở tab mới, tìm đúng đơn và kiểm tra hàng giữ. Nếu chỉ có quyền xem, nhờ Sales/chủ cửa hàng xử lý. Sau đó quay lại phiếu này để xác nhận xuất kho; không cần tạo lại Delivery.</p>}
       {uncertain && <p role="alert" className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">Chưa xác định kết quả. Giữ tab mở và gửi lại cùng thao tác, không tải lại trang hoặc đổi tài khoản.</p>}
     </ManagementForm>

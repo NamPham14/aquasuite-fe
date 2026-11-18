@@ -2,7 +2,7 @@ import { DeliveryProgress } from './DeliveryProgress'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Truck } from 'lucide-react'
-import { useAuth } from '../../iam'
+import { useAuth, useGetUserAccountQuery } from '../../iam'
 import { normalizeApiError } from '../../../shared/api/apiError'
 import { ManagementDialog } from '../../../shared/ui/ManagementDialog'
 import { ManagementPageHeader } from '../../../shared/ui/ManagementPage'
@@ -15,6 +15,17 @@ import { DeliveryBadge, DeliveryPanel } from './DeliveryUi'
 import { deliveryButton, deliveryDate, deliveryMoney, deliveryPrimary } from './deliveryPresentation'
 import { canManageDeliveries } from './deliveryIssueForm'
 import { DeliveryIssueDialog } from './DeliveryIssueDialog'
+import { EditDeliveryDialog } from './EditDeliveryDialog'
+
+function AssignedShipperStatus({ id }: { id: string }) {
+  const { user } = useAuth()
+  const owner = user?.roles.includes('SHOP_OWNER') ?? false
+  const account = useGetUserAccountQuery(id, { skip: !owner, refetchOnMountOrArgChange: true, refetchOnFocus: true, pollingInterval: 30000 })
+  if (!owner) return <p className="text-xs text-slate-500">Chưa có dữ liệu trạng thái tài khoản shipper từ API giao hàng.</p>
+  if (account.error) return <p role="alert" className="text-xs text-amber-800">Không tải được trạng thái tài khoản shipper. <button className={deliveryButton} onClick={() => void account.refetch()}>Thử lại</button></p>
+  const status = account.currentData?.status
+  return status && status !== 'ACTIVE' ? <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">{status === 'LOCKED' ? 'Shipper đã bị khóa tài khoản.' : 'Shipper đang bị hạn chế hoạt động.'} Không thể phân công thêm; cần kiểm tra và đổi shipper nếu phiếu còn cho phép.</p> : null
+}
 
 function ProofPhoto({ id, photoId, index }: { id: string; photoId: string; index: number }) {
   const [open, setOpen] = useState(false)
@@ -31,6 +42,7 @@ export function DeliveryDetails({ id }: { id: string }) {
   const { currentData: detail, isFetching, error, refetch } = useGetDeliveryQuery(id, { skip: !id || !allowed })
   const [action, setAction] = useState<'start' | 'complete' | 'fail' | 'assignment' | 'reschedule' | null>(null)
   const [assigning, setAssigning] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [downloadPdf, { isLoading: downloading }] = useDownloadIssueNoteMutation()
   const [pdfError, setPdfError] = useState('')
   async function downloadIssueNote() {
@@ -58,6 +70,7 @@ export function DeliveryDetails({ id }: { id: string }) {
     <ManagementPageHeader title={row.deliveryCode} breadcrumb="Chi tiết giao hàng" group="Giao hàng" description={`Đợt ${row.batchNo ?? '—'} · Kho ${row.warehouseCode || '—'}`} icon={<Truck className="h-5 w-5" />} />
     <div className="flex flex-wrap items-center justify-between gap-3"><Link to={back} className={deliveryButton}>← Về danh sách giao hàng</Link><DeliveryBadge status={row.deliveryStatus} /></div>
     <div className="flex flex-wrap gap-2">
+      {accountant && row.deliveryStatus === 'DRAFT' && !row.confirmedAt && <button className={deliveryButton} disabled={isFetching} onClick={() => setEditing(true)}>Sửa nháp</button>}
       {row.confirmedAt && !['DRAFT', 'CANCELLED'].includes(row.deliveryStatus) && <button className={deliveryButton} disabled={downloading} onClick={() => void downloadIssueNote()}>{downloading ? 'Đang tạo PDF…' : 'Tải phiếu xuất kho PDF'}</button>}
       {accountant && row.deliveryStatus === 'DRAFT' && <><button className={deliveryPrimary} disabled={isFetching} onClick={() => setIssueAction('confirm-issue')}>Xác nhận xuất kho</button><button className={deliveryButton} disabled={isFetching} onClick={() => setIssueAction('cancel-draft')}>Hủy nháp</button></>}
       {accountant && canAssignDelivery(row) && <button className={deliveryPrimary} onClick={() => setAssigning(true)}>{row.shipperId ? 'Đổi shipper' : 'Phân công shipper'}</button>}
@@ -75,7 +88,7 @@ export function DeliveryDetails({ id }: { id: string }) {
     {row.deliveryStatus === 'DELIVERED' && row.codRequired && <p className="rounded-md border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">Giao hàng đã hoàn tất. Tiền COD cần được khai báo và bàn giao riêng ở phần Thu &amp; bàn giao COD.</p>}
     <div className="grid gap-4 md:grid-cols-2">
       <DeliveryPanel title="Thông tin người nhận"><dl className="space-y-2 text-sm"><dt className="text-xs text-slate-500">Người nhận</dt><dd className="font-semibold text-slate-900">{row.recipientName || '—'}</dd><dt className="text-xs text-slate-500">Điện thoại</dt><dd>{row.recipientPhone ? <a className="text-sky-700 underline" href={`tel:${row.recipientPhone}`}>{row.recipientPhone}</a> : '—'}</dd><dt className="text-xs text-slate-500">Địa chỉ</dt><dd className="break-words">{row.deliveryAddress || '—'}</dd><dt className="text-xs text-slate-500">COD</dt><dd className="font-semibold tabular-nums">{row.codRequired ? deliveryMoney(row.codAmount) : 'Không thu COD'}</dd></dl></DeliveryPanel>
-      <DeliveryPanel title="Thông tin giao hàng"><dl className="space-y-2 text-sm"><dt className="text-xs text-slate-500">Đơn hàng (ID)</dt><dd className="break-all font-mono text-xs">{accountant ? <Link to={`/app/orders/${row.orderId}`} className="text-sky-700 underline">{row.orderId}</Link> : row.orderId}</dd><dt className="text-xs text-slate-500">Shipper</dt><dd>{detail.shipperName || row.shipperId || 'Chưa phân công'}{detail.shipperPhone && ` · ${detail.shipperPhone}`}</dd><dt className="text-xs text-slate-500">Hẹn giao</dt><dd>{deliveryDate(row.scheduledDate)}</dd></dl></DeliveryPanel>
+      <DeliveryPanel title="Thông tin giao hàng"><dl className="space-y-2 text-sm"><dt className="text-xs text-slate-500">Đơn hàng (ID)</dt><dd className="break-all font-mono text-xs">{accountant ? <Link to={`/app/orders/${row.orderId}`} className="text-sky-700 underline">{row.orderId}</Link> : row.orderId}</dd><dt className="text-xs text-slate-500">Shipper</dt><dd>{detail.shipperName?.trim() || (row.shipperId ? 'Đã phân công — chưa có tên shipper' : null) || 'Chưa phân công'}{detail.shipperPhone && ` · ${detail.shipperPhone}`}{row.shipperId && <AssignedShipperStatus id={row.shipperId} />}</dd><dt className="text-xs text-slate-500">Hẹn giao</dt><dd>{deliveryDate(row.scheduledDate)}</dd></dl></DeliveryPanel>
     </div>
     <DeliveryProgress detail={detail} />
     <DeliveryPanel title="Hóa đơn nguồn"><p className="break-all text-sm text-slate-700">{row.salesInvoiceId ? <><span className="text-slate-500">ID hóa đơn: </span><span className="font-mono">{row.salesInvoiceId}</span></> : 'Chưa có thông tin hóa đơn nguồn cho phiếu này.'}</p></DeliveryPanel>
@@ -88,6 +101,7 @@ export function DeliveryDetails({ id }: { id: string }) {
     <DeliveryPanel title="Ghi chú"><p className="whitespace-pre-wrap break-words text-sm text-slate-700">{row.note || 'Chưa có ghi chú.'}</p></DeliveryPanel>
     <DeliveryPanel title={`Ảnh bằng chứng (${detail.photos.length})`}>{detail.photos.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{detail.photos.map((p, i) => <ProofPhoto key={p.photoId} id={id} photoId={p.photoId} index={i} />)}</div> : <p className="text-sm text-slate-500">Chưa có ảnh bằng chứng.</p>}</DeliveryPanel>
     {assigning && <AssignmentDialog deliveryIds={[id]} onClose={() => setAssigning(false)} onDone={() => setAssigning(false)} />}
+    {editing && <EditDeliveryDialog detail={detail} onClose={() => setEditing(false)} />}
     {action && <DeliveryActionDialog id={id} action={action} resuming={row.deliveryStatus === 'RESCHEDULED'} onClose={() => setAction(null)} />}
     {issueAction && <DeliveryIssueDialog id={id} action={issueAction} onClose={() => setIssueAction(null)} />}
   </div>

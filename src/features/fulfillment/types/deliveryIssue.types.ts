@@ -2,10 +2,12 @@ export interface DeliveryCandidate {
   orderItemId: string; variantId: string; sku: string; productName: string
   orderedQty: number; issuedQty: number; remainingQty: number; heldQty: number; availableQty: number
   serialTracking?: boolean
+  dispatchableQty: number
 }
 export interface DeliveryCandidates {
   orderId: string; orderCode: string; deliveryAddress: string | null; eligible: boolean; items: DeliveryCandidate[]
   salesInvoiceId: string; invoiceCode: string
+  maxCodAmount: number
 }
 export interface DeliveryInvoice {
   invoiceId: string; invoiceCode: string; orderId: string; type: string; status: string

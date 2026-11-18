@@ -11,7 +11,7 @@ const originalFetch = globalThis.fetch
 const stores: ReturnType<typeof setup>[] = []
 function setup() { const s = configureStore({ reducer: { api: baseApi.reducer }, middleware: (g) => g().concat(baseApi.middleware) }); stores.push(s); return s }
 afterEach(() => { globalThis.fetch = originalFetch; stores.splice(0).forEach((s) => s.dispatch(baseApi.util.resetApiState())) })
-const candidates = { orderId: 'order', salesInvoiceId: 'invoice', invoiceCode: 'INV-01', orderCode: 'SO-01', deliveryAddress: 'Address', eligible: true, items: [{ orderItemId: 'line', variantId: 'variant', productName: 'Lavabo', sku: 'SKU-01', orderedQty: 10, issuedQty: 3, remainingQty: 7, heldQty: 2, availableQty: 5 }] }
+const candidates = { orderId: 'order', salesInvoiceId: 'invoice', invoiceCode: 'INV-01', orderCode: 'SO-01', deliveryAddress: 'Address', eligible: true, maxCodAmount: 100000, items: [{ orderItemId: 'line', variantId: 'variant', productName: 'Lavabo', sku: 'SKU-01', orderedQty: 10, issuedQty: 3, remainingQty: 7, dispatchableQty: 7, heldQty: 2, availableQty: 5 }] }
 
 test('issue PDF downloads a binary document and preserves JSON authorization errors', async () => {
   const store = setup()
@@ -70,7 +70,10 @@ test('confirm/cancel use bodyless POST and confirmation invalidates reservation/
   for (let i = 0; i < calls.length; i++) { assert.equal(calls[i].method, 'POST'); assert.equal(await calls[i].text(), '') }
   assert.match(calls[0].url, /draft\/confirm-issue$/); assert.match(calls[1].url, /draft\/cancel-draft$/)
 })
-test('quantity validation uses remaining, not held or free; supports two decimals and max 100 lines', () => {
+test('quantity validation uses dispatchable capacity, supports two decimals and max 100 lines', () => {
+  const limited = { ...candidates, items: candidates.items.map(line => ({ ...line, dispatchableQty: 2 })) }
+  assert.ok(validateDeliveryLines(limited, { line: '3' }))
+  assert.equal(validateDeliveryLines(limited, { line: '2' }), '')
   assert.equal(validateDeliveryLines(candidates, { line: '7' }), '')
   assert.equal(validateDeliveryLines(candidates, { line: '0.01' }), '')
   for (const value of ['0', '-1', '7.01', '0.001', 'NaN', '1e1', '10000000000']) assert.ok(validateDeliveryLines(candidates, { line: value }), value)
@@ -80,4 +83,18 @@ test('quantity validation uses remaining, not held or free; supports two decimal
   assert.equal(canManageDeliveries(['SHIPPER']), false); assert.equal(canManageDeliveries(['ADMIN']), false)
   for (const status of ['FETCH_ERROR', 'TIMEOUT_ERROR', 500, 503, 408]) assert.equal(isUncertainDeliveryError({ status }), true)
   for (const status of [400, 403, 404, 409]) assert.equal(isUncertainDeliveryError({ status }), false)
+})
+
+test('draft editing uses PUT with the original identity and source items', async () => {
+  const store = setup()
+  const body = { deliveryId: 'draft', warehouseCode: 'WH_MAIN' as const, recipientName: 'Recipient', recipientPhone: '0901234567', deliveryAddress: 'Address', scheduledDate: null, codAmount: 50000, note: null, items: [{ orderItemId: 'line', quantity: 2 }] }
+  globalThis.fetch = async (input, init) => {
+    const req = new Request(input, init)
+    assert.equal(req.method, 'PUT')
+    assert.ok(req.url.endsWith('/fulfillment/deliveries/draft/draft'))
+    assert.deepEqual(await req.json(), body)
+    return Response.json({ data: { deliveryId: 'draft', deliveryStatus: 'DRAFT' } })
+  }
+  const result = await store.dispatch(api.endpoints.updateDeliveryDraft.initiate({ id: 'draft', body })).unwrap()
+  assert.equal(result.deliveryId, 'draft')
 })

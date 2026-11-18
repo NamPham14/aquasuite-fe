@@ -33,7 +33,6 @@ export function DepositManagement() {
         { key: 'pending', header: 'Chờ xác minh', align: 'right', cell: (order) => order.payment ? money(order.payment.pendingAmount) : '—' },
         { key: 'shortfall', header: 'Thiếu cọc', align: 'right', cell: (order) => order.payment ? money(Math.max(0, order.payment.depositRequired - order.payment.verifiedPaid)) : '—' },
         { key: 'depositStatus', header: 'Trạng thái cọc', cell: (order) => order.depositStatus === 'SATISFIED' ? 'Đủ cọc' : order.depositStatus === 'AWAITING_DEPOSIT' ? 'Chưa đủ cọc' : '—' },
-        { key: 'status', header: 'Trạng thái đơn', cell: (order) => order.orderStatus },
         { key: 'action', header: 'Thao tác', cell: (order) => <button type="button" className={secondaryButton} aria-label={`Xem cọc và giữ hàng đơn ${order.orderCode}`} onClick={() => setSelected(order.orderId)}>Xem cọc & giữ hàng</button> },
       ]} />}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">

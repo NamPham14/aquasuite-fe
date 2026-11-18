@@ -8,3 +8,4 @@ export interface CodPage { items: CodCollection[]; page: number; size: number; t
 export interface CodFilters { shipperId?: string; orderId?: string; status?: string; page: number; size: number }
 export interface CodClaim { deliveryId: string; amount: number; collectedAt: string; note: string; idempotencyKey: string }
 export interface CodBalance { orderId: string; storeOutstanding: number; shipperHeld: number; customerCollectible: number; pendingClaimAmount: number }
+export interface CodClaimCapacity { deliveryId: string; orderId: string; orderRemaining: number; deliveryRemaining: number; maxClaimAmount: number; claimable: boolean }

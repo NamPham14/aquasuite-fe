@@ -17,6 +17,39 @@ const { MemoryRouter } = await import('react-router-dom')
 const { CreateDeliveryDialog } = await import('../src/features/fulfillment/components/CreateDeliveryDialog.tsx')
 const { DeliveryIssueDialog } = await import('../src/features/fulfillment/components/DeliveryIssueDialog.tsx')
 const { DeliveryActionDialog } = await import('../src/features/fulfillment/components/DeliveryActionDialog.tsx')
+const { EditDeliveryDialog } = await import('../src/features/fulfillment/components/EditDeliveryDialog.tsx')
+
+test('editing keeps saved contact and COD, uses PUT, and exposes backend field validation', async () => {
+  const originalFetch = globalThis.fetch
+  const store = configureStore({ reducer: { api: baseApi.reducer }, middleware: g => g().concat(baseApi.middleware) })
+  const root = createRoot(document.getElementById('root')!)
+  let submitted = 0
+  globalThis.fetch = async (input, init) => {
+    const req = new Request(input, init)
+    if (req.method === 'PUT') {
+      submitted++
+      assert.ok(req.url.endsWith('/deliveries/draft/draft'))
+      const body = await req.json()
+      assert.equal(body.deliveryId, 'draft'); assert.equal(body.codAmount, 50000)
+      assert.equal(body.recipientName, 'Saved recipient')
+      assert.deepEqual(body.items, [{ orderItemId: 'line', quantity: 2 }])
+      return Response.json({ message: 'Validation failed', errors: [{ field: 'recipientPhone', message: 'Số điện thoại không hợp lệ' }] }, { status: 400 })
+    }
+    return Response.json({ data: { orderId: 'order', salesInvoiceId: 'invoice', invoiceCode: 'INV-01', eligible: true, maxCodAmount: 100000, items: [{ orderItemId: 'line', sku: 'SKU', remainingQty: 5, dispatchableQty: 3 }] } })
+  }
+  try {
+    const detail = { delivery: { deliveryId: 'draft', orderId: 'order', salesInvoiceId: 'invoice', warehouseCode: 'WH_MAIN', deliveryStatus: 'DRAFT', recipientName: 'Saved recipient', recipientPhone: '0901234567', deliveryAddress: 'Saved address', codAmount: 50000 }, items: [{ orderItemId: 'line', quantity: 2 }] }
+    await act(async () => root.render(React.createElement(Provider, { store } as React.ComponentProps<typeof Provider>, React.createElement(MemoryRouter, null, React.createElement(EditDeliveryDialog, { detail: detail as never, onClose() {} })))))
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 80)) })
+    assert.equal(document.querySelector<HTMLInputElement>('#issue-cod')!.value, '50000')
+    assert.equal(document.querySelector<HTMLInputElement>('input[aria-label="Lượng giao SKU"]')!.value, '2')
+    await act(async () => { document.querySelector('form')!.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })); await new Promise(resolve => setTimeout(resolve, 80)) })
+    assert.equal(submitted, 1)
+    assert.equal(document.querySelector('#issue-phone')!.getAttribute('aria-invalid'), 'true')
+    assert.match(document.body.textContent!, /Số điện thoại không hợp lệ/)
+    assert.equal(document.querySelector<HTMLButtonElement>('button[aria-label="Đóng"]')!.disabled, false)
+  } finally { await act(async () => root.unmount()); store.dispatch(baseApi.util.resetApiState()); globalThis.fetch = originalFetch }
+})
 
 test('photo picker accepts PNG with missing MIME, previews it and submits an image multipart file', async () => {
   const originalFetch = globalThis.fetch
@@ -131,7 +164,7 @@ test('create form keeps the same UUID/payload after uncertain error and locks ed
       const body = await request.json(); payloads.push(body)
       return payloads.length === 1 ? Response.json({ message: 'Connection lost' }, { status: 503 }) : Response.json({ data: { deliveryId: body.deliveryId } })
     }
-    return Response.json({ data: { orderId: 'order', salesInvoiceId: 'invoice', invoiceCode: 'INV-01', orderCode: 'SO-01', deliveryAddress: 'Địa chỉ', eligible: true, items: [{ orderItemId: 'item', variantId: 'variant', sku: 'SKU-01', productName: 'Lavabo', orderedQty: 5, issuedQty: 1, remainingQty: 4, heldQty: 2, availableQty: 8 }] } })
+    return Response.json({ data: { orderId: 'order', salesInvoiceId: 'invoice', invoiceCode: 'INV-01', orderCode: 'SO-01', deliveryAddress: 'Địa chỉ', eligible: true, maxCodAmount: 100000, items: [{ orderItemId: 'item', variantId: 'variant', sku: 'SKU-01', productName: 'Lavabo', orderedQty: 5, issuedQty: 1, remainingQty: 4, dispatchableQty: 4, heldQty: 2, availableQty: 8 }] } })
   }
   const flush = () => act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)) })
   const fill = async (selector: string, value: string) => act(async () => {
@@ -146,7 +179,8 @@ test('create form keeps the same UUID/payload after uncertain error and locks ed
     await flush()
     assert.equal(document.querySelector<HTMLInputElement>('#issue-recipient')!.value, 'Order customer')
     assert.equal(document.querySelector<HTMLInputElement>('#issue-phone')!.value, '0912345678')
-    await fill('#issue-recipient', 'Nguyễn Văn A'); await fill('#issue-phone', '0901234567'); await fill('input[type="number"]', '2.25')
+    assert.equal(document.querySelector<HTMLInputElement>('#issue-cod')!.value, '100000')
+    await fill('#issue-recipient', 'Nguyễn Văn A'); await fill('#issue-phone', '0901234567'); await fill('input[aria-label="Lượng giao SKU-01"]', '2.25')
     await act(async () => { await store.dispatch(salesOrderApi.endpoints.getSalesOrderById.initiate('order', { forceRefetch: true, subscribe: false })).unwrap() })
     assert.equal(document.querySelector<HTMLInputElement>('#issue-recipient')!.value, 'Nguyễn Văn A')
     assert.equal(document.querySelector<HTMLInputElement>('#issue-phone')!.value, '0901234567')
@@ -160,7 +194,7 @@ test('create form keeps the same UUID/payload after uncertain error and locks ed
     assert.match(String(payloads[0].deliveryId), /^[0-9a-f-]{36}$/)
     assert.equal(document.querySelector<HTMLInputElement>('#issue-recipient')!.disabled, true)
     assert.equal(document.querySelector<HTMLButtonElement>('button[aria-label="Đóng"]')!.disabled, true)
-    assert.match(document.body.textContent!, /Chưa xác định kết quả tạo nháp/)
+    assert.match(document.body.textContent!, /Chưa xác định kết quả lưu nháp/)
     await act(async () => { document.querySelector('form')!.dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true })) })
     await flush()
     assert.equal(payloads.length, 2); assert.deepEqual(payloads[0], payloads[1]); assert.equal(closed, 1)
@@ -196,7 +230,7 @@ test('invoice selection loads issued invoices for the order, rejects mismatched 
     const request = new Request(input, init); paths.push(new URL(request.url).pathname)
     if (request.url.endsWith('/delivery-invoices')) return Response.json({ data: [...['first', 'second', 'wrong'].map((id) => ({ invoiceId: id, invoiceCode: id, orderId: 'order', type: 'SALE', status: 'ISSUED' })), { invoiceId: 'draft', invoiceCode: 'Draft', orderId: 'order', status: 'DRAFT' }, { invoiceId: 'other', invoiceCode: 'Other order', orderId: 'another-order', status: 'ISSUED' }] })
     const invoice = request.url.includes('/wrong/') ? 'wrong' : request.url.includes('/second/') ? 'second' : 'first'
-    return Response.json({ data: { orderId: invoice === 'wrong' ? 'another-order' : 'order', salesInvoiceId: invoice, invoiceCode: invoice, orderCode: 'SO-01', deliveryAddress: 'Địa chỉ', eligible: true, items: [{ orderItemId: invoice, variantId: 'variant', sku: invoice, productName: 'Lavabo', orderedQty: 10, issuedQty: 1, remainingQty: invoice === 'second' ? 2 : 4, heldQty: 0, availableQty: 8 }] } })
+    return Response.json({ data: { orderId: invoice === 'wrong' ? 'another-order' : 'order', salesInvoiceId: invoice, invoiceCode: invoice, orderCode: 'SO-01', deliveryAddress: 'Địa chỉ', eligible: true, maxCodAmount: 100000, items: [{ orderItemId: invoice, variantId: 'variant', sku: invoice, productName: 'Lavabo', orderedQty: 10, issuedQty: 1, remainingQty: invoice === 'second' ? 2 : 4, dispatchableQty: invoice === 'second' ? 2 : 4, heldQty: 0, availableQty: 8 }] } })
   }
   const render = async () => act(async () => root.render(React.createElement(Provider, { store } as React.ComponentProps<typeof Provider>, React.createElement(MemoryRouter, null, React.createElement(CreateDeliveryDialog, { orderId: 'order', onClose() {} })))))
   const select = async (id: string) => {
@@ -219,7 +253,7 @@ test('invoice selection loads issued invoices for the order, rejects mismatched 
     })
     await select('second')
     assert.equal(document.querySelector<HTMLInputElement>('#issue-recipient')!.value, '')
-    assert.equal(document.querySelector<HTMLInputElement>('input[type="number"]')!.max, '2')
+    assert.equal(document.querySelector<HTMLInputElement>('input[aria-label="Lượng giao second"]')!.max, '2')
     assert.ok(paths.filter((path) => !path.endsWith('/delivery-invoices') && !path.startsWith('/api/v1/sales/orders/')).every((path) => path.includes('/fulfillment/sales-invoices/')))
     assert.ok(!paths.some((path) => path.includes('/fulfillment/orders/') && !path.endsWith('/delivery-invoices')))
   } finally { await act(async () => root.unmount()); store.dispatch(baseApi.util.resetApiState()); globalThis.fetch = originalFetch }

@@ -1,11 +1,16 @@
 import { baseApi } from '../../../shared/api/baseApi.ts'
 import type { ApiResponse } from '../../../shared/api/types.ts'
-import type { CodBalance, CodClaim, CodCollection, CodFilters, CodPage } from '../types/cod.types.ts'
+import type { CodBalance, CodClaim, CodClaimCapacity, CodCollection, CodFilters, CodPage } from '../types/cod.types.ts'
 
 const codApiBase = baseApi.enhanceEndpoints({ addTagTypes: ['Cod'] })
 const changedTags = ['Cod', 'CustomerDebt', 'OrderPayment', 'SalesOrder'] as const
 export const codApi = codApiBase.injectEndpoints({
   endpoints: (builder) => ({
+    getCodClaimCapacity: builder.query<CodClaimCapacity, string>({
+      query: (deliveryId) => `/finance/cod/deliveries/${deliveryId}/claim-capacity`,
+      transformResponse: (res: ApiResponse<CodClaimCapacity>) => res.data!,
+      providesTags: ['Cod', 'OrderPayment', 'SalesOrder'],
+    }),
     getCodCollections: builder.query<CodPage, CodFilters>({
       query: (params) => ({ url: '/finance/cod/collections', params }),
       transformResponse: (res: ApiResponse<CodPage>) => res.data!, providesTags: ['Cod'],
@@ -29,4 +34,4 @@ export const codApi = codApiBase.injectEndpoints({
     }),
   }),
 })
-export const { useGetCodCollectionsQuery, useGetCodCollectionQuery, useClaimCodMutation, useReviewCodMutation, useGetCodBalanceQuery } = codApi
+export const { useGetCodClaimCapacityQuery, useGetCodCollectionsQuery, useGetCodCollectionQuery, useClaimCodMutation, useReviewCodMutation, useGetCodBalanceQuery } = codApi

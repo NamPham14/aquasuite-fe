@@ -142,3 +142,11 @@ Nghiệm thu end-to-end cần BE mới, V36, dữ liệu tồn/reservation hợp
 - Form FAILED chỉ dành cho khách xác nhận hủy/không nhận, bắt buộc checkbox xác nhận;
   gửi customerCancellationConfirmed=true. Các lý do tạm thời không còn nằm trong gợi ý kết thúc giao.
 - Ghi nhận FAILED không tự hủy Sales order, nhập hàng hoặc hoàn tiền. Những bước đó thuộc các UC riêng.
+## Cập nhật contract BE ngày 17/11/2026
+
+Phần này thay thế quy tắc cũ về hạn mức COD và chỉnh sửa nháp:
+
+- Candidates trả `maxCodAmount` và `items[].dispatchableQty`. Tạo nháp mặc định COD bằng max; người dùng có thể giảm về 0. Sửa nháp giữ COD đã lưu và báo lỗi nếu vượt max mới. Hàng giữ, tồn khả dụng, số còn theo hóa đơn và lượng hiện có thể giao hiển thị riêng; lượng nhập không vượt dispatchable.
+- ACCOUNTANT/SHOP_OWNER có nút Sửa nháp khi DRAFT và chưa confirmedAt. Lưu bằng PUT `/fulfillment/deliveries/{id}/draft`, giữ ID, nguồn và kho; không xác nhận xuất tự động. Phiếu cũ thiếu nguồn chỉ mở sửa khi tìm được duy nhất một hóa đơn ISSUED của đơn, BE kiểm tra lại.
+- Khai thu kiểm tra GET `/finance/cod/deliveries/{id}/claim-capacity` khi mở danh sách. Chỉ cho chọn claimable, giới hạn tiền bằng maxClaimAmount. Không chặn cứng khi đã VERIFIED một phần; BE tính phần còn lại. Có nút tải lại số còn khai; claim/receipt/payment invalidation làm mới dữ liệu liên quan.
+- Hiển thị `errors[].message` của BE, lỗi trường được gắn vào form. Lỗi bất định giữ nguyên snapshot để retry; BE quyết định tính hợp lệ tại thời điểm ghi.

@@ -12,7 +12,7 @@ export interface Delivery {
 }
 export interface DeliveryDetail {
   delivery: Delivery; assignedBy: string | null; shipperName: string | null; shipperPhone: string | null
-  items: { deliveryItemId: string; sku: string; productName: string; variantName: string; quantity: number; serialNumbers: string[] }[]
+  items: { deliveryItemId: string; orderItemId: string; sku: string; productName: string; variantName: string; quantity: number; serialNumbers: string[] }[]
   photos: { photoId: string; contentUrl: string }[]
 }
 export interface DeliveryPage { content: Delivery[]; totalElements: number; totalPages: number; number: number }

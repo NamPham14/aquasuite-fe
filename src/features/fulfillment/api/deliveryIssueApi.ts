@@ -4,6 +4,11 @@ import type { CreateDeliveryRequest, DeliveryCandidates, DeliveryInvoice, Delive
 
 export const deliveryIssueApi = deliveryApi.injectEndpoints({
   endpoints: (b) => ({
+    updateDeliveryDraft: b.mutation<DeliveryIssueResult, { id: string; body: CreateDeliveryRequest }>({
+      query: ({ id, body }) => ({ url: `/fulfillment/deliveries/${id}/draft`, method: 'PUT', body }),
+      transformResponse: (r: ApiResponse<DeliveryIssueResult>) => r.data!,
+      invalidatesTags: ['Delivery'],
+    }),
     getDeliveryInvoices: b.query<DeliveryInvoice[], string>({
       query: (orderId) => `/fulfillment/orders/${orderId}/delivery-invoices`,
       transformResponse: (r: ApiResponse<DeliveryInvoice[]>) => r.data!,
@@ -12,7 +17,7 @@ export const deliveryIssueApi = deliveryApi.injectEndpoints({
     getDeliveryCandidates: b.query<DeliveryCandidates, string>({
       query: (id) => `/fulfillment/sales-invoices/${id}/delivery-candidates`,
       transformResponse: (r: ApiResponse<DeliveryCandidates>) => r.data!,
-      providesTags: ['Delivery', 'Inventory'],
+      providesTags: ['Delivery', 'Inventory', 'OrderPayment', 'SalesOrder'],
     }),
     createDelivery: b.mutation<DeliveryIssueResult, { invoiceId: string; body: CreateDeliveryRequest }>({
       query: ({ invoiceId, body }) => ({ url: `/fulfillment/sales-invoices/${invoiceId}/deliveries`, method: 'POST', body }),
@@ -26,4 +31,4 @@ export const deliveryIssueApi = deliveryApi.injectEndpoints({
     }),
   }),
 })
-export const { useGetDeliveryInvoicesQuery, useGetDeliveryCandidatesQuery, useCreateDeliveryMutation, useIssueDeliveryMutation } = deliveryIssueApi
+export const { useUpdateDeliveryDraftMutation, useGetDeliveryInvoicesQuery, useGetDeliveryCandidatesQuery, useCreateDeliveryMutation, useIssueDeliveryMutation } = deliveryIssueApi
