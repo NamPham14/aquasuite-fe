@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Outlet, NavLink, Link, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, Link, useLocation, Navigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -33,6 +33,7 @@ import {
   UserCog,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
+import { isCustomerRole } from '../features/iam/types/auth.types'
 
 interface NavItem {
   name: string
@@ -278,6 +279,11 @@ function NavList({ navId, onItemClick, dark = false }: { navId: string; onItemCl
 export function ManagementLayout() {
   const { user, logout } = useAuth()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+
+  // Khách hàng không có quyền truy cập khu vực quản trị nội bộ
+  if (isCustomerRole(user?.roles)) {
+    return <Navigate to="/storefront" replace />
+  }
 
   const openButtonRef = useRef<HTMLButtonElement | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)

@@ -1,9 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { isCustomerRole } from '../types/auth.types'
 
-/** Chờ bootstrap; người đã đăng nhập về dashboard, còn lại được vào route công khai như login. */
+/** Chờ bootstrap; người đã đăng nhập về dashboard hoặc storefront theo vai trò, còn lại được vào route công khai như login. */
 export function PublicOnlyRoute() {
-  const { isAuthenticated, isBootstrapping } = useAuth()
+  const { isAuthenticated, isBootstrapping, user } = useAuth()
 
   if (isBootstrapping) {
     return (
@@ -21,7 +22,8 @@ export function PublicOnlyRoute() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/app/dashboard" replace />
+    const redirectPath = isCustomerRole(user?.roles) ? '/storefront' : '/app/dashboard'
+    return <Navigate to={redirectPath} replace />
   }
 
   return <Outlet />

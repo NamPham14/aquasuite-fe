@@ -15,6 +15,20 @@ export const CANONICAL_ROLES: CanonicalRole[] = [
   'CUSTOMER',
 ]
 
+export const MANAGEMENT_ROLES: CanonicalRole[] = [
+  'SHOP_OWNER',
+  'SALES_STAFF',
+  'ACCOUNTANT',
+  'TECHNICAL_STAFF',
+  'SHIPPER',
+]
+
+/** Kiểm tra người dùng có phải là tài khoản khách hàng (không có vai trò quản lý nội bộ). */
+export function isCustomerRole(roles?: string[] | null): boolean {
+  if (!roles || roles.length === 0) return false
+  return roles.includes('CUSTOMER') && !roles.some((r) => MANAGEMENT_ROLES.includes(r as CanonicalRole))
+}
+
 export interface UserSummary {
   id: string
   username: string

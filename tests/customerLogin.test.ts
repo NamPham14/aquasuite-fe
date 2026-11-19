@@ -1,8 +1,33 @@
-﻿import test from 'node:test'
+import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { loginSchema } from '../src/features/iam/schemas/login.schema.ts'
 import { loginApi } from '../src/features/iam/api/authApi.ts'
+import { isCustomerRole } from '../src/features/iam/types/auth.types.ts'
+
+test('isCustomerRole identifies customer-only accounts versus staff accounts', () => {
+  assert.equal(isCustomerRole(['CUSTOMER']), true)
+  assert.equal(isCustomerRole(['CUSTOMER', 'SHOP_OWNER']), false)
+  assert.equal(isCustomerRole(['SHOP_OWNER']), false)
+  assert.equal(isCustomerRole(['SALES_STAFF']), false)
+  assert.equal(isCustomerRole([]), false)
+  assert.equal(isCustomerRole(null), false)
+  assert.equal(isCustomerRole(undefined), false)
+})
+
+test('LoginForm and PublicOnlyRoute redirect customers to /storefront and guard management layout', () => {
+  const loginFormSource = readFileSync(new URL('../src/features/iam/components/LoginForm.tsx', import.meta.url), 'utf8')
+  assert.ok(loginFormSource.includes('isCustomerRole'))
+  assert.ok(loginFormSource.includes("'/storefront'"))
+
+  const publicOnlySource = readFileSync(new URL('../src/features/iam/components/PublicOnlyRoute.tsx', import.meta.url), 'utf8')
+  assert.ok(publicOnlySource.includes('isCustomerRole'))
+  assert.ok(publicOnlySource.includes("'/storefront'"))
+
+  const managementLayoutSource = readFileSync(new URL('../src/layouts/ManagementLayout.tsx', import.meta.url), 'utf8')
+  assert.ok(managementLayoutSource.includes('isCustomerRole'))
+  assert.ok(managementLayoutSource.includes('to="/storefront"'))
+})
 
 test('customer page reuses email login and keeps registration link', () => {
   const source = readFileSync(new URL('../src/pages/auth/CustomerLoginPage.tsx', import.meta.url), 'utf8')
