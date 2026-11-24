@@ -4,7 +4,7 @@ import type {
   CancelWarrantyTicketPayload,
   ClaimFormData,
   CreateWarrantyTicketPayload,
-  DispatchWarrantyTicketPayload,
+  CompleteWarrantyTicketPayload,
   RejectWarrantyTicketPayload,
   TicketMedia,
   WarrantyTicketDetail,
@@ -103,7 +103,7 @@ export const warrantyTicketApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // ===== Nội bộ cửa hàng (SHOP_OWNER / TECHNICAL_STAFF) — FE-13 Giai đoạn 2b =====
+    // ===== Nội bộ cửa hàng (SHOP_OWNER) =====
 
     /** Danh sách toàn bộ yêu cầu bảo hành cho nhân viên/chủ (GET /warranty-tickets). */
     getManagedWarrantyTickets: builder.query<PageResponse<WarrantyTicketListItem>, WarrantyTicketFilterParams | void>({
@@ -125,14 +125,24 @@ export const warrantyTicketApi = baseApi.injectEndpoints({
       providesTags: (_res, _err, id) => [{ type: 'WarrantyTicket', id }],
     }),
 
-    /** Chủ cửa hàng "bắn job" sửa chữa bảo hành (POST /warranty-tickets/{id}/dispatch). */
-    dispatchWarrantyTicket: builder.mutation<WarrantyTicketDetail, { id: string; body: DispatchWarrantyTicketPayload }>({
-      query: ({ id, body }) => ({ url: `/warranty-tickets/${id}/dispatch`, method: 'POST', body }),
+    /** Chủ cửa hàng tiếp nhận xử lý yêu cầu bảo hành: NEW → IN_PROGRESS (POST /warranty-tickets/{id}/start). */
+    startManagedWarrantyTicket: builder.mutation<WarrantyTicketDetail, string>({
+      query: (id) => ({ url: `/warranty-tickets/${id}/start`, method: 'POST' }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, id) => [
+        { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
+        { type: 'WarrantyTicket', id },
+      ],
+    }),
+
+    /** Chủ cửa hàng hoàn tất yêu cầu đang xử lý kèm kết quả: IN_PROGRESS → DONE (POST /warranty-tickets/{id}/complete). */
+    completeManagedWarrantyTicket: builder.mutation<WarrantyTicketDetail, { id: string; body: CompleteWarrantyTicketPayload }>({
+      query: ({ id, body }) => ({ url: `/warranty-tickets/${id}/complete`, method: 'POST', body }),
       transformResponse: (res: any) => res?.data ?? res,
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
         { type: 'WarrantyTicket', id },
-        { type: 'TechnicalJob', id: 'LIST' },
+        { type: 'WarrantyRecord', id: 'LIST' },
       ],
     }),
 
@@ -157,7 +167,8 @@ export const {
   useCancelWarrantyTicketMutation,
   useGetManagedWarrantyTicketsQuery,
   useGetManagedWarrantyTicketDetailQuery,
-  useDispatchWarrantyTicketMutation,
+  useStartManagedWarrantyTicketMutation,
+  useCompleteManagedWarrantyTicketMutation,
   useRejectManagedWarrantyTicketMutation,
 } = warrantyTicketApi
 

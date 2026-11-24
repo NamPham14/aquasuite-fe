@@ -20,7 +20,7 @@ export function IamAccessGate({ children }: { children: React.ReactNode }) {
       const response = await request.unwrap()
       const current = store.getState()
       if (current.auth.sessionGeneration !== generation || current.iamAccess.epoch !== epoch || current.iamAccess.status !== 'checking') return
-      const canonical = ['SHOP_OWNER', 'SALES_STAFF', 'ACCOUNTANT', 'TECHNICAL_STAFF', 'SHIPPER', 'CUSTOMER']
+      const canonical = ['SHOP_OWNER', 'SALES_STAFF', 'ACCOUNTANT', 'SHIPPER', 'CUSTOMER']
       const valid = response.success === true && Array.isArray(response.data) && response.data.length === canonical.length && response.data.every((role, index) => typeof role.id === 'string' && role.id.length > 0 && role.code === canonical[index] && (role.description == null || typeof role.description === 'string') && typeof role.active === 'boolean' && Array.isArray(role.permissions) && role.permissions.every((permission) => typeof permission.id === 'string' && permission.id.length > 0 && typeof permission.code === 'string' && (permission.description == null || typeof permission.description === 'string')))
       dispatch(finishIamProbe({ epoch, allowed: valid }))
       if (valid) dispatch(iamAccessApi.util.resetApiState())

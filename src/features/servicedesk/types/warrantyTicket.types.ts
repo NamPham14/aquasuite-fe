@@ -45,11 +45,9 @@ export interface CancelWarrantyTicketPayload {
   reason?: string | null
 }
 
-/** Payload Chủ cửa hàng "bắn job" sửa chữa bảo hành từ ticket (POST /warranty-tickets/{id}/dispatch). */
-export interface DispatchWarrantyTicketPayload {
-  technicianId: string
-  scheduledAt?: string | null
-  serviceAddress?: string | null
+/** Payload Chủ cửa hàng hoàn tất yêu cầu bảo hành đang xử lý (POST /warranty-tickets/{id}/complete). */
+export interface CompleteWarrantyTicketPayload {
+  result: string
 }
 
 /** Payload Chủ cửa hàng từ chối ticket tại bàn (POST /warranty-tickets/{id}/reject). */
@@ -100,7 +98,6 @@ export interface WarrantyTicketDetail {
   media: TicketMedia[]
   status: WarrantyTicketStatus
   canCancel: boolean
-  technicalJobId?: string | null
   result?: string | null
   rejectionReason?: string | null
   cancelReason?: string | null

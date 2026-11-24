@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { LifeBuoy, RotateCcw, SlidersHorizontal, RefreshCw } from 'lucide-react'
 import { ManagementPageHeader, ManagementFilterBar, ManagementSelect } from '../../shared/ui/ManagementPage'
 import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
 import { ManagementActionButton } from '../../shared/ui/ManagementRowActions'
 import { formatDateTime } from '../../shared/lib/money'
 import { useAuth } from '../../features/iam/hooks/useAuth'
-import { useGetManagedWarrantyTicketsQuery } from '../../features/servicedesk/api/warrantyTicketApi'
+import { useGetManagedWarrantyTicketsQuery, useStartManagedWarrantyTicketMutation } from '../../features/servicedesk/api/warrantyTicketApi'
 import { TicketStatusBadge } from '../../features/servicedesk/components/TicketStatusBadge'
-import { DispatchWarrantyTicketDialog } from '../../features/servicedesk/components/DispatchWarrantyTicketDialog'
+import { CompleteWarrantyTicketDialog } from '../../features/servicedesk/components/CompleteWarrantyTicketDialog'
 import { RejectWarrantyTicketDialog } from '../../features/servicedesk/components/RejectWarrantyTicketDialog'
 import { WarrantyTicketManageDetailModal } from '../../features/servicedesk/components/WarrantyTicketManageDetailModal'
 import type { WarrantyTicketListItem, WarrantyTicketStatus } from '../../features/servicedesk/types/warrantyTicket.types'
@@ -17,9 +18,10 @@ function hasRole(roles: string[] | undefined, role: string): boolean {
 }
 
 /**
- * Trang Yêu cầu bảo hành phía nội bộ (FE-13 Giai đoạn 2b).
- * Chủ cửa hàng/Kỹ thuật viên tra cứu yêu cầu bảo hành của khách; Chủ cửa hàng "bắn job" sửa chữa bảo hành
- * cho kỹ thuật viên (NEW → IN_PROGRESS) hoặc từ chối yêu cầu tại bàn (NEW → REJECTED).
+ * Trang Yêu cầu bảo hành phía nội bộ (chỉ Chủ cửa hàng).
+ * Luồng: Chờ tiếp nhận (NEW) → "Tiếp nhận xử lý" → Đang xử lý (IN_PROGRESS) → "Hoàn tất" + kết quả → Hoàn tất (DONE).
+ * Từ chối tại bàn (NEW → REJECTED, lý do bắt buộc) chỉ áp dụng ở bước Chờ tiếp nhận; không đủ điều kiện phát hiện
+ * trong lúc xử lý thì hoàn tất với kết quả "Không bảo hành vì …".
  */
 export function WarrantyTicketsPage() {
   const { user } = useAuth()
@@ -37,7 +39,17 @@ export function WarrantyTicketsPage() {
   const totalPages = data?.totalPages ?? 1
 
   const [detailId, setDetailId] = useState<string | null>(null)
-  const [dispatchItem, setDispatchItem] = useState<WarrantyTicketListItem | null>(null)
+  const [completeItem, setCompleteItem] = useState<WarrantyTicketListItem | null>(null)
+  const [startTicket, { isLoading: isStarting }] = useStartManagedWarrantyTicketMutation()
+
+  async function handleStart(item: WarrantyTicketListItem) {
+    try {
+      await startTicket(item.ticketId).unwrap()
+      toast.success(`Đã tiếp nhận xử lý yêu cầu ${item.ticketCode}.`)
+    } catch (err: any) {
+      toast.error(err?.data?.message || err?.message || 'Không thể tiếp nhận xử lý yêu cầu bảo hành')
+    }
+  }
   const [rejectItem, setRejectItem] = useState<WarrantyTicketListItem | null>(null)
 
   function resetFilters() {
@@ -74,9 +86,12 @@ export function WarrantyTicketsPage() {
           <ManagementActionButton variant="view" label="Chi tiết" ariaLabel={`Xem chi tiết yêu cầu ${r.ticketCode}`} onClick={() => setDetailId(r.ticketId)} />
           {isOwner && r.status === 'NEW' && (
             <>
-              <ManagementActionButton variant="edit" label="Bắn job" ariaLabel="Bắn công việc sửa chữa bảo hành" onClick={() => setDispatchItem(r)} />
+              <ManagementActionButton variant="edit" label="Tiếp nhận xử lý" ariaLabel={`Tiếp nhận xử lý yêu cầu ${r.ticketCode}`} disabled={isStarting} onClick={() => handleStart(r)} />
               <ManagementActionButton variant="delete" label="Từ chối" ariaLabel="Từ chối yêu cầu bảo hành" onClick={() => setRejectItem(r)} />
             </>
+          )}
+          {isOwner && r.status === 'IN_PROGRESS' && (
+            <ManagementActionButton variant="edit" label="Hoàn tất" ariaLabel={`Hoàn tất yêu cầu ${r.ticketCode}`} onClick={() => setCompleteItem(r)} />
           )}
         </div>
       ),
@@ -87,8 +102,8 @@ export function WarrantyTicketsPage() {
     <div className="space-y-6 pb-12">
       <ManagementPageHeader
         title="Yêu cầu bảo hành"
-        description="Tiếp nhận yêu cầu bảo hành của khách; bắn công việc sửa chữa cho kỹ thuật viên hoặc từ chối yêu cầu không hợp lệ"
-        group="Dịch vụ kỹ thuật"
+        description="Tiếp nhận xử lý yêu cầu bảo hành của khách, ghi kết quả khi hoàn tất hoặc từ chối yêu cầu không hợp lệ"
+        group="Bảo hành"
         breadcrumb="Yêu cầu bảo hành"
         icon={<LifeBuoy className="h-6 w-6" aria-hidden="true" />}
       />
@@ -145,7 +160,7 @@ export function WarrantyTicketsPage() {
       )}
 
       {detailId && <WarrantyTicketManageDetailModal ticketId={detailId} onClose={() => setDetailId(null)} />}
-      {dispatchItem && <DispatchWarrantyTicketDialog item={dispatchItem} onClose={() => setDispatchItem(null)} />}
+      {completeItem && <CompleteWarrantyTicketDialog item={completeItem} onClose={() => setCompleteItem(null)} />}
       {rejectItem && <RejectWarrantyTicketDialog item={rejectItem} onClose={() => setRejectItem(null)} />}
     </div>
   )

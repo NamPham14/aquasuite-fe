@@ -42,13 +42,15 @@ export type CancelWarrantyTicketFormData = z.infer<typeof cancelWarrantyTicketSc
 
 // ===== Nội bộ cửa hàng (FE-13 Giai đoạn 2b) =====
 
-export const dispatchWarrantyTicketSchema = z.object({
-  technicianId: z.string().min(1, 'Vui lòng chọn kỹ thuật viên.'),
-  scheduledAt: z.string().optional(),
-  serviceAddress: z.string().trim().max(1000, 'Địa chỉ dịch vụ tối đa 1000 ký tự.').optional(),
+export const completeWarrantyTicketSchema = z.object({
+  result: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập kết quả xử lý.')
+    .max(4000, 'Kết quả xử lý không được vượt quá 4000 ký tự.'),
 })
 
-export type DispatchWarrantyTicketFormData = z.infer<typeof dispatchWarrantyTicketSchema>
+export type CompleteWarrantyTicketFormData = z.infer<typeof completeWarrantyTicketSchema>
 
 export const rejectWarrantyTicketSchema = z.object({
   reason: z

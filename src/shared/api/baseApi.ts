@@ -20,7 +20,6 @@ export const baseApi = createApi({
     'PaymentVerification',
     'GoodsReceipt',
     'Inventory',
-    'TechnicalJob',
     'WarrantyPolicy',
     'WarrantyRecord',
     'WarrantyTicket',

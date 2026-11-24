@@ -2,7 +2,6 @@ export type CanonicalRole =
   | 'SHOP_OWNER'
   | 'SALES_STAFF'
   | 'ACCOUNTANT'
-  | 'TECHNICAL_STAFF'
   | 'SHIPPER'
   | 'CUSTOMER'
 
@@ -10,7 +9,6 @@ export const CANONICAL_ROLES: CanonicalRole[] = [
   'SHOP_OWNER',
   'SALES_STAFF',
   'ACCOUNTANT',
-  'TECHNICAL_STAFF',
   'SHIPPER',
   'CUSTOMER',
 ]
@@ -19,7 +17,6 @@ export const MANAGEMENT_ROLES: CanonicalRole[] = [
   'SHOP_OWNER',
   'SALES_STAFF',
   'ACCOUNTANT',
-  'TECHNICAL_STAFF',
   'SHIPPER',
 ]
 

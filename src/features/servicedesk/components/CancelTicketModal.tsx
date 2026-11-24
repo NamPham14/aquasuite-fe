@@ -66,7 +66,7 @@ export function CancelTicketModal({
         <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
           <span>
-            Lưu ý: Chỉ có thể hủy khi yêu cầu đang ở trạng thái <strong>Đã gửi (NEW)</strong>. Khi kỹ thuật viên đã tiếp nhận xử lý, bạn không thể tự hủy trên hệ thống.
+            Lưu ý: Chỉ có thể hủy khi yêu cầu đang ở trạng thái <strong>Đã gửi (NEW)</strong>. Khi cửa hàng đã tiếp nhận xử lý, bạn không thể tự hủy trên hệ thống.
           </span>
         </div>
 

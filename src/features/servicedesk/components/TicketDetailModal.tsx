@@ -100,7 +100,7 @@ export function TicketDetailModal({
             {/* Thông báo kết quả / Lý do hủy / Lý do từ chối nếu có */}
             {ticket.result && (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-emerald-800">
-                <span className="font-semibold">Kết quả xử lý từ kỹ thuật viên:</span>
+                <span className="font-semibold">Kết quả xử lý từ cửa hàng:</span>
                 <p className="mt-1 whitespace-pre-line text-emerald-700">{ticket.result}</p>
                 {ticket.completedAt && (
                   <span className="mt-1 block text-[11px] text-emerald-600">

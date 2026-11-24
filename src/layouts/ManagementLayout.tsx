@@ -22,7 +22,6 @@ import {
   ShoppingCart,
   Truck,
   WalletCards,
-  Wrench,
   LifeBuoy,
   ClipboardCheck,
   BadgeCheck,
@@ -143,25 +142,19 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
     ],
   },
   {
-    group: 'Bảo hành & Kỹ thuật',
+    group: 'Bảo hành',
     items: [
       {
         name: 'Thẻ bảo hành điện tử',
         to: '/app/warranty-records',
         icon: ShieldCheck,
-        roles: ['SHOP_OWNER', 'SALES_STAFF', 'TECHNICAL_STAFF'],
+        roles: ['SHOP_OWNER', 'SALES_STAFF'],
       },
       {
         name: 'Yêu cầu bảo hành',
         to: '/app/warranty-tickets',
         icon: LifeBuoy,
-        roles: ['SHOP_OWNER', 'TECHNICAL_STAFF'],
-      },
-      {
-        name: 'Công việc kỹ thuật',
-        to: '/app/technical-jobs',
-        icon: Wrench,
-        roles: ['SHOP_OWNER', 'TECHNICAL_STAFF'],
+        roles: ['SHOP_OWNER'],
       },
       {
         name: 'Chính sách bảo hành',

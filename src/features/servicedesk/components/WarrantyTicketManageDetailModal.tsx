@@ -1,4 +1,4 @@
-import { AlertTriangle, FileText, MapPin, Phone, ShieldCheck, Wrench } from 'lucide-react'
+import { AlertTriangle, FileText, MapPin, Phone, ShieldCheck } from 'lucide-react'
 import { ManagementDialog } from '../../../shared/ui/ManagementDialog'
 import { useGetManagedWarrantyTicketDetailQuery } from '../api/warrantyTicketApi'
 import { TicketStatusBadge } from './TicketStatusBadge'
@@ -18,8 +18,8 @@ function formatSlot(slot?: PreferredSlot | null): string {
 }
 
 /**
- * Chi tiết yêu cầu bảo hành phía nội bộ (Chủ cửa hàng / Kỹ thuật viên) — chỉ xem (FE-13 Giai đoạn 2b).
- * Hiển thị thêm thông tin liên hệ khách, cảnh báo thẻ hết hạn + đã xác nhận, công việc kỹ thuật đã bắn và kết quả.
+ * Chi tiết yêu cầu bảo hành phía nội bộ (Chủ cửa hàng) — chỉ xem.
+ * Hiển thị thêm thông tin liên hệ khách, cảnh báo thẻ hết hạn + đã xác nhận, kết quả xử lý hoặc lý do từ chối.
  */
 export function WarrantyTicketManageDetailModal({ ticketId, onClose }: { ticketId: string; onClose: () => void }) {
   const { data: ticket, isLoading } = useGetManagedWarrantyTicketDetailQuery(ticketId)
@@ -49,11 +49,6 @@ export function WarrantyTicketManageDetailModal({ ticketId, onClose }: { ticketI
                 Gửi lúc: {new Date(ticket.createdAt).toLocaleString('vi-VN')}
               </div>
             </div>
-            {ticket.technicalJobId && (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 font-medium text-sky-700">
-                <Wrench className="h-3.5 w-3.5" /> Đã bắn công việc kỹ thuật
-              </span>
-            )}
           </div>
 
           {/* Cảnh báo thẻ hết hạn */}
@@ -74,7 +69,7 @@ export function WarrantyTicketManageDetailModal({ ticketId, onClose }: { ticketI
           {/* Kết quả / lý do */}
           {ticket.result && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-emerald-800">
-              <span className="font-semibold">Kết quả xử lý từ kỹ thuật viên:</span>
+              <span className="font-semibold">Kết quả xử lý:</span>
               <p className="mt-1 whitespace-pre-line text-emerald-700">{ticket.result}</p>
               {ticket.completedAt && (
                 <span className="mt-1 block text-[11px] text-emerald-600">

@@ -104,7 +104,7 @@ export function ClaimWarrantyModal({
       }).unwrap()
 
       toast.success(
-        'MSG85: Yêu cầu bảo hành đã được gửi. Đội kỹ thuật sẽ liên hệ bạn trong vòng 4 giờ làm việc.',
+        'MSG85: Yêu cầu bảo hành đã được gửi. Cửa hàng sẽ liên hệ bạn trong vòng 4 giờ làm việc.',
         { duration: 6000 }
       )
       onSuccess?.(res)
