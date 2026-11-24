@@ -109,7 +109,7 @@ export function WarrantyRecordDetailPage({ customerScope = false }: { customerSc
             )}
             {isClaimed && (
               <span className="text-[11px] text-amber-700">
-                Thiết bị đang có phiếu sửa chữa mở — không thể gửi thêm.
+                Thẻ đang có yêu cầu bảo hành chưa hoàn tất — không thể gửi thêm.
               </span>
             )}
             {record.status === 'VOIDED' && (
@@ -133,7 +133,7 @@ export function WarrantyRecordDetailPage({ customerScope = false }: { customerSc
             </button>
             {isClaimed && (
               <span className="text-[11px] text-amber-700">
-                Đang có phiếu sửa chữa bảo hành mở — không thể hủy.
+                Đang có yêu cầu bảo hành chưa hoàn tất — không thể hủy thẻ.
               </span>
             )}
           </div>
@@ -293,33 +293,6 @@ export function WarrantyRecordDetailPage({ customerScope = false }: { customerSc
           </div>
         </section>
 
-        {/* Repair History */}
-        <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-          <h2 className="flex items-center gap-2 border-b border-slate-100 pb-3 text-sm font-semibold text-slate-900">
-            <Wrench className="h-4 w-4 text-sky-600" />
-            Lịch sử dịch vụ & sửa chữa ({record.repairHistory.length})
-          </h2>
-          {record.repairHistory.length === 0 ? (
-            <p className="text-xs text-slate-500">Chưa ghi nhận phiếu kỹ thuật hoặc sửa chữa bảo hành nào.</p>
-          ) : (
-            <ul className="space-y-3">
-              {record.repairHistory.map((job) => (
-                <li key={job.technicalJobId} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-slate-900">
-                      {job.jobType} • {job.status}
-                    </span>
-                    <span className="text-[11px] text-slate-500">{job.createdAt}</span>
-                  </div>
-                  <p className="mt-1 text-slate-700">{job.issueDescription}</p>
-                  {job.result && (
-                    <p className="mt-1 text-[11px] text-emerald-700">Kết quả: {job.result}</p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </div>
 
       {showVoidModal && (

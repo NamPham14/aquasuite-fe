@@ -45,7 +45,7 @@ export function WarrantyTicketsPage() {
   async function handleStart(item: WarrantyTicketListItem) {
     try {
       await startTicket(item.ticketId).unwrap()
-      toast.success(`Đã tiếp nhận xử lý yêu cầu ${item.ticketCode}.`)
+      toast.success('Đã tiếp nhận xử lý yêu cầu bảo hành.')
     } catch (err: any) {
       toast.error(err?.data?.message || err?.message || 'Không thể tiếp nhận xử lý yêu cầu bảo hành')
     }

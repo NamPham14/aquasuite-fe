@@ -52,6 +52,8 @@ export function GoodsReceiptDialog({
   const [invoiceNo, setInvoiceNo] = useState('')
   const [note, setNote] = useState('')
   const [formError, setFormError] = useState('')
+  // Mã chống ghi trùng: giữ nguyên khi gửi lại cùng nội dung (bấm nhiều lần, lỗi mạng), đổi mới khi người dùng sửa nội dung.
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID())
 
   // Khóa cuộn nền khi mở.
   useEffect(() => {
@@ -71,6 +73,7 @@ export function GoodsReceiptDialog({
       setQtyByItem(init)
       setInvoiceNo('')
       setNote('')
+      setIdempotencyKey(crypto.randomUUID())
       setFormError('')
     }
   }, [data])
@@ -93,6 +96,7 @@ export function GoodsReceiptDialog({
 
   const setQty = (item: ReceivableItemView, raw: string) => {
     setQtyByItem((prev) => ({ ...prev, [item.purchaseOrderItemId]: raw }))
+    setIdempotencyKey(crypto.randomUUID())
     if (formError) setFormError('')
   }
 
@@ -123,6 +127,7 @@ export function GoodsReceiptDialog({
 
     try {
       const res = await createReceipt({
+        idempotencyKey,
         purchaseOrderId,
         supplierInvoiceNo: invoiceNo.trim() || undefined,
         note: note.trim() || undefined,
@@ -257,7 +262,7 @@ export function GoodsReceiptDialog({
                     <input
                       type="text"
                       value={invoiceNo}
-                      onChange={(e) => setInvoiceNo(e.target.value)}
+                      onChange={(e) => { setInvoiceNo(e.target.value); setIdempotencyKey(crypto.randomUUID()) }}
                       placeholder="VD: HD-2026-001"
                       className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
@@ -267,7 +272,7 @@ export function GoodsReceiptDialog({
                     <input
                       type="text"
                       value={note}
-                      onChange={(e) => setNote(e.target.value)}
+                      onChange={(e) => { setNote(e.target.value); setIdempotencyKey(crypto.randomUUID()) }}
                       placeholder="Ghi chú đợt nhập (tùy chọn)"
                       className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />

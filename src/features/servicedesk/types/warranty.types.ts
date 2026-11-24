@@ -73,18 +73,6 @@ export interface DeliveryNoteInfo {
   note?: string | null
 }
 
-export interface RepairHistoryItem {
-  technicalJobId: string
-  jobType: string
-  status: string
-  scheduledAt?: string | null
-  issueDescription: string
-  result?: string | null
-  technicianId?: string | null
-  completedAt?: string | null
-  createdAt: string
-}
-
 export interface WarrantyRecordDetail {
   warrantyRecordId: string
   warrantyCode: string
@@ -123,7 +111,6 @@ export interface WarrantyRecordDetail {
 
   orderInvoice?: OrderInvoiceInfo | null
   deliveryNote?: DeliveryNoteInfo | null
-  repairHistory: RepairHistoryItem[]
 }
 
 export interface WarrantyFilterParams {
