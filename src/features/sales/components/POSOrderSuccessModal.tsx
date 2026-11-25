@@ -57,7 +57,7 @@ export function POSOrderSuccessModal({
     // Lưu ý kiến trúc: Hiện tại Nam chưa đăng ký route /app/finance/orders/:id/payments trên Frontend.
     // Tạm thời điều hướng về Chi tiết đơn hàng với thông báo, và sẵn sàng gắn route của Nam khi Nam tích hợp.
     toast.info(
-      'Chuyển sang chi tiết đơn hàng để theo dõi trạng thái thanh toán từ phân hệ Tài chính (Nam).',
+      'Chuyển sang chi tiết đơn hàng để theo dõi trạng thái thanh toán từ phân hệ Tài chính.',
     )
     navigate(`/app/orders/${order.orderId}`)
   }
@@ -190,7 +190,7 @@ export function POSOrderSuccessModal({
             className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-xs"
           >
             <Receipt className="w-3.5 h-3.5" />
-            <span>Ghi nhận thanh toán (Nam)</span>
+            <span>Ghi nhận thanh toán</span>
             <ExternalLink className="w-3 h-3 opacity-70" />
           </button>
         </div>

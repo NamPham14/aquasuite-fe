@@ -8,6 +8,10 @@ const STATUS_CONFIG: Record<
     label: 'Nháp (Chờ duyệt nợ)',
     className: 'bg-amber-50 text-amber-800 border-amber-300',
   },
+  PENDING_CONFIRMATION: {
+    label: 'Chờ xác nhận',
+    className: 'bg-amber-50 text-amber-800 border-amber-300',
+  },
   PROCESSING: {
     label: 'Đang xử lý',
     className: 'bg-sky-50 text-sky-700 border-sky-200',

@@ -12,6 +12,12 @@ const ORDER_STATUS_CONFIG: Record<
     border: 'border-amber-300',
     dotColor: 'bg-amber-500',
   },
+  PENDING_CONFIRMATION: {
+    label: 'Chờ xác nhận',
+    className: 'bg-amber-50 text-amber-800',
+    border: 'border-amber-300',
+    dotColor: 'bg-amber-500',
+  },
   PROCESSING: {
     label: 'Đang xử lý',
     className: 'bg-sky-50 text-sky-700',
@@ -54,6 +60,13 @@ const PAYMENT_STATUS_CONFIG: Record<
     border: 'border-emerald-200',
     dotColor: 'bg-emerald-500',
   },
+}
+
+const CHANNEL_LABEL: Record<string, { label: string; cls: string }> = {
+  ONLINE: { label: 'Online', cls: 'bg-sky-50 text-sky-700 border-sky-200' },
+  COUNTER: { label: 'Tại quầy', cls: 'bg-slate-100 text-slate-700 border-slate-200' },
+  POS: { label: 'Tại quầy', cls: 'bg-slate-100 text-slate-700 border-slate-200' },
+  DIRECT_SALES: { label: 'Dự án', cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
 }
 
 interface OrderTableProps {
@@ -181,10 +194,24 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
 
                   {/* Cột 3: Khách hàng & Kênh */}
                   <td className="px-4 py-3.5 align-middle text-left">
-                    <div className="font-semibold text-slate-900 truncate">
-                      {order.customerName && order.customerName !== 'Walk-in Retail Customer'
-                        ? order.customerName
-                        : 'Khách lẻ tại quầy'}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-semibold text-slate-900 truncate">
+                        {order.customerName && order.customerName !== 'Walk-in Retail Customer'
+                          ? order.customerName
+                          : 'Khách lẻ tại quầy'}
+                      </span>
+                      {order.orderChannel && (
+                        <span
+                          className={`shrink-0 inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold border ${
+                            (CHANNEL_LABEL[order.orderChannel] ?? {
+                              label: order.orderChannel,
+                              cls: 'bg-slate-100 text-slate-700 border-slate-200',
+                            }).cls
+                          }`}
+                        >
+                          {(CHANNEL_LABEL[order.orderChannel] ?? { label: order.orderChannel }).label}
+                        </span>
+                      )}
                     </div>
                     {order.customerPhone && order.customerPhone !== '0000000000' && (
                       <div className="text-[11px] text-slate-500 mt-0.5">
@@ -232,14 +259,24 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
                     </div>
                   </td>
 
-                  {/* Cột 7: Thao tác (Chỉ để thao tác Chỉnh sửa) */}
+                  {/* Cột 7: Thao tác (Xác nhận / Chỉnh sửa đơn hàng) */}
                   <td className="px-2 py-3.5 align-middle text-center">
                     <div className="flex items-center justify-center">
-                      {order.orderStatus === 'PROCESSING' ? (
+                      {order.orderStatus === 'PROCESSING' ||
+                      order.orderStatus === 'PENDING_CONFIRMATION' ||
+                      order.orderStatus === 'DRAFT' ? (
                         <Link
                           to={`/app/orders/${order.orderId}`}
-                          className="inline-flex items-center justify-center p-1.5 rounded text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition"
-                          title="Chỉnh sửa thông tin đơn hàng"
+                          className={`inline-flex items-center justify-center p-1.5 rounded transition ${
+                            order.orderStatus === 'PENDING_CONFIRMATION'
+                              ? 'text-sky-600 hover:text-sky-700 hover:bg-sky-50'
+                              : 'text-amber-600 hover:text-amber-700 hover:bg-amber-50'
+                          }`}
+                          title={
+                            order.orderStatus === 'PENDING_CONFIRMATION'
+                              ? 'Xác nhận & xử lý đơn hàng Online'
+                              : 'Chỉnh sửa & xử lý thông tin đơn hàng'
+                          }
                         >
                           <Edit3 className="w-4 h-4" />
                         </Link>

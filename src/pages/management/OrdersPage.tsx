@@ -27,7 +27,7 @@ export function OrdersPage() {
             <span>Quản lý đơn hàng</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Theo dõi, tra cứu và xử lý các đơn hàng bán lẻ POS và đơn hàng dự án.
+            Theo dõi, tra cứu và xử lý đơn hàng bán lẻ POS, đơn hàng Online và đơn hàng dự án.
           </p>
         </div>
 
@@ -55,6 +55,8 @@ export function OrdersPage() {
         onChangePaymentStatus={filters.setPaymentStatus}
         orderType={filters.orderType}
         onChangeOrderType={filters.setOrderType}
+        orderChannel={filters.orderChannel}
+        onChangeOrderChannel={filters.setOrderChannel}
         fromDate={filters.fromDate}
         onChangeFromDate={filters.setFromDate}
         toDate={filters.toDate}
