@@ -32,6 +32,7 @@ import {
   UserCog,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
+import { useProfileSync } from '../features/iam/hooks/useProfileSync'
 import { isCustomerRole } from '../features/iam/types/auth.types'
 
 interface NavItem {
@@ -60,9 +61,24 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
   {
     group: 'Bán hàng & Đơn hàng',
     items: [
-      { name: 'Đơn hàng', to: '/app/orders', icon: ShoppingCart },
-      { name: 'Báo giá', to: '/app/quotations', icon: FileSpreadsheet },
-      { name: 'Đặt cọc & Giữ hàng', to: '/app/deposits', icon: HandCoins },
+      {
+        name: 'Đơn hàng',
+        to: '/app/orders',
+        icon: ShoppingCart,
+        roles: ['SALES_STAFF', 'ACCOUNTANT', 'SHOP_OWNER'],
+      },
+      {
+        name: 'Báo giá',
+        to: '/app/quotations',
+        icon: FileSpreadsheet,
+        roles: ['SALES_STAFF', 'SHOP_OWNER'],
+      },
+      {
+        name: 'Đặt cọc & Giữ hàng',
+        to: '/app/deposits',
+        icon: HandCoins,
+        roles: ['SALES_STAFF', 'SHOP_OWNER'],
+      },
       {
         name: 'Yêu cầu đổi / hủy đơn',
         to: '/app/order-modification-requests',
@@ -78,7 +94,7 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
         name: 'Xác minh thanh toán',
         to: '/app/payment-verifications',
         icon: BadgeCheck,
-        roles: ['ACCOUNTANT'],
+        roles: ['ACCOUNTANT', 'SHOP_OWNER'],
       },
       {
         name: 'Phân bổ tiền thu',
@@ -110,7 +126,12 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
   {
     group: 'Kho vận & Cung ứng',
     items: [
-      { name: 'Tồn kho', to: '/app/inventory', icon: Warehouse },
+      {
+        name: 'Tồn kho',
+        to: '/app/inventory',
+        icon: Warehouse,
+        roles: ['SHOP_OWNER', 'ACCOUNTANT'],
+      },
       {
         name: 'Phiếu xuất kho',
         to: '/app/issue-notes',
@@ -129,16 +150,21 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
         icon: Truck,
         roles: ['SHIPPER'],
       },
-      { name: 'Đơn mua hàng (PO)', to: '/app/purchase-orders', icon: ClipboardList },
+      {
+        name: 'Đơn mua hàng (PO)',
+        to: '/app/purchase-orders',
+        icon: ClipboardList,
+        roles: ['SHOP_OWNER', 'ACCOUNTANT', 'SALES_STAFF'],
+      },
     ],
   },
   {
     group: 'Sản phẩm & Danh mục',
     items: [
-      { name: 'Sản phẩm', to: '/app/products', icon: Package },
-      { name: 'Combo', to: '/app/combos', icon: Layers },
-      { name: 'Danh mục', to: '/app/categories', icon: FolderTree },
-      { name: 'Thương hiệu', to: '/app/brands', icon: Tags },
+      { name: 'Sản phẩm', to: '/app/products', icon: Package, roles: ['SHOP_OWNER'] },
+      { name: 'Combo', to: '/app/combos', icon: Layers, roles: ['SHOP_OWNER'] },
+      { name: 'Danh mục', to: '/app/categories', icon: FolderTree, roles: ['SHOP_OWNER'] },
+      { name: 'Thương hiệu', to: '/app/brands', icon: Tags, roles: ['SHOP_OWNER'] },
     ],
   },
   {
@@ -167,9 +193,9 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
   {
     group: 'Hệ thống & Phân quyền',
     items: [
-      { name: 'Tài khoản người dùng', to: '/app/users', icon: UsersRound },
-      { name: 'Vai trò', to: '/app/roles', icon: UserCog },
-      { name: 'Quyền', to: '/app/permissions', icon: KeyRound },
+      { name: 'Tài khoản người dùng', to: '/app/users', icon: UsersRound, roles: ['SHOP_OWNER'] },
+      { name: 'Vai trò', to: '/app/roles', icon: UserCog, roles: ['SHOP_OWNER'] },
+      { name: 'Quyền', to: '/app/permissions', icon: KeyRound, roles: ['SHOP_OWNER'] },
     ],
   },
 ]
@@ -271,12 +297,9 @@ function NavList({ navId, onItemClick, dark = false }: { navId: string; onItemCl
 
 export function ManagementLayout() {
   const { user, logout } = useAuth()
+  // Đồng bộ vai trò khi tab được focus lại để sidebar cập nhật động theo phân quyền mới.
+  useProfileSync()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-
-  // Khách hàng không có quyền truy cập khu vực quản trị nội bộ
-  if (isCustomerRole(user?.roles)) {
-    return <Navigate to="/storefront" replace />
-  }
 
   const openButtonRef = useRef<HTMLButtonElement | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
@@ -372,6 +395,12 @@ export function ManagementLayout() {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [isMobileOpen, closeMobileDrawer])
+
+  // Khách hàng không có quyền truy cập khu vực quản trị nội bộ.
+  // Đặt sau toàn bộ hook để giữ thứ tự hook nhất quán giữa các lần render.
+  if (isCustomerRole(user?.roles)) {
+    return <Navigate to="/storefront" replace />
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
