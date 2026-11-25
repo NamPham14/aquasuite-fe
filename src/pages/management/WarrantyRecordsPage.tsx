@@ -159,7 +159,7 @@ export function WarrantyRecordsPage({ customerScope = false }: { customerScope?:
           if (row.openTicketCode) {
             tooltip = `Đang có yêu cầu bảo hành mở (${row.openTicketCode})`
           } else if (row.displayStatus === 'CLAIMED') {
-            tooltip = 'Thiết bị đang có phiếu sửa chữa bảo hành đang mở'
+            tooltip = 'Thẻ đang có yêu cầu bảo hành chưa hoàn tất'
           } else if (row.displayStatus === 'VOIDED') {
             tooltip = 'Thẻ bảo hành đã bị vô hiệu hóa'
           }

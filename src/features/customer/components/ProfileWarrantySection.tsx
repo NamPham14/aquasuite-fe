@@ -97,7 +97,7 @@ export function ProfileWarrantySection() {
                 Yêu cầu bảo hành &amp; Hỗ trợ ({ticketPage?.totalElements ?? tickets.length})
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Theo dõi tiến độ xử lý của kỹ thuật viên và lịch hẹn tại công trình.
+                Theo dõi tiến độ xử lý yêu cầu bảo hành của cửa hàng.
               </p>
             </div>
           </div>

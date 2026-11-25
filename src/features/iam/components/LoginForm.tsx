@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { normalizeApiError } from '../../../shared/api/apiError'
 import { loginSchema, type LoginFormData } from '../schemas/login.schema'
 import { useAuth } from '../hooks/useAuth'
+import { isCustomerRole } from '../types/auth.types'
 
 /** Form đăng nhập: validate bằng loginSchema, gọi useAuth.login và hiển thị lỗi phù hợp. */
 export function LoginForm({ successPath = '/app/dashboard' }: { successPath?: string }) {
@@ -37,7 +38,11 @@ export function LoginForm({ successPath = '/app/dashboard' }: { successPath?: st
       })
 
       if (result) {
-        navigate(successPath, { replace: true })
+        const isCustomer = isCustomerRole(result.user?.roles)
+        const targetPath = isCustomer
+          ? (successPath === '/app/dashboard' ? '/storefront' : successPath)
+          : successPath
+        navigate(targetPath, { replace: true })
       }
     } catch (err: unknown) {
       const apiError = normalizeApiError(err)

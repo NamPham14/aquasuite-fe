@@ -35,6 +35,8 @@ export interface CreateGoodsReceiptItemRequest {
 
 /** Body tạo + xác nhận phiếu nhập kho (Hướng B: một hành động). */
 export interface CreateGoodsReceiptRequest {
+  /** Mã chống ghi trùng; gửi lại cùng nội dung với cùng mã sẽ không tạo thêm phiếu. */
+  idempotencyKey: string
   purchaseOrderId: string
   supplierInvoiceNo?: string
   invoiceImageUrl?: string

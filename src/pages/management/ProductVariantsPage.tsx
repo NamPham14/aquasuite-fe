@@ -248,134 +248,151 @@ export function ProductVariantsPage() {
   const rows = list.data?.content ?? []
 
 const columns: ManagementTableColumn<ProductVariant>[] = [
-    {
-      key: 'sku',
-      header: 'Mã SKU / Biến thể',
-      align: 'left',
-      headerClassName: 'w-[17%]',
-      cell: (item) => (
-        <div>
-          <p className="truncate font-mono text-[13px] font-semibold text-sky-800" title={item.sku}>
-            {item.sku}
-          </p>
-          <p className="line-clamp-2 font-semibold text-slate-900" title={item.variantName}>
-            {item.variantName}
-          </p>
-          {item.serialTracking && <p className="mt-0.5 text-[11px] text-slate-500">Theo dõi Serial</p>}
-        </div>
-      ),
-    },
-    {
-      key: 'attributes',
-      header: 'Thuộc tính',
-      align: 'right',
-      headerClassName: 'w-[16%]',
-      cell: (item) => <AttributeSummary item={item} />,
-    },
-    {
-      key: 'unit',
-      header: 'ĐVT · Quy đổi',
-      align: 'right',
-      headerClassName: 'w-[10%]',
-      cell: (item) => (
-        <span className="whitespace-nowrap tabular-nums text-slate-800">
-          {item.unit}
-          {item.conversionRate !== 1 && <span className="text-xs text-slate-500"> · × {item.conversionRate}</span>}
+  {
+    key: 'sku',
+    header: 'Mã SKU / Biến thể',
+    align: 'left',
+    // Bỏ width cố định hoặc để lớn để cột này tự co giãn bù phần trống khi ẩn cột Giá nhập / Thao tác
+    headerClassName: 'min-w-[200px]',
+    cell: (item) => (
+      <div>
+        <p className="truncate font-mono text-[13px] font-semibold text-sky-800" title={item.sku}>
+          {item.sku}
+        </p>
+        <p className="line-clamp-2 font-semibold text-slate-900" title={item.variantName}>
+          {item.variantName}
+        </p>
+        {item.serialTracking && <p className="mt-0.5 text-[11px] text-slate-500">Theo dõi Serial</p>}
+      </div>
+    ),
+  },
+  {
+    key: 'attributes',
+    header: 'Thuộc tính',
+    align: 'left', // Sửa từ 'right' -> 'left' cho nội dung dạng text/tag
+    headerClassName: 'w-[16%]',
+    cell: (item) => <AttributeSummary item={item} />,
+  },
+  {
+    key: 'unit',
+    header: 'ĐVT · Quy đổi',
+    align: 'left', // Sửa từ 'right' -> 'left'
+    headerClassName: 'w-[11%]',
+    cell: (item) => (
+      <span className="whitespace-nowrap tabular-nums text-slate-800">
+        {item.unit}
+        {item.conversionRate !== 1 && (
+          <span className="text-xs text-slate-500"> · × {item.conversionRate}</span>
+        )}
+      </span>
+    ),
+  },
+  {
+    key: 'stock',
+    header: 'Tồn kho WH_MAIN',
+    align: 'right', // Số liệu tồn kho -> căn phải chuẩn
+    headerClassName: 'w-[14%]',
+    cell: (item) => (
+      <div className="text-xs tabular-nums text-slate-700">
+        <p className={item.lowStock ? 'font-bold text-amber-700' : 'font-semibold text-slate-900'}>
+          {item.onHandQty ?? 0} tồn thực tế
+        </p>
+        <p className="text-[11px] text-slate-500">
+          Khả dụng: {item.availableQty ?? 0} · Giữ: {item.reservedQty ?? 0}
+        </p>
+      </div>
+    ),
+  },
+  ...(canViewCost
+    ? [
+        {
+          key: 'cost' as const,
+          header: 'Giá nhập',
+          align: 'right' as const, // Sửa từ 'left' -> 'right' để thẳng hàng với cột Giá bán
+          headerClassName: 'w-[11%]',
+          cell: (item: ProductVariant) =>
+            item.costPrice != null ? (
+              <span className="whitespace-nowrap font-semibold tabular-nums text-slate-900">
+                {money(item.costPrice)}
+              </span>
+            ) : (
+              <span className="text-[13px] font-medium italic text-slate-400">Chưa nhập</span>
+            ),
+        },
+      ]
+    : []),
+  {
+    key: 'retail',
+    header: canViewCost ? 'Giá bán & lãi dự kiến' : 'Giá bán niêm yết',
+    align: 'right',
+    headerClassName: 'w-[14%]',
+    cell: (item) =>
+      canViewCost ? (
+        <MarginInfo costPrice={item.costPrice} sellingPrice={item.sellingPrice} />
+      ) : (
+        <span className="whitespace-nowrap font-bold tabular-nums text-slate-900">
+          {money(item.sellingPrice)}
         </span>
       ),
-    },
-    // Cột Giá nhập chỉ hiển thị cho SHOP_OWNER và ACCOUNTANT
-    ...(canViewCost ? [{
-      key: 'cost' as const,
-      header: 'Giá nhập',
-      align: 'left' as const,
-      headerClassName: 'w-[11%]',
-      cell: (item: ProductVariant) =>
-        item.costPrice != null ? (
-          <span className="whitespace-nowrap font-semibold tabular-nums text-slate-900">{money(item.costPrice)}</span>
-        ) : (
-          <span className="text-[13px] font-medium italic text-slate-400">Chưa nhập</span>
-        ),
-    }] : []),
-    {
-      key: 'stock',
-      header: 'Tồn kho WH_MAIN',
-      align: 'right',
-      headerClassName: 'w-[12%]',
-      cell: (item) => (
-        <div className="text-xs tabular-nums text-slate-700">
-          <p className={item.lowStock ? 'font-bold text-amber-700' : 'font-semibold text-slate-900'}>
-            {item.onHandQty ?? 0} tồn thực tế
-          </p>
-          <p className="text-[11px] text-slate-500">
-            Khả dụng: {item.availableQty ?? 0} · Giữ: {item.reservedQty ?? 0}
-          </p>
-        </div>
-      ),
-    },
-    {
-      key: 'retail',
-      header: canViewCost ? 'Giá bán & lãi dự kiến' : 'Giá bán niêm yết',
-      align: 'right',
-      headerClassName: 'w-[13%]',
-      // Khi không có quyền xem giá nhập, ẩn thông tin biên lợi nhuận
-      cell: (item) => canViewCost
-        ? <MarginInfo costPrice={item.costPrice} sellingPrice={item.sellingPrice} />
-        : <span className="whitespace-nowrap font-bold tabular-nums text-slate-900">{money(item.sellingPrice)}</span>,
-    },
-    {
-      key: 'status',
-      header: 'Trạng thái',
-      align: 'left',
-      headerClassName: 'w-[11%]',
-      cell: (item) => <StatusBadge status={item.status} missingPrice={item.sellingPrice == null} />,
-    },
-    // Cột thao tác chỉ hiển thị cho SHOP_OWNER
-    ...(canManageVariants ? [{
-      key: 'actions' as const,
-      header: 'Thao tác',
-      align: 'right' as const,
-      headerClassName: 'w-[8%]',
-      cell: (item: ProductVariant) => (
-        <div className="flex items-center justify-end gap-1">
-          <button
-            type="button"
-            className={iconActionButton}
-            onClick={() => setDialog({ kind: 'edit', variant: item })}
-            title="Sửa biến thể & giá"
-            aria-label={`Sửa ${item.sku}`}
-          >
-            <Pencil className="h-4 w-4" aria-hidden="true" />
-          </button>
-          {item.status !== 'DELETED' && (
-            <button
-              type="button"
-              className={iconActionButton}
-              disabled={statusState.isLoading}
-              onClick={() => setDialog({ kind: 'status', variant: item })}
-              title={item.status === 'ACTIVE' ? 'Ngừng kinh doanh' : 'Kinh doanh lại'}
-              aria-label={item.status === 'ACTIVE' ? `Ngừng kinh doanh ${item.sku}` : `Kích hoạt ${item.sku}`}
-            >
-              {item.status === 'ACTIVE' ? (
-                <Ban className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Check className="h-4 w-4" aria-hidden="true" />
+  },
+  {
+    key: 'status',
+    header: 'Trạng thái',
+    align: 'center', // Badge trạng thái căn giữa giúp tách biệt hẳn cột tiền (phải) và nút bấm (phải)
+    headerClassName: 'w-[11%]',
+    cell: (item) => <StatusBadge status={item.status} missingPrice={item.sellingPrice == null} />,
+  },
+  ...(canManageVariants
+    ? [
+        {
+          key: 'actions' as const,
+          header: 'Thao tác',
+          align: 'right' as const,
+          headerClassName: 'w-[9%]',
+          cell: (item: ProductVariant) => (
+            <div className="flex items-center justify-end gap-1">
+              <button
+                type="button"
+                className={iconActionButton}
+                onClick={() => setDialog({ kind: 'edit', variant: item })}
+                title="Sửa biến thể & giá"
+                aria-label={`Sửa ${item.sku}`}
+              >
+                <Pencil className="h-4 w-4" aria-hidden="true" />
+              </button>
+              {item.status !== 'DELETED' && (
+                <button
+                  type="button"
+                  className={iconActionButton}
+                  disabled={statusState.isLoading}
+                  onClick={() => setDialog({ kind: 'status', variant: item })}
+                  title={item.status === 'ACTIVE' ? 'Ngừng kinh doanh' : 'Kinh doanh lại'}
+                  aria-label={
+                    item.status === 'ACTIVE' ? `Ngừng kinh doanh ${item.sku}` : `Kích hoạt ${item.sku}`
+                  }
+                >
+                  {item.status === 'ACTIVE' ? (
+                    <Ban className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </button>
               )}
-            </button>
-          )}
-          <button
-            type="button"
-            className={iconDangerButton}
-            onClick={() => setDialog({ kind: 'delete', variant: item })}
-            title="Xóa biến thể"
-            aria-label={`Xóa ${item.sku}`}
-          >
-            <Trash2 className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-      ),
-    }] : []),
-  ]
+              <button
+                type="button"
+                className={iconDangerButton}
+                onClick={() => setDialog({ kind: 'delete', variant: item })}
+                title="Xóa biến thể"
+                aria-label={`Xóa ${item.sku}`}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+          ),
+        },
+      ]
+    : []),
+]
 
   return (
     <div className="space-y-4">

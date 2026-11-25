@@ -37,10 +37,22 @@ export interface CreateWarrantyTicketPayload {
   preferredSlot?: PreferredSlot | null
   siteAddress: string
   media?: TicketMedia[]
+  /** Khách chủ động xác nhận vẫn gửi dù thẻ đã hết hạn (bắt buộc true nếu thẻ hết hạn). */
+  acknowledgeExpired?: boolean
 }
 
 export interface CancelWarrantyTicketPayload {
   reason?: string | null
+}
+
+/** Payload Chủ cửa hàng hoàn tất yêu cầu bảo hành đang xử lý (POST /warranty-tickets/{id}/complete). */
+export interface CompleteWarrantyTicketPayload {
+  result: string
+}
+
+/** Payload Chủ cửa hàng từ chối ticket tại bàn (POST /warranty-tickets/{id}/reject). */
+export interface RejectWarrantyTicketPayload {
+  reason: string
 }
 
 export interface WarrantyTicketListItem {
@@ -72,6 +84,10 @@ export interface WarrantyTicketDetail {
   serialNumber?: string | null
   warrantyStartDate?: string | null
   warrantyEndDate?: string | null
+  /** Thẻ bảo hành đã hết hạn tại thời điểm xem (tính realtime ở BE). */
+  warrantyExpired?: boolean
+  /** Khách đã chủ động xác nhận gửi dù thẻ hết hạn (lưu trên ticket). */
+  expiredAcknowledged?: boolean
   contactName: string
   contactPhone: string
   contactEmail?: string | null
@@ -82,7 +98,6 @@ export interface WarrantyTicketDetail {
   media: TicketMedia[]
   status: WarrantyTicketStatus
   canCancel: boolean
-  technicalJobId?: string | null
   result?: string | null
   rejectionReason?: string | null
   cancelReason?: string | null

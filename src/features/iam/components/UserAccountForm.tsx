@@ -8,7 +8,6 @@ const ROLE_META: Record<string, { label: string; desc: string }> = {
   SHOP_OWNER: { label: 'Chủ cửa hàng', desc: 'Quản trị toàn bộ hệ thống và tài khoản nội bộ' },
   STORE_OWNER: { label: 'Chủ cửa hàng', desc: 'Quản trị toàn bộ hệ thống và tài khoản nội bộ' },
   SALES_STAFF: { label: 'Nhân viên bán hàng', desc: 'Bán hàng, tạo đơn và chăm sóc khách hàng' },
-  TECHNICAL_STAFF: { label: 'Nhân viên kỹ thuật', desc: 'Lắp đặt, bảo hành và xử lý kỹ thuật' },
   SHIPPER: { label: 'Shipper', desc: 'Giao hàng và xác nhận bàn giao' },
   ACCOUNTANT: { label: 'Kế toán', desc: 'Hóa đơn, thanh toán và công nợ' },
   CUSTOMER: { label: 'Khách hàng', desc: 'Tài khoản mua hàng của khách' },

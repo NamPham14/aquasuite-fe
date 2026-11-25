@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Outlet, NavLink, Link, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, Link, useLocation, Navigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -22,7 +22,7 @@ import {
   ShoppingCart,
   Truck,
   WalletCards,
-  Wrench,
+  LifeBuoy,
   ClipboardCheck,
   BadgeCheck,
   ReceiptText,
@@ -32,6 +32,7 @@ import {
   UserCog,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
+import { isCustomerRole } from '../features/iam/types/auth.types'
 
 interface NavItem {
   name: string
@@ -141,19 +142,19 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
     ],
   },
   {
-    group: 'Bảo hành & Kỹ thuật',
+    group: 'Bảo hành',
     items: [
       {
         name: 'Thẻ bảo hành điện tử',
         to: '/app/warranty-records',
         icon: ShieldCheck,
-        roles: ['SHOP_OWNER', 'SALES_STAFF', 'TECHNICAL_STAFF'],
+        roles: ['SHOP_OWNER', 'SALES_STAFF'],
       },
       {
-        name: 'Công việc kỹ thuật',
-        to: '/app/technical-jobs',
-        icon: Wrench,
-        roles: ['SHOP_OWNER', 'TECHNICAL_STAFF'],
+        name: 'Yêu cầu bảo hành',
+        to: '/app/warranty-tickets',
+        icon: LifeBuoy,
+        roles: ['SHOP_OWNER'],
       },
       {
         name: 'Chính sách bảo hành',
@@ -366,6 +367,11 @@ export function ManagementLayout() {
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [isMobileOpen, closeMobileDrawer])
+
+  // Khách hàng không có quyền truy cập khu vực quản trị nội bộ (đặt sau toàn bộ React Hooks)
+  if (isCustomerRole(user?.roles)) {
+    return <Navigate to="/storefront" replace />
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex">

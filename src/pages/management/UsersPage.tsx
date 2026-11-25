@@ -43,7 +43,6 @@ const ROLE_LABELS: Record<string, string> = {
   SHOP_OWNER: 'Chủ cửa hàng',
   STORE_OWNER: 'Chủ cửa hàng',
   SALES_STAFF: 'Nhân viên bán hàng',
-  TECHNICAL_STAFF: 'Nhân viên kỹ thuật',
   SHIPPER: 'Shipper',
   ACCOUNTANT: 'Kế toán',
   CUSTOMER: 'Khách hàng',

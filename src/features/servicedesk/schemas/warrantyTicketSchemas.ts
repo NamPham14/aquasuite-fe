@@ -40,3 +40,25 @@ export const cancelWarrantyTicketSchema = z.object({
 
 export type CancelWarrantyTicketFormData = z.infer<typeof cancelWarrantyTicketSchema>
 
+// ===== Nội bộ cửa hàng (FE-13 Giai đoạn 2b) =====
+
+export const completeWarrantyTicketSchema = z.object({
+  result: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập kết quả xử lý.')
+    .max(4000, 'Kết quả xử lý không được vượt quá 4000 ký tự.'),
+})
+
+export type CompleteWarrantyTicketFormData = z.infer<typeof completeWarrantyTicketSchema>
+
+export const rejectWarrantyTicketSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập lý do từ chối.')
+    .max(2000, 'Lý do từ chối không được vượt quá 2000 ký tự.'),
+})
+
+export type RejectWarrantyTicketFormData = z.infer<typeof rejectWarrantyTicketSchema>
+

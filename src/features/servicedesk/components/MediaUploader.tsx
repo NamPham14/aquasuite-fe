@@ -121,7 +121,7 @@ export function MediaUploader({
       </div>
 
       <p className="text-xs text-slate-500">
-        Nên đính kèm ảnh hoặc video để kỹ thuật viên đánh giá nhanh hơn và chuẩn bị linh kiện thay thế phù hợp.
+        Nên đính kèm ảnh hoặc video để cửa hàng đánh giá nhanh hơn và chuẩn bị linh kiện thay thế phù hợp.
       </p>
 
       {/* Upload Drop area */}
