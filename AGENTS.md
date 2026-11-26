@@ -27,3 +27,17 @@
 
 - `AGENTS.md` và `docs/` là quy tắc/tài liệu chia sẻ qua Git; `.agent/` là trạng thái local-only và được ignore. Không ghi secret hoặc dữ liệu nhạy cảm vào các file này.
 - Không tự sửa hoặc xóa work artifact không liên quan. Chỉ thay đổi phạm vi đã được giao.
+
+## Graphify (knowledge graph dùng chung)
+
+Claude Code và Codex dùng chung một graph tại `graphify-out/` (`graph.json`, `GRAPH_REPORT.md`, `graph.html`). Thư mục này là artifact local, đã được ignore và không commit.
+
+- **Ưu tiên truy vấn graph** khi tìm kiếm code, phân tích kiến trúc, lập kế hoạch, audit, review và xác định phạm vi ảnh hưởng (impact analysis) của thay đổi:
+  - `graphify query "<câu hỏi>"`: ngữ cảnh rộng (BFS), thêm `--dfs` để lần theo một luồng cụ thể.
+  - `graphify path "A" "B"`: đường nối ngắn nhất giữa hai thành phần.
+  - `graphify explain "X"`: một node và các kết nối của nó.
+  - `graphify-out/GRAPH_REPORT.md`: god nodes, communities, các kết nối bất thường và khoảng trống.
+- **Luôn xác minh bằng source code thực tế** trước khi kết luận, sửa code hoặc báo finding. Graph chỉ dùng để định hướng. Code và contract BE mới là bằng chứng. Edge `INFERRED`/`AMBIGUOUS` phải được kiểm tra lại. Graph có thể cũ hơn working tree.
+- **Không rebuild toàn bộ graph nếu không cần thiết.** Khi source thay đổi, cập nhật incremental bằng `graphify update .`. Lệnh này chỉ trích xuất lại code thay đổi theo AST và không tốn LLM. Thay đổi tài liệu/ảnh thì dùng `/graphify . --update`. Chỉ build lại toàn bộ (`--force`) khi graph hỏng, cấu trúc thư mục đổi lớn hoặc người dùng yêu cầu.
+- Nếu chưa có graph, hoặc chỉ cần một tra cứu đơn lẻ, dùng tìm kiếm thường (`rg`) và không tự build graph khi chưa được yêu cầu.
+- Không đưa nội dung graph lên dịch vụ ngoài. Graphify bỏ qua các file có tên giống nơi chứa secret. Không tắt cơ chế này để ép đưa file nhạy cảm vào graph.
