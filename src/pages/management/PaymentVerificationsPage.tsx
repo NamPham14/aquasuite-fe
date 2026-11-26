@@ -13,6 +13,10 @@ import { useLazyGetOrderPaymentProofQuery } from '../../features/finance/api/ord
 import { RejectVerificationDialog } from '../../features/finance/components/RejectVerificationDialog'
 import type { PaymentVerificationItem } from '../../features/finance/types/paymentVerification.types'
 import { ActivityLogPanel } from '../../features/audit'
+import { ManagementPageHeader, ManagementPageShell, ManagementPanel } from '../../shared/ui/ManagementPage'
+import { ManagementPagination, ManagementTableSkeleton } from '../../shared/ui/ManagementTable'
+import { CodeChip, StatusBadge } from '../../shared/ui/Badge'
+import { ErrorState } from '../../shared/ui/FeedbackStates'
 
 type StatusTab = 'PENDING' | 'VERIFIED' | 'REJECTED'
 
@@ -96,30 +100,24 @@ export function PaymentVerificationsPage() {
   const isPendingTab = tab === 'PENDING'
 
   return (
-    <div className="space-y-4 text-xs">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-sky-50 p-2 text-sky-600">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-slate-900">Xác minh thanh toán chuyển khoản</h1>
-            <p className="text-[11px] text-slate-500">
-              Đối chiếu tiền thực nhận và quyết định xác minh hoặc từ chối các khoản chuyển khoản (UC-70).
-            </p>
-          </div>
-        </div>
-      </div>
+    <ManagementPageShell>
+      <ManagementPageHeader
+        group="Tài chính & Công nợ"
+        breadcrumb="Xác minh thanh toán"
+        title="Xác minh thanh toán chuyển khoản"
+        description="Đối chiếu tiền thực nhận và quyết định xác minh hoặc từ chối các khoản chuyển khoản."
+        icon={<ShieldCheck className="h-5 w-5" />}
+      />
 
       {/* Bộ lọc trạng thái */}
-      <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5">
+      <div className="inline-flex w-fit rounded-control border border-aqs-border bg-aqs-surface p-1">
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
             onClick={() => changeTab(t.key)}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-              tab === t.key ? 'bg-sky-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+            className={`rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
+              tab === t.key ? 'bg-aqs-accent text-white' : 'text-aqs-ink-muted hover:bg-aqs-surface-subtle hover:text-aqs-ink'
             }`}
           >
             {t.label}
@@ -127,23 +125,26 @@ export function PaymentVerificationsPage() {
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xs">
-        <div className="border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
-          {TABS.find((t) => t.key === tab)?.label} {data ? `(${data.totalElements})` : ''}
-        </div>
-
+      <ManagementPanel
+        headingId="payment-verifications-list"
+        title={`${TABS.find((t) => t.key === tab)?.label ?? ''} ${data ? `(${data.totalElements})` : ''}`}
+        refreshing={isFetching && items.length > 0}
+        busy={isFetching}
+      >
         {isLoading || (isFetching && items.length === 0) ? (
-          <div className="flex items-center gap-2 px-4 py-8 text-slate-500">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-sky-600 border-t-transparent" />
-            Đang tải danh sách...
-          </div>
+          <ManagementTableSkeleton columns={6} rows={5} />
         ) : error ? (
-          <div className="px-4 py-8 text-center text-slate-500">
-            Không tải được danh sách.{' '}
-            <button type="button" onClick={() => refetch()} className="font-semibold text-sky-600">Thử lại</button>
+          <div className="p-5">
+            <ErrorState
+              sectionLabel="Danh sách xác minh thanh toán"
+              title="Không tải được danh sách"
+              message={normalizeApiError(error).message}
+              onRetry={() => void refetch()}
+              retrying={isFetching}
+            />
           </div>
         ) : items.length === 0 ? (
-          <div className="px-4 py-10 text-center text-slate-500">
+          <div className="px-4 py-12 text-center text-sm text-aqs-ink-muted">
             <Inbox className="mx-auto mb-2 h-8 w-8 text-slate-300" />
             {isPendingTab
               ? 'Không có khoản chuyển khoản nào đang chờ xác minh.'
@@ -151,76 +152,77 @@ export function PaymentVerificationsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="border-b border-slate-200 bg-slate-50/50 text-[11px] uppercase text-slate-500">
+            <table className="w-full text-left text-sm text-aqs-ink-muted">
+              <thead className="border-b border-aqs-border bg-aqs-surface-subtle text-xs font-semibold text-aqs-ink-muted">
                 <tr>
-                  <th className="px-4 py-2.5">Mã GD</th>
-                  <th className="px-3 py-2.5 text-right">Số tiền</th>
-                  <th className="px-3 py-2.5">Mã tham chiếu</th>
-                  <th className="px-3 py-2.5">{isPendingTab ? 'Ghi chú' : 'Trạng thái / Quyết định'}</th>
-                  <th className="px-3 py-2.5">{isPendingTab ? 'Thời điểm' : 'Thời điểm xử lý'}</th>
-                  <th className="px-4 py-2.5 text-right">Thao tác</th>
+                  <th className="px-4 py-3">Mã GD</th>
+                  <th className="px-3 py-3 text-right">Số tiền</th>
+                  <th className="px-3 py-3">Mã tham chiếu</th>
+                  <th className="px-3 py-3">{isPendingTab ? 'Ghi chú' : 'Trạng thái / Quyết định'}</th>
+                  <th className="px-3 py-3">{isPendingTab ? 'Thời điểm' : 'Thời điểm xử lý'}</th>
+                  <th className="px-4 py-3 text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-aqs-border">
                 {items.map((item) => {
-                  const badge = STATUS_BADGE[item.status] ?? { label: item.status, className: 'bg-slate-50 text-slate-700 border-slate-200' }
+                  const badge = STATUS_BADGE[item.status] ?? { label: item.status, className: '' }
+                  const tone = item.status === 'VERIFIED' ? 'positive' : item.status === 'REJECTED' ? 'danger' : 'warning'
                   return (
-                    <tr key={item.transactionId} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-2.5">
-                        <div className="font-mono text-[11px] text-slate-600">{item.transactionCode}</div>
-                        <Link to={`/app/orders/${item.orderId}`} className="text-[10px] font-medium text-sky-600 hover:text-sky-700">
-                          Xem đơn →
-                        </Link>
+                    <tr key={item.transactionId} className="transition-colors hover:bg-aqs-surface-subtle/60">
+                      <td className="px-4 py-3">
+                        <CodeChip>{item.transactionCode}</CodeChip>
+                        <div className="mt-1">
+                          <Link to={`/app/orders/${item.orderId}`} className="text-xs font-medium text-aqs-accent hover:text-aqs-accent-hover hover:underline">
+                            Xem đơn →
+                          </Link>
+                        </div>
                       </td>
-                      <td className="px-3 py-2.5 text-right font-bold text-slate-900">{formatVnd(item.amount)}</td>
-                      <td className="px-3 py-2.5 text-slate-600">{item.referenceNo || '—'}</td>
-                      <td className="px-3 py-2.5">
+                      <td className="px-3 py-3 text-right font-bold tabular-nums text-aqs-ink">{formatVnd(item.amount)}</td>
+                      <td className="px-3 py-3 text-aqs-ink-muted">{item.referenceNo || '—'}</td>
+                      <td className="px-3 py-3">
                         {isPendingTab ? (
-                          <span className="text-slate-500">{item.description || '—'}</span>
+                          <span className="text-aqs-ink-muted">{item.description || '—'}</span>
                         ) : (
                           <div>
-                            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${badge.className}`}>
-                              {badge.label}
-                            </span>
+                            <StatusBadge tone={tone}>{badge.label}</StatusBadge>
                             {item.status === 'REJECTED' && item.rejectReason && (
-                              <div className="mt-1 flex max-w-[240px] items-start gap-1 text-[10px] leading-snug text-slate-400" title={item.rejectReason}>
-                                <Info className="mt-px h-2.5 w-2.5 shrink-0" />
+                              <div className="mt-1 flex max-w-[240px] items-start gap-1 text-xs leading-snug text-aqs-ink-faint" title={item.rejectReason}>
+                                <Info className="mt-0.5 h-3 w-3 shrink-0" />
                                 <span className="truncate italic">{item.rejectReason}</span>
                               </div>
                             )}
                           </div>
                         )}
                       </td>
-                      <td className="px-3 py-2.5 text-slate-500">
+                      <td className="px-3 py-3 tabular-nums text-xs text-aqs-ink-muted">
                         {formatDateTime(isPendingTab ? item.transactionDate : item.approvedAt || item.transactionDate)}
                       </td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
                             onClick={() => handleViewProof(item)}
                             disabled={viewingProof}
-                            className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-aqs-border bg-aqs-surface px-2.5 text-xs font-medium text-aqs-ink transition-colors hover:bg-aqs-surface-subtle disabled:opacity-50"
                           >
-                            <Eye className="h-3 w-3" /> Chứng từ
+                            <Eye className="h-3.5 w-3.5" /> Chứng từ
                           </button>
                           {isPendingTab && (
                             <>
                               <button
                                 type="button"
                                 onClick={() => setRejecting(item)}
-                                className="inline-flex items-center gap-1 rounded-md border border-rose-300 px-2 py-1 text-[11px] font-medium text-rose-600 hover:bg-rose-50"
+                                className="inline-flex h-8 items-center gap-1 rounded-lg border border-aqs-danger-border bg-aqs-danger-soft px-2.5 text-xs font-semibold text-aqs-danger transition-colors hover:bg-rose-100"
                               >
-                                <XCircle className="h-3 w-3" /> Từ chối
+                                <XCircle className="h-3.5 w-3.5" /> Từ chối
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleVerify(item)}
                                 disabled={verifying}
-                                className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                                className="inline-flex h-8 items-center gap-1 rounded-lg bg-aqs-accent px-3 text-xs font-semibold text-white transition-colors hover:bg-aqs-accent-hover disabled:opacity-50"
                               >
-                                <CheckCircle2 className="h-3 w-3" /> Xác minh
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Xác minh
                               </button>
                             </>
                           )}
@@ -234,31 +236,18 @@ export function PaymentVerificationsPage() {
           </div>
         )}
 
-        {data && data.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-2.5 text-[11px] text-slate-500">
-            <button
-              type="button"
-              disabled={page <= 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              className="rounded-md border border-slate-300 px-2 py-1 font-medium disabled:opacity-40"
-            >
-              Trang trước
-            </button>
-            <span>Trang {page + 1} / {data.totalPages}</span>
-            <button
-              type="button"
-              disabled={page + 1 >= data.totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="rounded-md border border-slate-300 px-2 py-1 font-medium disabled:opacity-40"
-            >
-              Trang tiếp
-            </button>
-          </div>
-        )}
-      </div>
+        <ManagementPagination
+          page={page}
+          totalPages={data?.totalPages ?? 0}
+          totalElements={data?.totalElements ?? 0}
+          noun="giao dịch"
+          disabled={isFetching}
+          onPageChange={setPage}
+        />
+      </ManagementPanel>
 
       {rejecting && <RejectVerificationDialog item={rejecting} onClose={() => setRejecting(null)} />}
-      <ActivityLogPanel entityType="PAYMENT_RECEIPT" title="Nhật ký phân bổ tiền vào hóa đơn" description="Các khoản thu đã được phân bổ vào hóa đơn cửa hàng (UC-63)." />
-    </div>
+      <ActivityLogPanel operational entityType="PAYMENT_RECEIPT" title="Nhật ký phân bổ tiền vào hóa đơn" description="Các khoản thu đã được phân bổ vào hóa đơn cửa hàng." />
+    </ManagementPageShell>
   )
 }

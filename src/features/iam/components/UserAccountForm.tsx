@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { ManagementForm, ManagementFormField, managementFieldClass } from '../../../shared/ui/ManagementDialog.tsx'
+import { Notice } from '../../../shared/ui/Badge'
+import { ValidationSummary, type ValidationIssue } from '../../../shared/ui/FeedbackStates'
 import type { AssignableRole, UserAccount, UserAccountFormValues } from '../types/userAccount.types.ts'
 
 const strongTemporaryPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
@@ -11,6 +13,16 @@ const ROLE_META: Record<string, { label: string; desc: string }> = {
   SHIPPER: { label: 'Shipper', desc: 'Giao hàng và xác nhận bàn giao' },
   ACCOUNTANT: { label: 'Kế toán', desc: 'Hóa đơn, thanh toán và công nợ' },
   CUSTOMER: { label: 'Khách hàng', desc: 'Tài khoản mua hàng của khách' },
+}
+
+const USER_FIELD_META: Record<string, { id: string; label: string }> = {
+  username: { id: 'user-account-username', label: 'Tên người dùng' },
+  avatarUrl: { id: 'user-account-avatar-url', label: 'URL ảnh đại diện' },
+  email: { id: 'user-account-email', label: 'Email' },
+  phone: { id: 'user-account-phone', label: 'Số điện thoại' },
+  roleIds: { id: 'user-account-roles-fieldset', label: 'Vai trò' },
+  temporaryPassword: { id: 'user-account-password', label: 'Mật khẩu tạm' },
+  confirmTemporaryPassword: { id: 'user-account-confirm-password', label: 'Nhập lại mật khẩu' },
 }
 
 function initialValues(account?: UserAccount): UserAccountFormValues {
@@ -101,19 +113,31 @@ export function UserAccountForm({
   const fieldError = (name: string) => errors[name] || apiFieldErrors[name]
   const roleError = fieldError('roleIds')
 
+  const validationIssues = useMemo<ValidationIssue[]>(() => {
+    const combined = { ...errors, ...apiFieldErrors }
+    return Object.entries(combined).flatMap(([field, message]) => {
+      const meta = USER_FIELD_META[field]
+      return meta && message ? [{ fieldId: meta.id, label: meta.label, message }] : []
+    })
+  }, [errors, apiFieldErrors])
+
   return (
     <ManagementForm
       onSubmit={submit}
       onClose={onClose}
-      submitLabel={editing ? 'Lưu tài khoản' : 'Tạo tài khoản'}
+      submitLabel={pending ? 'Đang lưu...' : editing ? 'Lưu tài khoản' : 'Tạo tài khoản'}
       submitDisabled={pending || rolesLoading}
       closeDisabled={pending}
+      submitLoading={pending}
     >
+      <ValidationSummary issues={validationIssues} />
+
       {apiError && (
-        <p role="alert" className="rounded-[11px] bg-red-50 px-3.5 py-2.5 text-[13.5px] font-semibold text-red-700">
+        <Notice tone="danger" role="alert" title="Không thể lưu tài khoản">
           {apiError}
-        </p>
+        </Notice>
       )}
+
       <div className="grid gap-3.5 sm:grid-cols-2">
         <ManagementFormField id="user-account-username" label="Tên người dùng *" error={fieldError('username')}>
           <input
@@ -174,45 +198,64 @@ export function UserAccountForm({
       </div>
 
       <fieldset
+        id="user-account-roles-fieldset"
+        tabIndex={-1}
         aria-describedby={roleError ? 'user-account-roles-error' : undefined}
         aria-invalid={Boolean(roleError)}
-        className={`rounded-lg border px-3 pt-2.5 pb-3 ${roleError ? 'border-red-700' : 'border-slate-200'}`}
+        className={`rounded-card border px-3.5 pb-3.5 pt-2.5 ${
+          roleError ? 'border-aqs-danger' : 'border-aqs-border'
+        }`}
       >
-        <legend className="px-1 text-[13px] font-bold text-slate-900">
-          Vai trò <span className="text-red-700">*</span>
+        <legend className="px-1.5 text-[13px] font-bold text-aqs-ink">
+          Vai trò <span className="text-aqs-danger">*</span>
         </legend>
         {rolesLoading ? (
-          <p className="text-sm text-slate-500">Đang tải vai trò...</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2" aria-label="Đang tải vai trò">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="rounded-control border border-aqs-border p-3">
+                <span className="aqs-animate-skeleton block h-3 w-3/4 rounded bg-aqs-skeleton" />
+              </div>
+            ))}
+          </div>
         ) : roles.length === 0 ? (
-          <p role="alert" className="text-sm text-red-700">
+          <Notice tone="danger" role="alert">
             Không có vai trò đang hoạt động để gán.
-          </p>
+          </Notice>
         ) : (
-          <div className="mt-1 grid gap-x-2.5 gap-y-0.5 sm:grid-cols-2">
+          <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
             {roles.map((role) => {
               const meta = ROLE_META[role.code]
               const displayLabel = meta?.label ?? role.code
               const displayDesc = role.description || meta?.desc
+              const checked = values.roleIds.includes(role.id)
               // Khóa checkbox vai trò Chủ cửa hàng khi đang sửa chính tài khoản của mình
               const isShopOwnerCheckbox = role.code === 'SHOP_OWNER' || role.code === 'STORE_OWNER'
               const disabledForSelf = isSelf && isShopOwnerCheckbox
               return (
                 <label
                   key={role.id}
-                  className="flex cursor-pointer items-start gap-2 rounded-md px-1.5 py-1.5 text-[13px] text-slate-800 hover:bg-slate-50"
+                  className={`flex cursor-pointer items-start gap-2.5 rounded-control border px-3 py-2.5 transition-colors ${
+                    checked
+                      ? 'border-aqs-accent bg-aqs-accent-soft'
+                      : 'border-aqs-border bg-aqs-surface hover:bg-aqs-surface-subtle'
+                  } ${disabledForSelf ? 'opacity-80' : ''}`}
                 >
                   <input
                     type="checkbox"
-                    checked={values.roleIds.includes(role.id)}
+                    checked={checked}
                     onChange={() => toggleRole(role.id)}
                     disabled={pending || disabledForSelf}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-sky-700 focus:ring-sky-600"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-aqs-accent"
                   />
-                  <span>
-                    <span className="block font-semibold text-slate-900">{displayLabel}</span>
-                    {displayDesc ? <span className="block text-[11.5px] text-slate-500">{displayDesc}</span> : null}
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-semibold text-aqs-ink">{displayLabel}</span>
+                    {displayDesc ? (
+                      <span className="mt-0.5 block text-[11.5px] leading-snug text-aqs-ink-muted">
+                        {displayDesc}
+                      </span>
+                    ) : null}
                     {disabledForSelf && (
-                      <span className="block text-[11.5px] font-medium text-amber-700">
+                      <span className="mt-1 block text-[11.5px] font-medium text-aqs-warning">
                         Không thể tự bỏ vai trò Chủ cửa hàng của chính mình.
                       </span>
                     )}
@@ -223,37 +266,52 @@ export function UserAccountForm({
           </div>
         )}
         {roleError && (
-          <p id="user-account-roles-error" role="alert" className="mt-1.5 text-xs font-semibold text-red-700">
+          <p id="user-account-roles-error" role="alert" className="mt-2 text-xs font-semibold text-aqs-danger">
             {roleError}
           </p>
         )}
       </fieldset>
 
       {!editing && (
-        <>
-          <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-slate-200 px-3.5 py-3 text-[13.5px] text-slate-900">
+        <div className="space-y-3">
+          <label
+            className={`flex cursor-pointer items-start gap-2.5 rounded-control border px-3 py-2.5 transition-colors ${
+              values.autoGenerateTemporaryPassword
+                ? 'border-aqs-accent bg-aqs-accent-soft'
+                : 'border-aqs-border bg-aqs-surface hover:bg-aqs-surface-subtle'
+            }`}
+          >
             <input
               type="checkbox"
               checked={values.autoGenerateTemporaryPassword}
               onChange={(event) => update('autoGenerateTemporaryPassword', event.target.checked)}
               disabled={pending}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-sky-700 focus:ring-sky-600"
+              className="mt-0.5 h-4 w-4 shrink-0 accent-aqs-accent"
             />
             <span>
-              <span className="block font-semibold">Tự tạo mật khẩu tạm</span>
-              <span className="block text-xs text-slate-600">Hệ thống gửi thông tin đăng nhập qua email sau khi tạo.</span>
+              <span className="block text-[13.5px] font-semibold text-aqs-ink">Tự tạo mật khẩu tạm</span>
+              <span className="mt-0.5 block text-xs text-aqs-ink-muted">
+                Hệ thống gửi thông tin đăng nhập qua email sau khi tạo.
+              </span>
             </span>
           </label>
           {!values.autoGenerateTemporaryPassword && (
             <div className="grid gap-3.5 sm:grid-cols-2">
-              <ManagementFormField id="user-account-password" label="Mật khẩu tạm *" error={fieldError('temporaryPassword')}>
+              <ManagementFormField
+                id="user-account-password"
+                label="Mật khẩu tạm *"
+                hint="Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
+                error={fieldError('temporaryPassword')}
+              >
                 <input
                   id="user-account-password"
                   className={managementFieldClass}
                   value={values.temporaryPassword}
                   onChange={(event) => update('temporaryPassword', event.target.value)}
                   aria-invalid={Boolean(fieldError('temporaryPassword'))}
-                  aria-describedby={fieldError('temporaryPassword') ? 'user-account-password-error' : undefined}
+                  aria-describedby={
+                    fieldError('temporaryPassword') ? 'user-account-password-error' : 'user-account-password-hint'
+                  }
                   type="password"
                   autoComplete="new-password"
                   disabled={pending}
@@ -280,7 +338,7 @@ export function UserAccountForm({
               </ManagementFormField>
             </div>
           )}
-        </>
+        </div>
       )}
     </ManagementForm>
   )

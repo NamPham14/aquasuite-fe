@@ -17,7 +17,9 @@ src/                                    # Mã nguồn Frontend AquaSuite
 │   ├── images/                         # Logo, banner, ảnh nền và ảnh placeholder
 │   ├── icons/                          # Icon SVG, PNG riêng của ứng dụng
 │   ├── fonts/                          # Font chữ lưu trữ cục bộ
-│   └── styles/                         # Style tài nguyên dùng chung nếu cần
+│   └── styles/                         # Design System toàn cục (Tailwind CSS 4)
+│       ├── tokens.css                  # Semantic design tokens (@theme) & --ux-* bridge
+│       └── motion.css                  # Keyframes dùng chung & prefers-reduced-motion
 │
 ├── layouts/                            # Bố cục giao diện dùng chung
 │   ├── SalesLayout.tsx                 # Bố cục trang bán hàng cho khách hàng
@@ -78,7 +80,7 @@ src/                                    # Mã nguồn Frontend AquaSuite
     │   ├── apiError.ts                 # Chuẩn hóa và xử lý lỗi API
     │   └── types.ts                    # Kiểu dữ liệu chung của API
     │
-    ├── ui/                             # Component UI dùng chung: Button, Modal, Table
+    ├── ui/                             # Shared UI hợp nhất (Button, Badge, FeedbackStates, ManagementPage/Table/Dialog/RowActions)
     ├── hooks/                          # React Hook dùng chung
     ├── lib/                            # Hàm tiện ích: format, date, validation
     ├── config/                         # Cấu hình môi trường, route, constants
@@ -131,6 +133,7 @@ Nếu một feature cần quản lý trạng thái phía client phức tạp, c�
 | `app` cấu hình toàn hệ thống | Chứa Router, Redux Store, Provider và phần khởi tạo ứng dụng. |
 | Không import xuyên module tùy tiện | Feature khác chỉ sử dụng public exports của module khi cần. |
 | Không tạo circular dependency | `shared` không được import ngược từ `features`; các module không phụ thuộc vòng tròn. |
+| Tuân thủ Design System & Shared UI | Toàn bộ Management Dashboard (`/app/*`) dùng `tokens.css`, `motion.css` và `src/shared/ui/` theo [MANAGEMENT_UI_COMPONENTS.md](MANAGEMENT_UI_COMPONENTS.md), lấy `ProductsPage` và Sidebar sáng làm chuẩn. Không tạo CSS phân tán theo page/feature, không duplicate shared component và không dựng hệ thống UI song song. |
 
 ### Phân biệt `src/assets` và `public`
 

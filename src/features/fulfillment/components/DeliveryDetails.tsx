@@ -5,7 +5,7 @@ import { Truck } from 'lucide-react'
 import { useAuth, useGetUserAccountQuery } from '../../iam'
 import { normalizeApiError } from '../../../shared/api/apiError'
 import { ManagementDialog } from '../../../shared/ui/ManagementDialog'
-import { ManagementPageHeader } from '../../../shared/ui/ManagementPage'
+import { ManagementPageHeader, ManagementPageShell } from '../../../shared/ui/ManagementPage'
 import { ManagementTable } from '../../../shared/ui/ManagementTable'
 import { useDownloadIssueNoteMutation, useGetDeliveryPhotoQuery, useGetDeliveryQuery } from '../api/deliveryApi'
 import { canAssignDelivery } from '../types/delivery.types'
@@ -65,10 +65,9 @@ export function DeliveryDetails({ id }: { id: string }) {
   if (!detail) return <div className="space-y-4 p-6"><p role="alert" className="text-sm text-rose-700">{error ? normalizeApiError(error).message : 'Không tìm thấy đợt giao.'}</p><button className={deliveryButton} onClick={() => void refetch()}>Thử lại</button> <Link className={deliveryButton} to={back}>Về danh sách</Link></div>
   const row = detail.delivery
   const own = user?.roles.includes('SHIPPER') && row.shipperId === user.id
-  return <div className="space-y-4">
-    {error && <div role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">Chưa tải lại được trạng thái: {normalizeApiError(error).message} <button className={deliveryButton} onClick={() => void refetch()}>Thử lại</button></div>}
-    <ManagementPageHeader title={row.deliveryCode} breadcrumb="Chi tiết giao hàng" group="Giao hàng" description={`Đợt ${row.batchNo ?? '—'} · Kho ${row.warehouseCode || '—'}`} icon={<Truck className="h-5 w-5" />} />
-    <div className="flex flex-wrap items-center justify-between gap-3"><Link to={back} className={deliveryButton}>← Về danh sách giao hàng</Link><DeliveryBadge status={row.deliveryStatus} /></div>
+  return <ManagementPageShell>
+    {error && <div role="alert" className="rounded-control border border-aqs-danger-border bg-aqs-danger-soft p-3 text-sm text-aqs-danger">Chưa tải lại được trạng thái: {normalizeApiError(error).message} <button className={deliveryButton} onClick={() => void refetch()}>Thử lại</button></div>}
+    <ManagementPageHeader title={row.deliveryCode} breadcrumb="Chi tiết giao hàng" group="Giao hàng" description={`Đợt ${row.batchNo ?? '—'} · Kho ${row.warehouseCode || '—'}`} icon={<Truck className="h-5 w-5" />} actions={<div className="flex flex-wrap items-center gap-2"><DeliveryBadge status={row.deliveryStatus} /><Link to={back} className={deliveryButton}>← Về danh sách giao hàng</Link></div>} />
     <div className="flex flex-wrap gap-2">
       {accountant && row.deliveryStatus === 'DRAFT' && !row.confirmedAt && <button className={deliveryButton} disabled={isFetching} onClick={() => setEditing(true)}>Sửa nháp</button>}
       {row.confirmedAt && !['DRAFT', 'CANCELLED'].includes(row.deliveryStatus) && <button className={deliveryButton} disabled={downloading} onClick={() => void downloadIssueNote()}>{downloading ? 'Đang tạo PDF…' : 'Tải phiếu xuất kho PDF'}</button>}
@@ -104,5 +103,5 @@ export function DeliveryDetails({ id }: { id: string }) {
     {editing && <EditDeliveryDialog detail={detail} onClose={() => setEditing(false)} />}
     {action && <DeliveryActionDialog id={id} action={action} resuming={row.deliveryStatus === 'RESCHEDULED'} onClose={() => setAction(null)} />}
     {issueAction && <DeliveryIssueDialog id={id} action={issueAction} onClose={() => setIssueAction(null)} />}
-  </div>
+  </ManagementPageShell>
 }

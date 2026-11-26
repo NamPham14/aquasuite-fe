@@ -14,10 +14,10 @@ export function BundleDetails({ bundle }: { bundle: Bundle }) {
     </section>
     <section aria-labelledby="combo-detail-price" className="border-t border-slate-200 pt-5">
       <h3 id="combo-detail-price" className="mb-3 font-semibold text-slate-900">Giá combo</h3>
-      <dl className="grid grid-cols-1 gap-4 rounded-lg bg-slate-50 p-4 sm:grid-cols-3">
-        <div><dt>Giá bán combo</dt><dd className="mt-1 text-xl font-semibold text-sky-800">{bundleMoney(bundle.packagePrice)}</dd></div>
-        <div><dt>Tổng giá mua lẻ</dt><dd className="mt-1 font-medium text-slate-900">{bundleMoney(bundle.originalTotal)}</dd></div>
-        <div><dt>Tiết kiệm khi mua combo</dt><dd className="mt-1 font-medium text-slate-900">{bundleMoney(bundle.savingAmount)}{bundle.discountPercent != null ? ` (${bundle.discountPercent}%)` : ''}</dd></div>
+      <dl className="grid grid-cols-1 gap-4 rounded-control border border-aqs-border bg-aqs-surface-subtle p-4 sm:grid-cols-3">
+        <div><dt className="text-xs text-aqs-ink-muted">Giá bán combo</dt><dd className="mt-1 text-xl font-bold tabular-nums text-aqs-accent">{bundleMoney(bundle.packagePrice)}</dd></div>
+        <div><dt className="text-xs text-aqs-ink-muted">Tổng giá mua lẻ</dt><dd className="mt-1 font-semibold tabular-nums text-aqs-ink">{bundleMoney(bundle.originalTotal)}</dd></div>
+        <div><dt className="text-xs text-aqs-ink-muted">Tiết kiệm khi mua combo</dt><dd className="mt-1 font-semibold tabular-nums text-aqs-positive">{bundleMoney(bundle.savingAmount)}{bundle.discountPercent != null ? ` (${bundle.discountPercent}%)` : ''}</dd></div>
       </dl>
       {bundle.priceIssue && <p role="alert" className="mt-3 rounded-md bg-amber-50 p-3 text-amber-900">Giá hiện hành cần kiểm tra ({bundle.priceIssue}). Ngừng công bố và sửa cấu hình giá khi cần.</p>}
     </section>

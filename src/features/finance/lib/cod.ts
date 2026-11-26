@@ -5,7 +5,7 @@ export const isVndAmount = (value: number) => Number.isSafeInteger(value) && val
 export const canReceiveCod = (item: CodCollection, actorId: string) => item.status === 'PENDING' && item.shipperId !== actorId
 export const codStatusLabel = (value: string | null) => ({ PENDING: 'Chờ bàn giao tiền', VERIFIED: 'Đã nhận tiền', REJECTED: 'Đã từ chối' } as Record<string, string>)[value ?? ''] ?? value ?? 'Chưa áp dụng'
 
-export const codButton = 'min-h-9 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:opacity-50'
+export const codButton = 'inline-flex h-10 items-center justify-center rounded-control border border-aqs-border bg-aqs-surface px-3.5 text-sm font-medium text-aqs-ink transition-colors hover:border-slate-300 hover:bg-aqs-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:opacity-50'
 
 // Retry uncertain results with the same key and payload; a definite 4xx did not commit.
 export function isUncertainCodError(error: unknown) {

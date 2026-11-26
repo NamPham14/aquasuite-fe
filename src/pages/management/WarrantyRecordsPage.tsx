@@ -3,13 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import { Plus, RotateCcw, ShieldCheck, Wrench } from 'lucide-react'
 import { useAuth } from '../../features/iam/hooks/useAuth'
 import {
-  ManagementFilterBar,
+  ManagementFilterCard,
   ManagementPageHeader,
+  ManagementPageShell,
+  ManagementPanel,
   ManagementSearch,
   ManagementSelect,
+  filterControlClass,
 } from '../../shared/ui/ManagementPage'
-import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
+import { ManagementTable, ManagementTableSkeleton, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
 import { ManagementRowActions } from '../../shared/ui/ManagementRowActions'
+import { Button, SakugaActionButton } from '../../shared/ui/Button'
+import { ErrorState } from '../../shared/ui/FeedbackStates'
 import { normalizeApiError } from '../../shared/api/apiError'
 import {
   useGetMyWarrantyRecordsQuery,
@@ -218,107 +223,106 @@ export function WarrantyRecordsPage({ customerScope = false }: { customerScope?:
   const fetchError = activeQuery.error ? normalizeApiError(activeQuery.error).message : null
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <ManagementPageHeader
-            title={customerScope ? 'Bảo hành của tôi' : 'Thẻ bảo hành điện tử (E-Warranty)'}
-            description={
-              customerScope
-                ? 'Tra cứu thời hạn bảo hành, điều khoản áp dụng và lịch sử sửa chữa sản phẩm của bạn.'
-                : 'Cấp mới, tra cứu theo SĐT/Serial và quản lý hồ sơ bảo hành điện tử toàn cửa hàng.'
-            }
-            group="Dịch vụ & Hậu mãi"
-            breadcrumb={customerScope ? 'Bảo hành của tôi' : 'Thẻ bảo hành điện tử'}
-            icon={<ShieldCheck className="h-5 w-5" />}
+    <ManagementPageShell>
+      <ManagementPageHeader
+        title={customerScope ? 'Bảo hành của tôi' : 'Thẻ bảo hành điện tử (E-Warranty)'}
+        description={
+          customerScope
+            ? 'Tra cứu thời hạn bảo hành, điều khoản áp dụng và lịch sử sửa chữa sản phẩm của bạn.'
+            : 'Cấp mới, tra cứu theo SĐT/Serial và quản lý hồ sơ bảo hành điện tử toàn cửa hàng.'
+        }
+        group="Dịch vụ & Hậu mãi"
+        breadcrumb={customerScope ? 'Bảo hành của tôi' : 'Thẻ bảo hành điện tử'}
+        icon={<ShieldCheck className="h-5 w-5" />}
+        actions={
+          canCreate ? (
+            <SakugaActionButton onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Cấp thẻ bảo hành
+            </SakugaActionButton>
+          ) : undefined
+        }
+      />
+
+      <ManagementFilterCard
+        headingId="warranty-record-filters"
+        title="Tìm và lọc thẻ bảo hành"
+        resultCount={`Hiển thị ${items.length} / ${totalElements} thẻ bảo hành`}
+        hasActiveFilters={hasActiveFilters}
+        onReset={resetFilters}
+      >
+        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <ManagementSearch
+            id="warranty-keyword-search"
+            label="Tìm theo Mã thẻ / Số Serial"
+            value={keyword}
+            onChange={(val) => {
+              setKeyword(val)
+              setPage(1)
+            }}
+            placeholder="Nhập WAR-... hoặc số serial..."
           />
-        </div>
-        {canCreate && (
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-sky-700 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-sky-800"
+
+          {!customerScope && (
+            <div className="min-w-0">
+              <label htmlFor="warranty-phone-filter" className="mb-1.5 block text-xs font-semibold leading-none text-aqs-ink-muted">
+                Số điện thoại khách hàng
+              </label>
+              <input
+                id="warranty-phone-filter"
+                type="search"
+                value={phone}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="VD: 0901234567"
+                className={`${filterControlClass} ${phoneError ? 'border-aqs-danger' : ''}`}
+              />
+              {phoneError && <p className="mt-1 text-[11px] text-aqs-danger">{phoneError}</p>}
+            </div>
+          )}
+
+          <ManagementSelect
+            id="warranty-status-filter"
+            label="Trạng thái"
+            value={displayStatus}
+            onChange={(val) => {
+              setDisplayStatus(val as WarrantyDisplayStatus | '')
+              setPage(1)
+            }}
           >
-            <Plus className="h-4 w-4" />
-            Cấp thẻ bảo hành
-          </button>
-        )}
-      </div>
+            <option value="">Tất cả trạng thái</option>
+            <option value="ACTIVE">Còn hiệu lực (Active)</option>
+            <option value="CLAIMED">Đang bảo hành (Claimed)</option>
+            <option value="EXPIRED">Hết hạn (Expired)</option>
+            <option value="VOIDED">Đã hủy (Voided)</option>
+          </ManagementSelect>
 
-      <ManagementFilterBar>
-        <ManagementSearch
-          id="warranty-keyword-search"
-          label="Tìm theo Mã thẻ / Số Serial"
-          value={keyword}
-          onChange={(val) => {
-            setKeyword(val)
-            setPage(1)
-          }}
-          placeholder="Nhập WAR-... hoặc số serial..."
-        />
+          {hasActiveFilters && (
+            <Button variant="secondary" onClick={resetFilters}>
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+              Đặt lại
+            </Button>
+          )}
+        </div>
+      </ManagementFilterCard>
 
-        {!customerScope && (
-          <div className="min-w-0 sm:min-w-52">
-            <label htmlFor="warranty-phone-filter" className="mb-1.5 block text-xs font-medium text-slate-700">
-              Số điện thoại khách hàng
-            </label>
-            <input
-              id="warranty-phone-filter"
-              type="search"
-              value={phone}
-              onChange={(e) => handlePhoneChange(e.target.value)}
-              placeholder="VD: 0901234567"
-              className={`h-10 w-full rounded-md border bg-white px-3 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
-                phoneError ? 'border-rose-400' : 'border-slate-300'
-              }`}
+      <ManagementPanel
+        headingId="warranty-table-heading"
+        title={`Danh sách thẻ bảo hành (${totalElements})`}
+        refreshing={activeQuery.isFetching && items.length > 0}
+        busy={activeQuery.isFetching}
+      >
+        {fetchError ? (
+          <div className="p-5">
+            <ErrorState
+              sectionLabel="Danh sách thẻ bảo hành"
+              title="Không thể tải dữ liệu bảo hành"
+              message={fetchError}
+              onRetry={() => void activeQuery.refetch()}
+              retrying={activeQuery.isFetching}
             />
-            {phoneError && <p className="mt-1 text-[11px] text-rose-700">{phoneError}</p>}
           </div>
-        )}
-
-        <ManagementSelect
-          id="warranty-status-filter"
-          label="Trạng thái"
-          value={displayStatus}
-          onChange={(val) => {
-            setDisplayStatus(val as WarrantyDisplayStatus | '')
-            setPage(1)
-          }}
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="ACTIVE">Còn hiệu lực (Active)</option>
-          <option value="CLAIMED">Đang bảo hành (Claimed)</option>
-          <option value="EXPIRED">Hết hạn (Expired)</option>
-          <option value="VOIDED">Đã hủy (Voided)</option>
-        </ManagementSelect>
-
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={resetFilters}
-            className="inline-flex h-10 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Đặt lại
-          </button>
-        )}
-      </ManagementFilterBar>
-
-      {fetchError && (
-        <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
-          {fetchError}
-        </div>
-      )}
-
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div className="border-b border-slate-100 px-4 py-3">
-          <h2 id="warranty-table-heading" className="text-sm font-semibold text-slate-900">
-            Danh sách thẻ bảo hành ({totalElements})
-          </h2>
-        </div>
-
-        {activeQuery.isLoading ? (
-          <div className="px-4 py-10 text-center text-sm text-slate-500">Đang tải dữ liệu bảo hành...</div>
+        ) : activeQuery.isLoading ? (
+          <ManagementTableSkeleton columns={customerScope ? 7 : 8} rows={5} />
         ) : (
           <ManagementTable
             columns={columns}
@@ -328,37 +332,37 @@ export function WarrantyRecordsPage({ customerScope = false }: { customerScope?:
             emptyMessage="Không tìm thấy thẻ bảo hành nào phù hợp với điều kiện lọc."
           />
         )}
-      </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-2 pt-1 text-xs text-slate-500">
-          <div>
-            Hiển thị <span className="font-semibold text-slate-700">{items.length}</span> /{' '}
-            <span className="font-semibold text-slate-700">{totalElements}</span> thẻ bảo hành
+        {totalPages > 1 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-aqs-border bg-aqs-surface-subtle/60 px-5 py-3 text-xs text-aqs-ink-muted">
+            <div>
+              Hiển thị <span className="font-semibold tabular-nums text-aqs-ink">{items.length}</span> /{' '}
+              <span className="font-semibold tabular-nums text-aqs-ink">{totalElements}</span> thẻ bảo hành
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Trước
+              </Button>
+              <span className="px-1 font-medium tabular-nums text-aqs-ink">
+                Trang {page} / {totalPages}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Tiếp
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="rounded border border-slate-200 px-2.5 py-1 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-            >
-              Trước
-            </button>
-            <span className="px-2 py-1 font-medium text-slate-700">
-              Trang {page} / {totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="rounded border border-slate-200 px-2.5 py-1 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-            >
-              Tiếp
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </ManagementPanel>
 
       {showCreateModal && (
         <CreateWarrantyModal
@@ -384,7 +388,7 @@ export function WarrantyRecordsPage({ customerScope = false }: { customerScope?:
           }}
         />
       )}
-    </div>
+    </ManagementPageShell>
   )
 }
 

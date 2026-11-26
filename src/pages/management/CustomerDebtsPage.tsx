@@ -5,12 +5,13 @@ import { ActivityLogPanel } from '../../features/audit'
 import { type CustomerDebtSummary, type DebtStatus, useGetCustomerDebtStatsQuery, useGetCustomerDebtsQuery } from '../../features/finance'
 import { useAuth } from '../../features/iam/hooks/useAuth.ts'
 import { normalizeApiError } from '../../shared/api/apiError.ts'
+import { ManagementPageHeader, ManagementPageShell, filterControlClass } from '../../shared/ui/ManagementPage.tsx'
 
 const pageSize = 15
 const money = (value?: number) => value == null ? '—' : `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value)} ₫`
 const date = (value?: string) => value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short' }).format(new Date(value)) : '—'
-const secondaryButton = 'inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50'
-const iconButton = 'inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white transition-colors focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-40'
+const secondaryButton = 'inline-flex h-10 items-center justify-center gap-1.5 rounded-control border border-aqs-border bg-aqs-surface px-3.5 text-sm font-medium text-aqs-ink transition-colors hover:border-slate-300 hover:bg-aqs-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:opacity-50'
+const iconButton = 'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-aqs-border bg-aqs-surface transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:opacity-40'
 const statusLabel = (status: DebtStatus) => ({ COD_REVIEW: 'Chờ đối soát COD', NO_CREDIT: 'Không có tín dụng', WITHIN_TERM: 'Trong hạn', OVERDUE: 'Quá hạn', CREDIT_BLOCKED: 'Chặn tín dụng', BLACKLISTED: 'Danh sách đen', BLOCKED: 'Đã khóa' } as const)[status]
 const statusClass = (status: DebtStatus) => status === 'WITHIN_TERM' ? 'bg-emerald-100 text-emerald-700' : status === 'OVERDUE' || status === 'CREDIT_BLOCKED' || status === 'COD_REVIEW' ? 'bg-amber-100 text-amber-700' : status === 'NO_CREDIT' ? 'bg-slate-200 text-slate-600' : 'bg-rose-100 text-rose-700'
 const customerTypeLabel = (value?: string) => ({ RETAIL: 'Khách lẻ', CONTRACTOR: 'Nhà thầu', INSTALLER: 'Thợ lắp đặt', PROJECT_CUSTOMER: 'Khách dự án' } as Record<string, string>)[value ?? ''] ?? value ?? '—'
@@ -38,18 +39,19 @@ export function CustomerDebtsPage() {
   function reset() { setKeyword(''); setCustomerType(''); changeStatus(''); setSortBy(''); setDirection('desc') }
   function scrollToLog() { document.getElementById('customer-debt-activity')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
 
-  return <main className="mx-auto w-full max-w-[1200px] space-y-3 pb-12">
-    <header className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-      <div>
-        <nav aria-label="Breadcrumb" className="mb-1 text-xs text-slate-500">Bán hàng <span className="mx-1.5 text-slate-300">/</span><span className="font-semibold text-sky-700">Quản lý công nợ</span></nav>
-        <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Quản lý công nợ khách hàng</h1>
-        <p className="mt-1 text-[13px] text-slate-500">Theo dõi dư nợ, kiểm tra tín dụng và nhắc nợ khách hàng bán chịu.</p>
-      </div>
-      <div className="flex flex-wrap justify-end gap-2">
-        <button type="button" className={secondaryButton} onClick={scrollToLog}><History className="h-4 w-4" />Nhật ký hoạt động</button>
-        {isOwner && <Link to="/app/customer-debts/credit-approvals" className={secondaryButton}><ShieldCheck className="h-4 w-4" />Duyệt hạn mức</Link>}
-      </div>
-    </header>
+  return <ManagementPageShell>
+    <ManagementPageHeader
+      group="Tài chính & Công nợ"
+      breadcrumb="Quản lý công nợ"
+      title="Quản lý công nợ khách hàng"
+      description="Theo dõi dư nợ, kiểm tra tín dụng và nhắc nợ khách hàng bán chịu."
+      actions={
+        <div className="flex flex-wrap justify-end gap-2">
+          <button type="button" className={secondaryButton} onClick={scrollToLog}><History className="h-4 w-4" />Nhật ký hoạt động</button>
+          {isOwner && <Link to="/app/customer-debts/credit-approvals" className={secondaryButton}><ShieldCheck className="h-4 w-4" />Duyệt hạn mức</Link>}
+        </div>
+      }
+    />
 
     {stats.isError && <ErrorBanner message={`Không thể tải thống kê: ${normalizeApiError(stats.error).message}`} retry={() => void stats.refetch()} />}
 
@@ -59,9 +61,9 @@ export function CustomerDebtsPage() {
       <StatisticCard label="Đang bị chặn tín dụng" value={`${stats.data?.creditBlockedCustomerCount ?? '—'} khách`} note="Vượt hạn mức, danh sách đen hoặc bị khóa" icon={<ShieldAlert className="h-4 w-4" />} />
     </section>
 
-    <section role="search" aria-label="Tìm kiếm và lọc công nợ" className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <section role="search" aria-label="Tìm kiếm và lọc công nợ" className="rounded-card border border-aqs-border bg-aqs-surface p-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="min-w-0 lg:col-span-2"><span className="mb-1 block text-[11px] font-semibold text-slate-600">Tìm kiếm</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input type="search" value={keyword} onChange={(event) => { setKeyword(event.target.value); setPage(0) }} placeholder="Tìm theo mã khách, tên, số điện thoại…" disabled={list.isLoading} className="h-8 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-xs text-slate-900 outline-none transition focus:border-sky-700 focus:ring-1 focus:ring-sky-700 disabled:bg-slate-50" /></span></label>
+        <label className="min-w-0 lg:col-span-2"><span className="mb-1.5 block text-xs font-semibold leading-none text-aqs-ink-muted">Tìm kiếm</span><span className="relative block"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-aqs-ink-faint" /><input type="search" value={keyword} onChange={(event) => { setKeyword(event.target.value); setPage(0) }} placeholder="Tìm theo mã khách, tên, số điện thoại…" disabled={list.isLoading} className={`${filterControlClass} pl-9`} /></span></label>
         <Field label="Loại khách"><select value={customerType} onChange={(event) => { setCustomerType(event.target.value); setPage(0) }} disabled={list.isLoading}><option value="">Mọi loại khách</option><option value="CONTRACTOR">Nhà thầu</option><option value="PROJECT_CUSTOMER">Khách dự án</option><option value="RETAIL">Khách lẻ</option><option value="INSTALLER">Thợ lắp đặt</option></select></Field>
         <Field label="Trạng thái nợ"><select value={debtStatus} onChange={(event) => changeStatus(event.target.value as DebtStatus | '')} disabled={list.isLoading}><option value="">Mọi trạng thái nợ</option><option value="WITHIN_TERM">Trong hạn</option><option value="OVERDUE">Quá hạn — cần nhắc nợ</option><option value="CREDIT_BLOCKED">Chặn tín dụng</option><option value="BLACKLISTED">Danh sách đen</option><option value="NO_CREDIT">Không công nợ / không tín dụng</option><option value="COD_REVIEW">Chờ đối soát COD</option><option value="BLOCKED">Đã khóa</option></select></Field>
         <Field label="Sắp xếp theo"><select value={sortBy} onChange={(event) => { setSortBy(event.target.value); setPage(0) }} disabled={list.isLoading}><option value="">Mặc định</option><option value="outstandingBalance">Dư nợ</option><option value="overdueBalance">Nợ quá hạn</option><option value="nearestDueDate">Ngày tới hạn</option><option value="customerName">Tên khách</option></select></Field>
@@ -70,21 +72,21 @@ export function CustomerDebtsPage() {
       </div>
     </section>
 
-    <section aria-label="Danh sách khách hàng có công nợ" className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm" aria-busy={list.isFetching}>
-      {error && <div className="p-3"><ErrorBanner message={error} retry={() => void list.refetch()} /></div>}
+    <section aria-label="Danh sách khách hàng có công nợ" className="overflow-hidden rounded-card border border-aqs-border bg-aqs-surface" aria-busy={list.isFetching}>
+      {error && <div className="p-4"><ErrorBanner message={error} retry={() => void list.refetch()} /></div>}
       <DebtTable rows={rows} loading={list.isLoading} error={Boolean(error)} owner={isOwner} canRemind={canRemind} onOpen={openDetail} />
-      <div className="border-t border-slate-200 bg-slate-50/60 px-4 py-2.5"><Pagination page={list.data?.page ?? page} totalPages={list.data?.totalPages ?? 0} total={list.data?.totalElements ?? 0} disabled={list.isFetching} onChange={setPage} /></div>
+      <div className="border-t border-aqs-border bg-aqs-surface-subtle/60 px-5 py-3"><Pagination page={list.data?.page ?? page} totalPages={list.data?.totalPages ?? 0} total={list.data?.totalElements ?? 0} disabled={list.isFetching} onChange={setPage} /></div>
     </section>
 
-    <div id="customer-debt-activity"><ActivityLogPanel entityType="CUSTOMER" description="Các thay đổi hồ sơ tín dụng, nhắc nợ, ghi nhận cuộc gọi và thao tác công nợ." /></div>
-  </main>
+    <div id="customer-debt-activity"><ActivityLogPanel operational entityType="CUSTOMER" description="Các thay đổi hồ sơ tín dụng, nhắc nợ, ghi nhận cuộc gọi và thao tác công nợ." /></div>
+  </ManagementPageShell>
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="min-w-0"><span className="mb-1 block text-[11px] font-semibold text-slate-600">{label}</span><span className="block [&>select]:h-8 [&>select]:w-full [&>select]:rounded-lg [&>select]:border [&>select]:border-slate-300 [&>select]:bg-white [&>select]:px-2.5 [&>select]:text-xs [&>select]:text-slate-900 [&>select]:outline-none [&>select]:focus:border-sky-700 [&>select]:focus:ring-1 [&>select]:focus:ring-sky-700 [&>select]:disabled:bg-slate-50">{children}</span></label> }
+function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="min-w-0"><span className="mb-1.5 block text-xs font-semibold leading-none text-aqs-ink-muted">{label}</span><span className="block [&>select]:h-10 [&>select]:w-full [&>select]:rounded-control [&>select]:border [&>select]:border-aqs-border-strong [&>select]:bg-aqs-surface [&>select]:px-3 [&>select]:text-[13px] [&>select]:text-aqs-ink [&>select]:outline-none [&>select]:focus:border-aqs-focus [&>select]:disabled:bg-aqs-surface-subtle">{children}</span></label> }
 
 function StatisticCard({ label, value, note, icon, active = false, onClick }: { label: string; value: string; note: string; icon: ReactNode; active?: boolean; onClick?: () => void }) {
-  const content = <><span className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">{icon}{label}</span><strong className="mt-1 block text-xl font-extrabold tabular-nums text-slate-900">{value}</strong><span className="block text-[11px] text-slate-500">{note}</span></>
-  return onClick ? <button type="button" aria-pressed={active} onClick={onClick} className={`min-h-20 rounded-xl border px-4 py-3 text-left shadow-sm transition ${active ? 'border-sky-700 bg-sky-50 ring-1 ring-sky-700' : 'border-slate-200 bg-white hover:border-sky-500'}`}>{content}</button> : <div className="min-h-20 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">{content}</div>
+  const content = <><span className="flex items-center gap-1.5 text-xs font-semibold text-aqs-ink-muted">{icon}{label}</span><strong className="mt-1 block text-xl font-bold tabular-nums text-aqs-ink">{value}</strong><span className="block text-[11px] text-aqs-ink-faint">{note}</span></>
+  return onClick ? <button type="button" aria-pressed={active} onClick={onClick} className={`min-h-20 rounded-card border px-4 py-3 text-left transition-colors ${active ? 'border-aqs-accent bg-aqs-accent-soft ring-1 ring-inset ring-aqs-accent' : 'border-aqs-border bg-aqs-surface hover:border-aqs-border-strong hover:bg-aqs-surface-subtle'}`}>{content}</button> : <div className="min-h-20 rounded-card border border-aqs-border bg-aqs-surface px-4 py-3">{content}</div>
 }
 
 function DebtTable({ rows, loading, error, owner, canRemind, onOpen }: { rows: CustomerDebtSummary[]; loading: boolean; error: boolean; owner: boolean; canRemind: boolean; onOpen: (customerId: string, action?: 'credit' | 'reminder') => void }) {

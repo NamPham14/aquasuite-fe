@@ -1,0 +1,142 @@
+/* AquaSuite Shared Motion & SVG Micro-interactions.
+ * Includes Lucian UX/UI (#090, #092, #244, #436 — MIT License) & Sakuga VFX beats with full reduced-motion support.
+ */
+
+/* Shared spinners & pulses */
+@keyframes aqs-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes aqs-status-pulse {
+  50% { opacity: 0.35; scale: 0.75; }
+}
+@keyframes aqs-skeleton-pulse {
+  50% { opacity: 0.48; }
+}
+
+.aqs-animate-spin { animation: aqs-spin 0.7s linear infinite; }
+.aqs-animate-status-pulse { animation: aqs-status-pulse 1.2s ease-in-out infinite; }
+.aqs-animate-skeleton { animation: aqs-skeleton-pulse 1.3s ease-in-out infinite; }
+
+/* Sakuga VFX — restrained press anticipation, accent ticks on hit & spring settle */
+.aqs-sakuga-ticks i {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--color-aqs-accent);
+  opacity: 0;
+  transform-origin: 50% 16px;
+}
+.aqs-sakuga-ticks i:nth-child(1) { left: 18%; top: 2px; transform: rotate(-24deg) scaleY(0); }
+.aqs-sakuga-ticks i:nth-child(2) { left: 50%; top: -2px; transform: scaleY(0); }
+.aqs-sakuga-ticks i:nth-child(3) { right: 18%; top: 2px; transform: rotate(24deg) scaleY(0); }
+.aqs-sakuga-hit > button { animation: aqs-sakuga-settle 480ms var(--ease-aqs-spring); }
+.aqs-sakuga-hit .aqs-sakuga-ticks i { animation: aqs-sakuga-tick 420ms ease-out; }
+
+@keyframes aqs-sakuga-settle {
+  0% { transform: scaleX(1.04) scaleY(0.94); }
+  42% { transform: scaleX(0.985) scaleY(1.025); }
+  100% { transform: none; }
+}
+@keyframes aqs-sakuga-tick {
+  0% { opacity: 0; scale: 1 0.3; }
+  28% { opacity: 1; scale: 1 1; }
+  100% { opacity: 0; scale: 1 0.05; }
+}
+
+/* Lucian #244 — Validation summary entrance */
+@keyframes aqs-u244-in {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+.aqs-u244-enter {
+  animation: aqs-u244-in 0.4s cubic-bezier(0.3, 1, 0.4, 1);
+}
+
+/* Lucian #092 — Empty search lens scan & suggestion rise */
+@keyframes aqs-u092-scan {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(46px, 10px) rotate(8deg); }
+  50% { transform: translate(78px, -4px) rotate(-4deg); }
+  75% { transform: translate(30px, -8px) rotate(-10deg); }
+}
+@keyframes aqs-u092-up {
+  from { opacity: 0; transform: translateY(14px) scale(0.95); }
+}
+.aqs-u092-lens { animation: aqs-u092-scan 3.6s ease-in-out infinite; }
+.aqs-u092-up { animation: aqs-u092-up 0.45s var(--ease-aqs-spring) backwards; }
+
+/* Lucian #090 — Retry error plug animation */
+@keyframes aqs-u090-jig {
+  50% { transform: translateX(6px); }
+}
+@keyframes aqs-u090-blink {
+  50% { fill: var(--ux-surface-3); }
+}
+.aqs-u090-left,
+.aqs-u090-right { transition: transform 0.55s var(--ease-aqs-spring); }
+.aqs-u090-left { transform: translateX(-10px); }
+.aqs-u090-right { transform: translateX(8px); }
+.aqs-u090-trying .aqs-u090-left {
+  transform: translateX(9px);
+  animation: aqs-u090-jig 0.28s 0.5s ease-in-out infinite;
+}
+.aqs-u090-trying .aqs-u090-right { transform: translateX(-2px); }
+.aqs-u090-trying .aqs-u090-led {
+  fill: var(--ux-warn);
+  animation: aqs-u090-blink 0.5s steps(1) infinite;
+}
+
+/* Lucian #436 — Destructive delete confirmation animation */
+.aqs-u436-lid { transform-box: view-box; transform-origin: 6px 9.5px; }
+.aqs-u436-body { transform-box: view-box; transform-origin: 16px 27px; }
+.aqs-u436-document { opacity: 0; }
+.aqs-u436-deleting .aqs-u436-lid { animation: aqs-u436-lid 1.25s cubic-bezier(0.3, 1.3, 0.5, 1); }
+.aqs-u436-deleting .aqs-u436-document { animation: aqs-u436-doc 1.25s cubic-bezier(0.5, 0, 0.6, 1); }
+.aqs-u436-deleting .aqs-u436-body { animation: aqs-u436-body 1.25s ease-out; }
+.aqs-u436-deleting .aqs-u436-icon { animation: aqs-u436-tile 1.25s ease-out; }
+
+@keyframes aqs-u436-lid {
+  0% { transform: none; }
+  22%, 58% { transform: rotate(-38deg); }
+  74% { transform: rotate(7deg); }
+  86%, 100% { transform: none; }
+}
+@keyframes aqs-u436-doc {
+  0%, 14% { opacity: 0; transform: translateY(-14px) rotate(-8deg); }
+  26% { opacity: 1; transform: translateY(-12px) rotate(-4deg); }
+  52% { opacity: 1; transform: translateY(9px); }
+  60%, 100% { opacity: 1; transform: translateY(14px); }
+}
+@keyframes aqs-u436-body {
+  0%, 72% { transform: none; }
+  80% { transform: scale(1.07, 0.9); }
+  90% { transform: scale(0.97, 1.04); }
+  100% { transform: none; }
+}
+@keyframes aqs-u436-tile {
+  0%, 74% { transform: none; }
+  80% { transform: translateY(2px); }
+  90% { transform: translateY(-1px); }
+  100% { transform: none; }
+}
+
+/* Reduced motion compliance */
+@media (prefers-reduced-motion: reduce) {
+  .aqs-animate-spin,
+  .aqs-animate-status-pulse,
+  .aqs-animate-skeleton,
+  .aqs-sakuga-hit > button,
+  .aqs-sakuga-hit .aqs-sakuga-ticks i,
+  .aqs-u244-enter,
+  .aqs-u092-lens,
+  .aqs-u092-up,
+  .aqs-u090-trying .aqs-u090-left,
+  .aqs-u090-trying .aqs-u090-led,
+  .aqs-u436-deleting .aqs-u436-lid,
+  .aqs-u436-deleting .aqs-u436-document,
+  .aqs-u436-deleting .aqs-u436-body,
+  .aqs-u436-deleting .aqs-u436-icon {
+    animation: none !important;
+    transition-duration: 0.001ms !important;
+  }
+}

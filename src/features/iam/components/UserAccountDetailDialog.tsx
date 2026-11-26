@@ -1,10 +1,14 @@
 import { useState, type ReactNode } from 'react'
+import { Pencil } from 'lucide-react'
 import { ManagementDialog } from '../../../shared/ui/ManagementDialog.tsx'
+import { Button } from '../../../shared/ui/Button'
+import { CodeChip, StatusBadge, type StatusTone } from '../../../shared/ui/Badge'
+import { ErrorState } from '../../../shared/ui/FeedbackStates'
 import { normalizeApiError } from '../../../shared/api/apiError.ts'
 import { useGetUserAccountQuery } from '../api/userAccountApi.ts'
 import type { UserAccount } from '../types/userAccount.types.ts'
 
-const AVATAR_COLORS = ['#0369a1', '#256d85', '#8a5a12', '#7a4a8c', '#a03b32', '#3c6e47', '#5b5f97', '#14666e']
+const AVATAR_COLORS = ['#087f8c', '#256d85', '#8a5a12', '#6a4b7c', '#983d36', '#24724f', '#4e598c', '#14666e']
 
 const ROLE_LABELS: Record<string, string> = {
   SHOP_OWNER: 'Chủ cửa hàng',
@@ -17,6 +21,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 function roleLabel(code: string) {
   return ROLE_LABELS[code] ?? code
+}
+
+function isOwnerRole(code: string) {
+  return code === 'SHOP_OWNER' || code === 'STORE_OWNER'
 }
 
 function avatarColor(name: string) {
@@ -39,23 +47,10 @@ function formatPhone(phone: string) {
   return digits.length === 10 ? `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}` : phone
 }
 
-function statusLabel(status: UserAccount['status']) {
-  return status === 'ACTIVE' ? 'Đang hoạt động' : status === 'INACTIVE' ? 'Ngừng hoạt động' : 'Đã khóa'
-}
-
-function StatusBadge({ status }: { status: UserAccount['status'] }) {
-  const style =
-    status === 'ACTIVE'
-      ? 'bg-green-50 text-green-700'
-      : status === 'INACTIVE'
-        ? 'bg-slate-100 text-slate-600'
-        : 'bg-red-50 text-red-700'
-  return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${style}`}>
-      <span className="h-[7px] w-[7px] rounded-full bg-current" aria-hidden="true" />
-      {statusLabel(status)}
-    </span>
-  )
+function statusMeta(status: UserAccount['status']): { label: string; tone: StatusTone } {
+  if (status === 'ACTIVE') return { label: 'Đang hoạt động', tone: 'positive' }
+  if (status === 'INACTIVE') return { label: 'Ngừng hoạt động', tone: 'neutral' }
+  return { label: 'Đã khóa', tone: 'danger' }
 }
 
 export function UserAccountDetailDialog({
@@ -74,79 +69,135 @@ export function UserAccountDetailDialog({
 
   return (
     <ManagementDialog title="Chi tiết tài khoản" onClose={onClose}>
-      <div className="space-y-4 p-5 sm:p-6">
-        {detail.isLoading && <p className="text-sm text-slate-600">Đang tải thông tin tài khoản...</p>}
-        {error && (
-          <div role="alert" className="space-y-3 rounded-lg bg-red-50 p-3 text-sm text-red-800">
-            <p>{error}</p>
-            <button
-              type="button"
-              onClick={() => void detail.refetch()}
-              className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium"
-            >
-              Thử lại
-            </button>
-          </div>
-        )}
-        {account && (
-          <>
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3.5">
-              <div
-                style={!account.avatarUrl || avatarFailed ? { backgroundColor: avatarColor(account.username || '?') } : undefined}
-                className="flex h-[46px] w-[46px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-sky-700 text-base font-bold text-white"
-              >
-                {account.avatarUrl && !avatarFailed ? (
-                  <img
-                    src={account.avatarUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                    onError={() => setAvatarFailed(true)}
-                  />
-                ) : (
-                  (account.username || '?').slice(0, 2).toUpperCase()
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-base font-bold text-slate-900">{account.username}</p>
-                <p className="truncate text-[13px] text-slate-600">{account.email}</p>
+      <div className="space-y-5 p-5 sm:p-6">
+        {detail.isLoading && (
+          <div className="space-y-3" aria-label="Đang tải thông tin tài khoản">
+            <div className="flex items-center gap-3 rounded-card border border-aqs-border bg-aqs-surface-subtle p-4">
+              <span className="aqs-animate-skeleton h-12 w-12 shrink-0 rounded-full bg-aqs-skeleton" />
+              <div className="space-y-2">
+                <span className="aqs-animate-skeleton block h-3 w-36 rounded bg-aqs-skeleton" />
+                <span className="aqs-animate-skeleton block h-3 w-48 rounded bg-aqs-skeleton" />
               </div>
             </div>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="grid grid-cols-[140px_1fr] gap-4 py-1">
+                <span className="aqs-animate-skeleton h-3 w-2/3 rounded bg-aqs-skeleton" />
+                <span className="aqs-animate-skeleton h-3 w-3/4 rounded bg-aqs-skeleton" />
+              </div>
+            ))}
+          </div>
+        )}
 
-            <dl className="grid grid-cols-1 gap-x-3.5 gap-y-2 text-[13.5px] sm:grid-cols-[150px_1fr]">
-              <DetailRow label="ID">
-                <span className="font-mono text-[12.5px] font-medium text-slate-800">{account.id}</span>
+        {error && (
+          <ErrorState
+            sectionLabel="Hồ sơ tài khoản"
+            title="Không thể tải thông tin tài khoản"
+            message={error}
+            retrying={detail.isFetching}
+            onRetry={() => void detail.refetch()}
+            compact
+          />
+        )}
+
+        {account && (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-3.5 rounded-card border border-aqs-border bg-aqs-surface-subtle px-4 py-3.5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div
+                  style={
+                    !account.avatarUrl || avatarFailed
+                      ? { backgroundColor: avatarColor(account.username || '?') }
+                      : undefined
+                  }
+                  className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full text-base font-bold text-white"
+                >
+                  {account.avatarUrl && !avatarFailed ? (
+                    <img
+                      src={account.avatarUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      onError={() => setAvatarFailed(true)}
+                    />
+                  ) : (
+                    (account.username || '?').slice(0, 2).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="m-0 truncate text-base font-bold text-aqs-ink">{account.username}</p>
+                    {account.currentUser && (
+                      <span className="rounded-chip border border-aqs-accent-border bg-aqs-accent-soft px-1.5 py-0.5 text-[11px] font-bold text-aqs-accent-hover">
+                        Bạn
+                      </span>
+                    )}
+                  </div>
+                  <p className="m-0 truncate text-[13px] text-aqs-ink-muted">{account.email}</p>
+                </div>
+              </div>
+              <StatusBadge tone={statusMeta(account.status).tone}>
+                {statusMeta(account.status).label}
+              </StatusBadge>
+            </div>
+
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-2.5 text-[13.5px] sm:grid-cols-[155px_minmax(0,1fr)]">
+              <DetailRow label="Mã định danh (ID)">
+                <CodeChip>{account.id}</CodeChip>
               </DetailRow>
               <DetailRow label="Tên người dùng">{account.username}</DetailRow>
               <DetailRow label="Email">{account.email}</DetailRow>
               <DetailRow label="Số điện thoại">{formatPhone(account.phone)}</DetailRow>
               <DetailRow label="Vai trò">
-                {account.roles.map((role) => roleLabel(role.code)).join(', ') || '—'}
+                {account.roles.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {account.roles.map((role) => (
+                      <span
+                        key={role.id}
+                        title={role.code}
+                        className={`inline-flex items-center whitespace-nowrap rounded-chip border px-2 py-0.5 text-xs font-semibold ${
+                          isOwnerRole(role.code)
+                            ? 'border-aqs-accent-border bg-aqs-accent-soft text-aqs-accent-hover'
+                            : 'border-aqs-border bg-aqs-surface-subtle text-aqs-ink-muted'
+                        }`}
+                      >
+                        {roleLabel(role.code)}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  '—'
+                )}
               </DetailRow>
               <DetailRow label="Trạng thái">
-                <StatusBadge status={account.status} />
+                <StatusBadge tone={statusMeta(account.status).tone}>
+                  {statusMeta(account.status).label}
+                </StatusBadge>
               </DetailRow>
               <DetailRow label="Provider">{account.provider || 'LOCAL'}</DetailRow>
-              <DetailRow label="Xác thực email">{account.isVerified ? 'Đã xác thực' : 'Chưa xác thực'}</DetailRow>
-              <DetailRow label="Ngày tạo">{formatDateTime(account.createdAt)}</DetailRow>
+              <DetailRow label="Xác thực email">
+                <StatusBadge tone={account.isVerified ? 'positive' : 'neutral'}>
+                  {account.isVerified ? 'Đã xác thực' : 'Chưa xác thực'}
+                </StatusBadge>
+              </DetailRow>
+              <DetailRow label="Ngày tạo">
+                <span className="tabular-nums">{formatDateTime(account.createdAt)}</span>
+              </DetailRow>
             </dl>
           </>
         )}
-        <div className="flex justify-end gap-2.5 border-t border-slate-100 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 text-xs font-medium text-slate-700 hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-700"
-          >
+
+        <div className="flex justify-end gap-2 border-t border-aqs-border pt-4">
+          <Button type="button" variant="secondary" onClick={onClose}>
             Đóng
-          </button>
+          </Button>
           {account && (
-            <button
+            <Button
               type="button"
+              variant="primary"
+              icon={<Pencil className="h-4 w-4" aria-hidden="true" />}
               onClick={() => onEdit(account)}
-              className="inline-flex h-9 items-center justify-center rounded-lg bg-sky-700 px-3.5 text-[13px] font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-sky-700"
             >
               Sửa tài khoản
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -157,8 +208,8 @@ export function UserAccountDetailDialog({
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <>
-      <dt className="pt-0.5 text-[12.5px] font-semibold text-slate-500">{label}</dt>
-      <dd className="break-words font-semibold text-slate-900">{children}</dd>
+      <dt className="text-[12.5px] font-semibold text-aqs-ink-faint">{label}</dt>
+      <dd className="m-0 break-words font-semibold text-aqs-ink">{children}</dd>
     </>
   )
 }

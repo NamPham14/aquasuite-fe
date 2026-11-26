@@ -15,9 +15,6 @@ import {
 import { toast } from 'sonner'
 import type { AppDispatch } from '../../app/store'
 import {
-  CatalogDeleteDialog,
-  CatalogMobileList,
-  CatalogPagination,
   exportProductsToExcel,
   getCatalogErrorState,
   productApi,
@@ -40,20 +37,26 @@ import {
   type ProductType,
   type ValidProductFormValues,
 } from '../../features/catalog'
-import { ManagementDialog } from '../../shared/ui/ManagementDialog'
+import { DeleteConfirmDialog, ManagementDialog } from '../../shared/ui/ManagementDialog'
+import { Button, IconButton, SakugaActionButton, Tooltip } from '../../shared/ui/Button'
 import {
-  ManagementFilterBar,
+  ManagementFilterCard,
+  ManagementFilterChip,
   ManagementPageHeader,
+  ManagementPageShell,
+  ManagementPanel,
   ManagementSearch,
   ManagementSelect,
 } from '../../shared/ui/ManagementPage'
 import { ManagementRowActions } from '../../shared/ui/ManagementRowActions'
-import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
-
-const secondaryButton =
-  'inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50'
-const primaryButton =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600'
+import {
+  ManagementMobileList,
+  ManagementPagination,
+  ManagementTable,
+  ManagementTableSkeleton,
+  type ManagementTableColumn,
+} from '../../shared/ui/ManagementTable'
+import { EmptyState, ErrorState, OPERATIONAL_TOAST_CLASS } from '../../shared/ui/FeedbackStates'
 
 interface ProductDialogState {
   mode: Exclude<CatalogDialogMode, 'delete'>
@@ -130,6 +133,9 @@ export function ProductsPage() {
 
   const categoryOptions = categoryOptionsQuery.data ?? []
   const brandOptions = brandOptionsQuery.data ?? []
+  const hasActiveFilters = Boolean(
+    search || categoryId || brandId || status || productType || sort !== 'createdAt,desc',
+  )
 
   function handleFilterChange<T>(setter: (val: T) => void, val: T) {
     setter(val)
@@ -195,23 +201,27 @@ export function ProductsPage() {
 
       const exportRows = res.items.length > 0 ? res.items : rows
       if (exportRows.length === 0) {
-        toast.info('Không có sản phẩm nào để xuất file.')
+        toast.info('Không có sản phẩm nào để xuất file.', { className: OPERATIONAL_TOAST_CLASS })
         return
       }
       exportProductsToExcel(
         exportRows,
         `Danh_sach_san_pham_${new Date().toISOString().slice(0, 10)}.csv`,
       )
-      toast.success(`Đã xuất ${exportRows.length} sản phẩm ra file thành công.`)
+      toast.success(`Đã xuất ${exportRows.length} sản phẩm ra file thành công.`, {
+        className: OPERATIONAL_TOAST_CLASS,
+      })
     } catch {
       if (rows.length > 0) {
         exportProductsToExcel(
           rows,
           `Danh_sach_san_pham_${new Date().toISOString().slice(0, 10)}.csv`,
         )
-        toast.success(`Đã xuất ${rows.length} sản phẩm trên trang hiện tại.`)
+        toast.success(`Đã xuất ${rows.length} sản phẩm trên trang hiện tại.`, {
+          className: OPERATIONAL_TOAST_CLASS,
+        })
       } else {
-        toast.error('Không thể xuất dữ liệu sản phẩm.')
+        toast.error('Không thể xuất dữ liệu sản phẩm.', { className: OPERATIONAL_TOAST_CLASS })
       }
     } finally {
       setIsExporting(false)
@@ -235,7 +245,7 @@ export function ProductsPage() {
           status: values.status,
           imageUrls: values.imageUrls,
         }).unwrap()
-        toast.success('Tạo sản phẩm thành công.')
+        toast.success('Tạo sản phẩm thành công.', { className: OPERATIONAL_TOAST_CLASS })
         setDialog(null)
       } else if (dialog?.mode === 'edit' && dialog.productId) {
         await updateProduct({
@@ -252,7 +262,7 @@ export function ProductsPage() {
             imageUrls: values.imageUrls,
           },
         }).unwrap()
-        toast.success('Cập nhật sản phẩm thành công.')
+        toast.success('Cập nhật sản phẩm thành công.', { className: OPERATIONAL_TOAST_CLASS })
         setDialog(null)
       }
     } catch (err) {
@@ -270,7 +280,9 @@ export function ProductsPage() {
         id: statusTarget.productId,
         data: { status: nextStatus },
       }).unwrap()
-      toast.success('Cập nhật trạng thái sản phẩm thành công.')
+      toast.success('Cập nhật trạng thái sản phẩm thành công.', {
+        className: OPERATIONAL_TOAST_CLASS,
+      })
       setStatusTarget(null)
     } catch (err) {
       const errorState = getCatalogErrorState(err)
@@ -283,7 +295,7 @@ export function ProductsPage() {
     setDeleteError('')
     try {
       await deleteProduct(deleteTarget.productId).unwrap()
-      toast.success('Xóa sản phẩm thành công.')
+      toast.success('Xóa sản phẩm thành công.', { className: OPERATIONAL_TOAST_CLASS })
       setDeleteTarget(null)
     } catch (err) {
       const errorState = getCatalogErrorState(err)
@@ -291,15 +303,14 @@ export function ProductsPage() {
     }
   }
 
-  // Construct table columns: 5 optimized columns fitting 100% viewport without horizontal scrolling
   const columns: ManagementTableColumn<ProductSummary>[] = [
     {
       key: 'product',
       header: 'Sản phẩm',
       cellClassName: '!whitespace-normal min-w-[220px]',
       cell: (item) => (
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-[5px] border border-aqs-border bg-aqs-surface-subtle">
             {item.primaryImageUrl ? (
               <img
                 src={item.primaryImageUrl}
@@ -311,24 +322,22 @@ export function ProductsPage() {
                 }}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-slate-400">
+              <div className="grid h-full w-full place-items-center text-aqs-ink-faint">
                 <Package className="h-5 w-5" />
               </div>
             )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className="font-mono text-xs font-semibold text-sky-800">
-                {item.productCode}
-              </span>
+              <span className="text-xs font-bold text-aqs-accent-hover">{item.productCode}</span>
               {item.productType === 'BUNDLE' && (
-                <span className="rounded border border-purple-200 bg-purple-50 px-1.5 py-0.2 text-[10px] font-medium text-purple-700">
+                <span className="rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-700">
                   Combo
                 </span>
               )}
             </div>
             <div
-              className="line-clamp-2 text-xs font-medium text-slate-900 leading-snug"
+              className="mt-0.5 line-clamp-2 max-w-[320px] text-[13px] font-semibold leading-snug text-aqs-ink"
               title={item.productName}
             >
               {item.productName}
@@ -343,8 +352,8 @@ export function ProductsPage() {
       cellClassName: '!whitespace-normal',
       cell: (item) => (
         <div className="space-y-0.5">
-          <div className="font-medium text-slate-800">{item.categoryName}</div>
-          <div className="text-[11px] text-slate-500">
+          <div className="font-medium text-aqs-ink">{item.categoryName}</div>
+          <div className="text-xs text-aqs-ink-faint">
             {item.brandName ? `Hiệu: ${item.brandName}` : 'Không có thương hiệu'}
           </div>
         </div>
@@ -352,16 +361,11 @@ export function ProductsPage() {
     },
     {
       key: 'priceVariants',
-      header: 'Giá & Biến thể',
-      align: 'right',
+      header: 'Giá bán',
+      align: 'center',
       cell: (item) => (
-        <div className="space-y-0.5 text-right">
-          <div className="tabular-nums font-medium text-slate-900">
-            {formatPriceRange(item.minSellingPrice, item.maxSellingPrice)}
-          </div>
-          <div className="text-[11px] text-slate-500">
-            <Link className="text-sky-700 underline focus-visible:outline-2 focus-visible:outline-sky-600" to={`/app/products/${item.productId}/variants`} aria-label={`Quản lý SKU của ${item.productName}`}>{item.totalVariants} biến thể</Link>
-          </div>
+        <div className="text-center font-semibold tabular-nums text-aqs-ink">
+          {formatPriceRange(item.minSellingPrice, item.maxSellingPrice)}
         </div>
       ),
     },
@@ -374,53 +378,30 @@ export function ProductsPage() {
     {
       key: 'actions',
       header: 'Thao tác',
-      align: 'right',
+      align: 'center',
       cell: (item) => (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-center gap-1.5">
           <Link
             to={`/app/products/${item.productId}/variants`}
-            className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-sky-600"
+            className="inline-flex min-h-9 items-center gap-1 rounded-control border border-aqs-border px-2.5 text-xs font-semibold text-aqs-ink-muted no-underline transition-colors hover:bg-aqs-surface-subtle hover:text-aqs-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-focus"
             title="Quản lý biến thể (SKU) & giá bán"
             aria-label={`Quản lý SKU của ${item.productName}`}
           >
             SKU <ExternalLink className="h-3.5 w-3.5" />
           </Link>
-          <button
-            type="button"
-            onClick={() => openViewDialog(item)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-sky-600"
-            title="Xem chi tiết"
-            aria-label={`Xem ${item.productName}`}
-          >
-            <Eye className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => openEditDialog(item)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-sky-200 bg-sky-50 text-sky-700 transition-colors hover:bg-sky-100 focus-visible:outline-2 focus-visible:outline-sky-600"
-            title="Chỉnh sửa sản phẩm"
-            aria-label={`Sửa ${item.productName}`}
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
+          <IconButton label={`Xem ${item.productName}`} icon={<Eye />} onClick={() => openViewDialog(item)} />
+          <IconButton label={`Sửa ${item.productName}`} icon={<Pencil />} onClick={() => openEditDialog(item)} />
+          <IconButton
+            label={`Đổi trạng thái ${item.productName}`}
+            icon={<RefreshCw />}
             onClick={() => openStatusDialog(item)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-700 transition-colors hover:bg-amber-100 focus-visible:outline-2 focus-visible:outline-sky-600"
-            title="Đổi trạng thái"
-            aria-label={`Đổi trạng thái ${item.productName}`}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
+            label={`Xóa ${item.productName}`}
+            icon={<Trash2 />}
+            tone="danger"
             onClick={() => openDeleteDialog(item)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-rose-700 transition-colors hover:bg-rose-100 focus-visible:outline-2 focus-visible:outline-sky-600"
-            title="Xóa sản phẩm"
-            aria-label={`Xóa ${item.productName}`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          />
         </div>
       ),
     },
@@ -428,7 +409,6 @@ export function ProductsPage() {
 
   const listErrorMessage = isError ? getCatalogErrorState(error).message : ''
 
-  // Build fallback product detail when waiting for detailQuery
   const activeProductDetail: ProductDetail | undefined = detailQuery.data
     ? detailQuery.data
     : dialog?.initialSummary
@@ -468,305 +448,289 @@ export function ProductsPage() {
       : undefined
 
   return (
-    <div className="space-y-5">
+    <ManagementPageShell>
       <ManagementPageHeader
         title="Quản lý Sản phẩm"
-        description="Quản lý thông tin định danh sản phẩm, danh mục, thương hiệu và thông số kỹ thuật"
-        breadcrumb="Sản phẩm"
+        description="Kiểm soát thông tin định danh, phân loại và trạng thái kinh doanh. Biến thể và bảng giá tiếp tục được quản lý trong module SKU hiện có."
         group="Quản lý danh mục"
-        icon={<Package className="h-6 w-6" />}
+        breadcrumb="Sản phẩm"
+        actions={
+          <>
+            <Button variant="secondary" icon={<FileSpreadsheet />} onClick={() => setIsImportOpen(true)}>
+              Nhập Excel
+            </Button>
+            <Tooltip label={rows.length === 0 ? 'Không có sản phẩm để xuất' : 'Xuất danh sách hiện tại ra CSV'}>
+              <Button
+                variant="secondary"
+                icon={<Download />}
+                loading={isExporting}
+                disabled={isExporting || rows.length === 0}
+                onClick={() => void handleExportExcel()}
+              >
+                {isExporting ? 'Đang xuất' : 'Xuất Excel'}
+              </Button>
+            </Tooltip>
+            <SakugaActionButton icon={<Plus />} onClick={openCreateDialog}>
+              Tạo sản phẩm
+            </SakugaActionButton>
+          </>
+        }
       />
 
-      {/* Top action toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-600">
-          Danh mục định danh sản phẩm (Master Data). Biến thể và bảng giá chi tiết được quản lý tại module biến thể.
-        </p>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className={secondaryButton}
-            onClick={() => setIsImportOpen(true)}
-          >
-            <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
-            Nhập Excel
-          </button>
-          <button
-            type="button"
-            className={secondaryButton}
-            onClick={() => void handleExportExcel()}
-            disabled={isExporting || rows.length === 0}
-            title={rows.length === 0 ? 'Không có sản phẩm để xuất' : 'Xuất danh sách sản phẩm ra Excel/CSV'}
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            {isExporting ? 'Đang xuất...' : 'Xuất Excel'}
-          </button>
-          <button
-            type="button"
-            className={primaryButton}
-            onClick={openCreateDialog}
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Tạo sản phẩm
-          </button>
-        </div>
-      </div>
-
-      {/* Filters bar */}
-      <ManagementFilterBar>
-        <ManagementSearch
-          id="product-search"
-          label="Tìm kiếm"
-          value={search}
-          onChange={(val) => handleFilterChange(setSearch, val)}
-          placeholder="Tìm theo tên hoặc mã SP..."
-          disabled={isLoading}
-        />
-
-        <ManagementSelect
-          id="product-category-filter"
-          label="Danh mục"
-          value={categoryId}
-          onChange={(val) => handleFilterChange(setCategoryId, val)}
-          disabled={isLoading || categoryOptionsQuery.isLoading}
-        >
-          <option value="">Tất cả danh mục</option>
-          {categoryOptions.map((opt) => (
-            <option key={opt.categoryId} value={opt.categoryId}>
-              {opt.categoryCode} — {opt.categoryName}
-            </option>
-          ))}
-        </ManagementSelect>
-
-        <ManagementSelect
-          id="product-brand-filter"
-          label="Thương hiệu"
-          value={brandId}
-          onChange={(val) => handleFilterChange(setBrandId, val)}
-          disabled={isLoading || brandOptionsQuery.isLoading}
-        >
-          <option value="">Tất cả thương hiệu</option>
-          {brandOptions.map((opt) => (
-            <option key={opt.brandId} value={opt.brandId}>
-              {opt.brandCode} — {opt.brandName}
-            </option>
-          ))}
-        </ManagementSelect>
-
-        <ManagementSelect
-          id="product-status-filter"
-          label="Trạng thái"
-          value={status}
-          onChange={(val) => handleFilterChange(setStatus, val as '' | ProductStatus)}
-          disabled={isLoading}
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="DRAFT">Bản nháp</option>
-          <option value="ACTIVE">Đang kinh doanh</option>
-          <option value="INACTIVE">Tạm ngưng</option>
-          <option value="DISCONTINUED">Ngừng kinh doanh</option>
-        </ManagementSelect>
-
-        <ManagementSelect
-          id="product-type-filter"
-          label="Loại sản phẩm"
-          value={productType}
-          onChange={(val) => handleFilterChange(setProductType, val as '' | ProductType)}
-          disabled={isLoading}
-        >
-          <option value="">Tất cả loại</option>
-          <option value="NORMAL">Sản phẩm thông thường</option>
-          <option value="BUNDLE">Gói combo</option>
-        </ManagementSelect>
-
-        <ManagementSelect
-          id="product-sort"
-          label="Sắp xếp"
-          value={sort}
-          onChange={(val) => handleFilterChange(setSort, val)}
-          disabled={isLoading}
-        >
-          <option value="createdAt,desc">Mới nhất</option>
-          <option value="createdAt,asc">Cũ nhất</option>
-          <option value="productName,asc">Tên (A-Z)</option>
-          <option value="productName,desc">Tên (Z-A)</option>
-          <option value="productCode,asc">Mã sản phẩm (A-Z)</option>
-        </ManagementSelect>
-
-        <button
-          type="button"
-          onClick={resetFilters}
-          className="h-10 rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600"
-        >
-          Xóa bộ lọc
-        </button>
-      </ManagementFilterBar>
-
-      {/* Main Table section */}
-      <section
-        aria-labelledby="products-heading"
-        className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs"
+      <ManagementFilterCard
+        headingId="product-filters-heading"
+        title="Tìm và lọc sản phẩm"
+        description="Kết quả tự cập nhật theo các điều kiện bên dưới."
+        hasActiveFilters={hasActiveFilters}
+        onReset={resetFilters}
+        summaryChips={
+          <>
+            {search && <ManagementFilterChip>Từ khóa: {search}</ManagementFilterChip>}
+            {categoryId && <ManagementFilterChip>Danh mục đã chọn</ManagementFilterChip>}
+            {brandId && <ManagementFilterChip>Thương hiệu đã chọn</ManagementFilterChip>}
+            {status && <ManagementFilterChip>Trạng thái: {status}</ManagementFilterChip>}
+            {productType && <ManagementFilterChip>Loại: {productType}</ManagementFilterChip>}
+          </>
+        }
+        resultCount={`${totalElements.toLocaleString('vi-VN')} kết quả`}
       >
-        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <div>
-            <h2 id="products-heading" className="text-base font-semibold text-slate-900">
-              Danh sách sản phẩm
-            </h2>
-            <p className="text-xs text-slate-500">
-              Tổng số {totalElements.toLocaleString('vi-VN')} sản phẩm được đồng bộ từ hệ thống.
-            </p>
-          </div>
-          {isFetching && (
-            <span className="self-start rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 sm:self-auto">
-              Đang làm mới dữ liệu...
-            </span>
-          )}
-        </div>
-
-        {/* Error notification banner */}
-        {listErrorMessage && (
-          <div className="m-4 flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
-            <div>
-              <p className="font-medium">Không thể tải danh sách sản phẩm</p>
-              <p className="text-xs">{listErrorMessage}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void refetch()}
-              className="inline-flex items-center gap-1 rounded-md border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              Thử lại
-            </button>
-          </div>
-        )}
-
-        {/* Desktop Table */}
-        <div className="hidden sm:block [&_table]:text-sm">
-          <ManagementTable
-            columns={columns}
-            rows={rows}
-            rowKey={(item) => item.productId}
-            labelledBy="products-heading"
-            emptyMessage={
-              isLoading
-                ? 'Đang tải danh sách sản phẩm...'
-                : listErrorMessage
-                  ? 'Chưa thể tải dữ liệu sản phẩm.'
-                  : 'Không tìm thấy sản phẩm phù hợp. Hãy thử từ khóa hoặc bộ lọc khác.'
-            }
+        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(220px,1.8fr)_repeat(5,minmax(132px,1fr))]">
+          <ManagementSearch
+            id="product-search"
+            label="Tìm kiếm"
+            value={search}
+            onChange={(val) => handleFilterChange(setSearch, val)}
+            placeholder="Tên hoặc mã sản phẩm…"
+            disabled={isLoading}
+            className="sm:col-span-2 lg:col-span-2 xl:col-span-1"
           />
+          <ManagementSelect
+            id="product-category-filter"
+            label="Danh mục"
+            value={categoryId}
+            onChange={(val) => handleFilterChange(setCategoryId, val)}
+            disabled={isLoading || categoryOptionsQuery.isLoading}
+          >
+            <option value="">Tất cả danh mục</option>
+            {categoryOptions.map((opt) => (
+              <option key={opt.categoryId} value={opt.categoryId}>
+                {opt.categoryCode} — {opt.categoryName}
+              </option>
+            ))}
+          </ManagementSelect>
+          <ManagementSelect
+            id="product-brand-filter"
+            label="Thương hiệu"
+            value={brandId}
+            onChange={(val) => handleFilterChange(setBrandId, val)}
+            disabled={isLoading || brandOptionsQuery.isLoading}
+          >
+            <option value="">Tất cả thương hiệu</option>
+            {brandOptions.map((opt) => (
+              <option key={opt.brandId} value={opt.brandId}>
+                {opt.brandCode} — {opt.brandName}
+              </option>
+            ))}
+          </ManagementSelect>
+          <ManagementSelect
+            id="product-status-filter"
+            label="Trạng thái"
+            value={status}
+            onChange={(val) => handleFilterChange(setStatus, val as '' | ProductStatus)}
+            disabled={isLoading}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="DRAFT">Bản nháp</option>
+            <option value="ACTIVE">Đang kinh doanh</option>
+            <option value="INACTIVE">Tạm ngưng</option>
+            <option value="DISCONTINUED">Ngừng kinh doanh</option>
+          </ManagementSelect>
+          <ManagementSelect
+            id="product-type-filter"
+            label="Loại sản phẩm"
+            value={productType}
+            onChange={(val) => handleFilterChange(setProductType, val as '' | ProductType)}
+            disabled={isLoading}
+          >
+            <option value="">Tất cả loại</option>
+            <option value="NORMAL">Thông thường</option>
+            <option value="BUNDLE">Gói combo</option>
+          </ManagementSelect>
+          <ManagementSelect
+            id="product-sort"
+            label="Sắp xếp"
+            value={sort}
+            onChange={(val) => handleFilterChange(setSort, val)}
+            disabled={isLoading}
+          >
+            <option value="createdAt,desc">Mới nhất</option>
+            <option value="createdAt,asc">Cũ nhất</option>
+            <option value="productName,asc">Tên (A–Z)</option>
+            <option value="productName,desc">Tên (Z–A)</option>
+            <option value="productCode,asc">Mã sản phẩm (A–Z)</option>
+          </ManagementSelect>
         </div>
+      </ManagementFilterCard>
 
-        {/* Mobile View */}
-        <CatalogMobileList
-          rows={rows}
-          rowKey={(item) => item.productId}
-          emptyMessage={
-            isLoading
-              ? 'Đang tải danh sách sản phẩm...'
-              : listErrorMessage
-                ? 'Chưa thể tải dữ liệu sản phẩm.'
-                : 'Không tìm thấy sản phẩm phù hợp.'
-          }
-          renderRow={(item) => (
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-50">
-                    {item.primaryImageUrl ? (
-                      <img
-                        src={item.primaryImageUrl}
-                        alt={item.productName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-slate-400">
-                        <Package className="h-6 w-6" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-slate-900">{item.productName}</p>
-                    <p className="font-mono text-xs text-sky-800">{item.productCode}</p>
-                    <p className="text-xs text-slate-500">
-                      {item.categoryName} • {item.brandName || 'Không có thương hiệu'}
-                    </p>
-                  </div>
-                </div>
-                <ProductStatusBadge status={item.status} />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 rounded-md bg-slate-50 p-2 text-xs">
-                <div>
-                  <span className="text-slate-500">Khoảng giá:</span>
-                  <div className="font-medium text-slate-900">
-                    {formatPriceRange(item.minSellingPrice, item.maxSellingPrice)}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-500">Biến thể:</span>
-                  <div className="font-medium text-slate-900"><Link className="text-sky-700 underline focus-visible:outline-2 focus-visible:outline-sky-600" to={`/app/products/${item.productId}/variants`} aria-label={`Quản lý SKU của ${item.productName}`}>{item.totalVariants} biến thể</Link></div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                <ManagementRowActions
-                  actions={[
-                    {
-                      variant: 'view',
-                      label: 'Xem',
-                      ariaLabel: `Xem ${item.productName}`,
-                      onClick: () => openViewDialog(item),
-                    },
-                    {
-                      variant: 'edit',
-                      label: 'Sửa',
-                      ariaLabel: `Sửa ${item.productName}`,
-                      onClick: () => openEditDialog(item),
-                    },
-                    {
-                      variant: 'delete',
-                      label: 'Xóa',
-                      ariaLabel: `Xóa ${item.productName}`,
-                      onClick: () => openDeleteDialog(item),
-                    },
-                  ]}
-                />
-                <div className="flex items-center gap-2">
-                  <Link
-                    to={`/app/products/${item.productId}/variants`}
-                    className="inline-flex min-h-9 items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-700"
-                    aria-label={`Quản lý SKU của ${item.productName}`}
-                  >
-                    SKU <ExternalLink className="h-3.5 w-3.5" />
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => openStatusDialog(item)}
-                    className="inline-flex min-h-9 items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 text-xs font-medium text-amber-800"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Đổi trạng thái
-                  </button>
-                </div>
-              </div>
+      <ManagementPanel
+        headingId="products-heading"
+        title="Danh sách sản phẩm"
+        description={`Tổng số ${totalElements.toLocaleString('vi-VN')} sản phẩm được đồng bộ từ hệ thống.`}
+        refreshing={isFetching && !isLoading}
+        busy={isFetching}
+      >
+        {isLoading ? (
+          <ManagementTableSkeleton
+            rows={6}
+            columns={5}
+            withLeadingAvatar
+            label="Đang tải danh sách sản phẩm"
+          />
+        ) : listErrorMessage ? (
+          <ErrorState
+            sectionLabel="Danh sách sản phẩm"
+            title="Không thể tải danh sách sản phẩm"
+            message={listErrorMessage}
+            retrying={isFetching}
+            onRetry={() => void refetch()}
+          />
+        ) : rows.length === 0 ? (
+          <EmptyState
+            title="Không có sản phẩm phù hợp"
+            description={
+              search.trim()
+                ? `Không tìm thấy kết quả cho “${search.trim()}”. Hãy bỏ từ khóa hoặc nới bộ lọc.`
+                : 'Bộ lọc hiện tại chưa trả về sản phẩm nào. Hãy nới điều kiện để xem thêm dữ liệu.'
+            }
+            search={search}
+            hasFilters={hasActiveFilters}
+            onClearSearch={() => handleFilterChange(setSearch, '')}
+            onResetFilters={resetFilters}
+          />
+        ) : (
+          <>
+            <div className="hidden md:block">
+              <ManagementTable
+                columns={columns}
+                rows={rows}
+                rowKey={(item) => item.productId}
+                labelledBy="products-heading"
+                emptyMessage="Không có sản phẩm."
+              />
             </div>
-          )}
-        />
 
-        {/* Pagination */}
-        <CatalogPagination
-          page={data?.page ?? page}
-          totalPages={totalPages}
-          totalElements={totalElements}
-          noun="sản phẩm"
-          disabled={isFetching}
-          onPageChange={setPage}
-        />
-      </section>
+            <ManagementMobileList
+              rows={rows}
+              rowKey={(item) => item.productId}
+              emptyMessage="Không có sản phẩm."
+              renderRow={(item) => (
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-control border border-aqs-border bg-aqs-surface-subtle">
+                        {item.primaryImageUrl ? (
+                          <img
+                            src={item.primaryImageUrl}
+                            alt={item.productName}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-aqs-ink-faint">
+                            <Package className="h-6 w-6" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-aqs-ink">{item.productName}</p>
+                        <p className="font-mono text-xs text-aqs-accent-hover">{item.productCode}</p>
+                        <p className="text-xs text-aqs-ink-faint">
+                          {item.categoryName} • {item.brandName || 'Không có thương hiệu'}
+                        </p>
+                      </div>
+                    </div>
+                    <ProductStatusBadge status={item.status} />
+                  </div>
 
-      {/* Modal: Create / Edit / View Product */}
+                  <div className="grid grid-cols-2 gap-3 rounded-control bg-aqs-surface-subtle px-3 py-2.5 text-xs">
+                    <div>
+                      <span className="block text-[11px] text-aqs-ink-faint">Khoảng giá</span>
+                      <strong className="mt-0.5 block font-semibold tabular-nums text-aqs-ink">
+                        {formatPriceRange(item.minSellingPrice, item.maxSellingPrice)}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="block text-[11px] text-aqs-ink-faint">Biến thể</span>
+                      <div className="mt-0.5 font-semibold">
+                        <Link
+                          className="text-aqs-accent-hover underline focus-visible:outline-2 focus-visible:outline-aqs-focus"
+                          to={`/app/products/${item.productId}/variants`}
+                          aria-label={`Quản lý SKU của ${item.productName}`}
+                        >
+                          {item.totalVariants} biến thể
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <ManagementRowActions
+                      actions={[
+                        {
+                          variant: 'view',
+                          label: 'Xem',
+                          ariaLabel: `Xem ${item.productName}`,
+                          onClick: () => openViewDialog(item),
+                        },
+                        {
+                          variant: 'edit',
+                          label: 'Sửa',
+                          ariaLabel: `Sửa ${item.productName}`,
+                          onClick: () => openEditDialog(item),
+                        },
+                        {
+                          variant: 'delete',
+                          label: 'Xóa',
+                          ariaLabel: `Xóa ${item.productName}`,
+                          onClick: () => openDeleteDialog(item),
+                        },
+                      ]}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/app/products/${item.productId}/variants`}
+                        className="inline-flex min-h-9 items-center gap-1 rounded-control border border-aqs-border bg-aqs-surface px-2.5 text-xs font-semibold text-aqs-ink-muted"
+                        aria-label={`Quản lý SKU của ${item.productName}`}
+                      >
+                        SKU <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        icon={<RefreshCw className="h-3.5 w-3.5" />}
+                        onClick={() => openStatusDialog(item)}
+                      >
+                        Đổi trạng thái
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            />
+
+            <ManagementPagination
+              page={data?.page ?? page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              shownCount={rows.length}
+              noun="sản phẩm"
+              disabled={isFetching}
+              onPageChange={setPage}
+            />
+          </>
+        )}
+      </ManagementPanel>
+
       {dialog && (
         <ManagementDialog
           title={
@@ -780,7 +744,7 @@ export function ProductsPage() {
           closeDisabled={createState.isLoading || updateState.isLoading}
         >
           {dialog.mode !== 'create' && detailQuery.isLoading && !activeProductDetail ? (
-            <div className="p-8 text-center text-sm text-slate-500">
+            <div className="p-8 text-center text-sm text-aqs-ink-faint">
               Đang tải chi tiết sản phẩm...
             </div>
           ) : (
@@ -802,7 +766,6 @@ export function ProductsPage() {
         </ManagementDialog>
       )}
 
-      {/* Modal: Update Product Status */}
       {statusTarget && (
         <ProductStatusDialog
           product={statusTarget}
@@ -813,26 +776,26 @@ export function ProductsPage() {
         />
       )}
 
-      {/* Modal: Soft Delete Confirmation */}
       {deleteTarget && (
-        <CatalogDeleteDialog
-          kind="sản phẩm"
-          code={deleteTarget.productCode}
-          name={deleteTarget.productName}
+        <DeleteConfirmDialog
+          title="Xác nhận xóa sản phẩm"
+          subject={`${deleteTarget.productCode} — ${deleteTarget.productName}`}
+          description="Sản phẩm sẽ bị xóa vĩnh viễn. Máy chủ sẽ từ chối nếu dữ liệu đang được tham chiếu."
+          confirmLabel="Xóa sản phẩm"
+          pendingLabel="Đang xóa sản phẩm"
           pending={deleteState.isLoading}
-          error={deleteError}
+          error={deleteError || undefined}
           onClose={() => setDeleteTarget(null)}
           onConfirm={() => void handleConfirmDelete()}
         />
       )}
 
-      {/* Modal: Import Excel */}
       {isImportOpen && (
         <ProductImportDialog
           onSuccess={() => void refetch()}
           onClose={() => setIsImportOpen(false)}
         />
       )}
-    </div>
+    </ManagementPageShell>
   )
 }

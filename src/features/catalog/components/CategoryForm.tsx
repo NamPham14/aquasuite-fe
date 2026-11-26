@@ -4,6 +4,7 @@ import {
   ManagementFormField,
   managementFieldClass,
 } from '../../../shared/ui/ManagementDialog'
+import { Notice } from '../../../shared/ui/Badge'
 import {
   categorySchema,
   type CategoryFormValues,
@@ -79,7 +80,7 @@ export function CategoryForm({
       closeDisabled={pending}
       submitLabel={pending ? 'Đang lưu...' : mode === 'create' ? 'Tạo danh mục' : 'Lưu thay đổi'}
     >
-      {apiError && <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">{apiError}</p>}
+      {apiError && <Notice tone="danger">{apiError}</Notice>}
       <div className="grid gap-4 sm:grid-cols-2">
         <ManagementFormField
           id="category-code"

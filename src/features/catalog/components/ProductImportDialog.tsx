@@ -6,6 +6,7 @@ import {
   useDownloadProductImportReportMutation,
   useSubmitProductImportJobMutation,
 } from '../api/productApi.ts'
+import { OPERATIONAL_TOAST_CLASS } from '../../../shared/ui/FeedbackStates'
 import { CatalogImportDialog } from './CatalogImportDialog.tsx'
 
 export interface ProductImportDialogProps {
@@ -113,6 +114,8 @@ export function ProductImportDialog({ onSuccess, onClose }: ProductImportDialogP
       onDownloadReport={handleDownloadReport}
       onSuccess={onSuccess}
       onClose={onClose}
+      className="max-h-[min(88vh,760px)] overflow-y-auto rounded-card border-aqs-border shadow-aqs-float"
+      toastClassName={OPERATIONAL_TOAST_CLASS}
     />
   )
 }

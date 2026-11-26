@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useStore } from "react-redux";
-import { KeyRound, Plus } from "lucide-react";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  IamAccessGate,
   usePermissionsQuery,
   useCreatePermissionMutation,
   useUpdatePermissionMutation,
@@ -21,27 +22,38 @@ import {
   type RootState,
 } from "../../app/store";
 import {
+  ManagementMobileList,
+  ManagementPagination,
+  ManagementTable,
+  ManagementTableSkeleton,
+  type ManagementTableColumn,
+} from "../../shared/ui/ManagementTable";
+import {
+  ManagementFilterCard,
+  ManagementFilterChip,
   ManagementPageHeader,
-  ManagementFilterBar,
+  ManagementPageShell,
+  ManagementPanel,
   ManagementSearch,
   ManagementSelect,
 } from "../../shared/ui/ManagementPage";
 import {
-  ManagementTable,
-  type ManagementTableColumn,
-} from "../../shared/ui/ManagementTable";
-import {
+  DeleteConfirmDialog,
   ManagementDialog,
   ManagementForm,
   ManagementFormField,
   managementFieldClass,
 } from "../../shared/ui/ManagementDialog";
+import { Button, IconButton, SakugaActionButton } from "../../shared/ui/Button";
+import { CodeChip, Notice } from "../../shared/ui/Badge";
+import {
+  EmptyState,
+  ErrorState,
+  OPERATIONAL_TOAST_CLASS,
+  ValidationSummary,
+  type ValidationIssue,
+} from "../../shared/ui/FeedbackStates";
 import { normalizeApiError } from "../../shared/api/apiError";
-import { IamAccessGate } from "./IamAccessGate";
-import { ManagementRowActions } from "../../shared/ui/ManagementRowActions";
-
-const btn =
-  "rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:opacity-50";
 
 function isPermissionRecord(value: unknown): value is IamPermission {
   if (!value || typeof value !== "object") return false;
@@ -95,9 +107,11 @@ function invalidReconciliationResponse(): Error & { status: string } {
     status: "PARSING_ERROR",
   });
 }
+
 type Dialog =
   | { mode: "create" }
   | { mode: "edit" | "delete" | "view"; item: IamPermission };
+
 export function PermissionsPage() {
   return (
     <IamAccessGate>
@@ -112,7 +126,9 @@ function PermissionsContent() {
   const needsReload = useAppSelector(
     (state) => state.iamAccess.needsReconciliation,
   );
-  const pendingIamMutations = useAppSelector((state) => state.iamAccess.pendingMutations > 0);
+  const pendingIamMutations = useAppSelector(
+    (state) => state.iamAccess.pendingMutations > 0,
+  );
   const reconciliationTarget = useAppSelector(
     (state) => state.iamAccess.reconciliationTarget,
   );
@@ -151,7 +167,18 @@ function PermissionsContent() {
   const [remove, removeState] = useDeletePermissionMutation();
   const inFlight = useRef(false);
   const pending =
-    pendingIamMutations || createState.isLoading || updateState.isLoading || removeState.isLoading;
+    pendingIamMutations ||
+    createState.isLoading ||
+    updateState.isLoading ||
+    removeState.isLoading;
+
+  const hasActiveFilters = Boolean(
+    search || sortBy !== "code" || direction !== "asc",
+  );
+  const rows = list.data?.data?.items ?? [];
+  const totalElements = list.data?.data?.totalElements ?? 0;
+  const totalPages = list.data?.data?.totalPages ?? 0;
+
   const open = (next: Dialog) => {
     setError("");
     setInvalidField(null);
@@ -159,43 +186,64 @@ function PermissionsContent() {
     setDescription(next.mode === "create" ? "" : (next.item.description ?? ""));
     setDialog(next);
   };
+
+  function resetFilters() {
+    setSearch("");
+    setSort("code");
+    setDirection("asc");
+    setPage(0);
+  }
+
+  const validationIssues = useMemo<ValidationIssue[]>(() => {
+    if (!error || !invalidField) return [];
+    if (invalidField === "code") {
+      return [
+        { fieldId: "iam-permission-code", label: "Mã quyền", message: error },
+      ];
+    }
+    return [
+      { fieldId: "iam-permission-description", label: "Mô tả", message: error },
+    ];
+  }, [error, invalidField]);
+
   const columns: ManagementTableColumn<IamPermission>[] = [
-    { key: "code", header: "Mã quyền", cell: (item) => item.code },
+    {
+      key: "code",
+      header: "Mã quyền",
+      cell: (item) => <CodeChip>{item.code}</CodeChip>,
+    },
     {
       key: "description",
       header: "Mô tả",
-      cellClassName: "whitespace-normal min-w-48",
+      cellClassName: "!whitespace-normal min-w-48 text-aqs-ink-muted",
       cell: (item) => item.description || "—",
     },
     {
       key: "actions",
       header: "Thao tác",
+      align: "center",
       cell: (item) => (
-        <ManagementRowActions
-          actions={[
-            {
-              variant: "view",
-              label: "Xem",
-              ariaLabel: `Xem ${item.code}`,
-              disabled: needsReload || pendingIamMutations,
-              onClick: () => open({ mode: "view", item }),
-            },
-            {
-              variant: "edit",
-              label: "Sửa",
-              ariaLabel: `Sửa ${item.code}`,
-              disabled: needsReload || pendingIamMutations,
-              onClick: () => open({ mode: "edit", item }),
-            },
-            {
-              variant: "delete",
-              label: "Xóa",
-              ariaLabel: `Xóa ${item.code}`,
-              disabled: needsReload || pendingIamMutations,
-              onClick: () => open({ mode: "delete", item }),
-            },
-          ]}
-        />
+        <div className="flex items-center justify-center gap-1.5">
+          <IconButton
+            label={`Xem ${item.code}`}
+            icon={<Eye />}
+            disabled={needsReload || pendingIamMutations}
+            onClick={() => open({ mode: "view", item })}
+          />
+          <IconButton
+            label={`Sửa ${item.code}`}
+            icon={<Pencil />}
+            disabled={needsReload || pendingIamMutations}
+            onClick={() => open({ mode: "edit", item })}
+          />
+          <IconButton
+            label={`Xóa ${item.code}`}
+            icon={<Trash2 />}
+            tone="danger"
+            disabled={needsReload || pendingIamMutations}
+            onClick={() => open({ mode: "delete", item })}
+          />
+        </div>
       ),
     },
   ];
@@ -204,8 +252,12 @@ function PermissionsContent() {
     try {
       const waitForRunningIamWork = async () => {
         for (;;) {
-          const runningQueries = dispatch(iamAccessApi.util.getRunningQueriesThunk());
-          const runningMutations = dispatch(iamAccessApi.util.getRunningMutationsThunk());
+          const runningQueries = dispatch(
+            iamAccessApi.util.getRunningQueriesThunk(),
+          );
+          const runningMutations = dispatch(
+            iamAccessApi.util.getRunningMutationsThunk(),
+          );
           await Promise.all([...runningQueries, ...runningMutations]);
           if (store.getState().iamAccess.pendingMutations === 0) return;
           await new Promise((resolve) => setTimeout(resolve, 0));
@@ -248,14 +300,11 @@ function PermissionsContent() {
           ) {
             throw invalidReconciliationResponse();
           }
-        } catch (error) {
-          if (normalizeApiError(error).status !== 404) throw error;
+        } catch (err) {
+          if (normalizeApiError(err).status !== 404) throw err;
         } finally {
           request.unsubscribe();
         }
-        // Keep the lock while dropping all cached IAM data and repopulating the
-        // currently visible list from the server. First let older requests
-        // settle so delayed RTK Query invalidations cannot race the cache reset.
         await waitForRunningIamWork();
         dispatch(iamAccessApi.util.resetApiState());
         await refreshVisibleList();
@@ -266,15 +315,16 @@ function PermissionsContent() {
         );
         toast.success(
           "Đã tải lại dữ liệu quyền. Vui lòng kiểm tra trước khi tiếp tục.",
+          { className: OPERATIONAL_TOAST_CLASS },
         );
       } else if (
         activeTarget?.type === "permission" &&
         activeTarget.permissionCode
       ) {
         let currentPage = 0;
-        let totalPages = 1;
+        let totalSearchPages = 1;
         let codeExists = false;
-        while (currentPage < totalPages && !codeExists) {
+        while (currentPage < totalSearchPages && !codeExists) {
           const request = dispatch(
             iamAccessApi.endpoints.permissions.initiate(
               {
@@ -299,11 +349,9 @@ function PermissionsContent() {
           codeExists = response.data.items.some(
             (item) => item.code === activeTarget.permissionCode,
           );
-          totalPages = response.data.totalPages;
+          totalSearchPages = response.data.totalPages;
           currentPage += 1;
         }
-        // Search confirms the submitted code; drain old requests, then drop
-        // every old IAM cache and reload the visible list before unlocking.
         await waitForRunningIamWork();
         dispatch(iamAccessApi.util.resetApiState());
         await refreshVisibleList();
@@ -316,23 +364,35 @@ function PermissionsContent() {
           codeExists
             ? "Đã xác nhận quyền vừa tạo trên máy chủ."
             : "Đã xác nhận mã quyền chưa tồn tại trên máy chủ.",
+          { className: OPERATIONAL_TOAST_CLASS },
         );
       } else if (activeTarget?.type === "role") {
         await list.refetch().unwrap();
         toast.warning(
           "Đã tải lại danh mục quyền. Vai trò bị ảnh hưởng chưa được đối soát, vui lòng tải lại vai trò để mở khóa.",
+          { className: OPERATIONAL_TOAST_CLASS },
         );
       } else {
         await list.refetch().unwrap();
       }
     } catch {
-      toast.error("Không tải lại được dữ liệu. Vui lòng thử lại.");
+      toast.error("Không tải lại được dữ liệu. Vui lòng thử lại.", {
+        className: OPERATIONAL_TOAST_CLASS,
+      });
     }
   }
 
   async function submit(event?: FormEvent) {
     event?.preventDefault();
-    if (!dialog || dialog.mode === "view" || inFlight.current || needsReload || store.getState().iamAccess.needsReconciliation || store.getState().iamAccess.pendingMutations > 0) return;
+    if (
+      !dialog ||
+      dialog.mode === "view" ||
+      inFlight.current ||
+      needsReload ||
+      store.getState().iamAccess.needsReconciliation ||
+      store.getState().iamAccess.pendingMutations > 0
+    )
+      return;
     const normalized = code.trim().toUpperCase();
     if (
       dialog.mode === "create" &&
@@ -377,18 +437,18 @@ function PermissionsContent() {
         return;
       const isValidEnvelope = Boolean(
         result &&
-        typeof result === "object" &&
-        "success" in result &&
-        result.success === true,
+          typeof result === "object" &&
+          "success" in result &&
+          result.success === true,
       );
       const isValidData =
         dialog.mode === "delete" ||
         Boolean(
           result &&
-          typeof result === "object" &&
-          "data" in result &&
-          result.data &&
-          typeof result.data === "object",
+            typeof result === "object" &&
+            "data" in result &&
+            result.data &&
+            typeof result.data === "object",
         );
       if (!isValidEnvelope || !isValidData)
         throw Object.assign(new Error("Phản hồi không hợp lệ"), {
@@ -401,6 +461,7 @@ function PermissionsContent() {
           : dialog.mode === "edit"
             ? "Đã cập nhật quyền."
             : "Đã xóa quyền.",
+        { className: OPERATIONAL_TOAST_CLASS },
       );
     } catch (err) {
       const current = store.getState();
@@ -420,13 +481,13 @@ function PermissionsContent() {
         setDialog(null);
         dispatch(
           requirePermissionReconciliation({
-            permissionId:
-              dialog.mode !== "create" ? dialog.item.id : undefined,
+            permissionId: dialog.mode !== "create" ? dialog.item.id : undefined,
             permissionCode: dialog.mode === "create" ? normalized : undefined,
           }),
         );
         toast.warning(
           "Chưa xác định kết quả. Hãy tải lại dữ liệu quyền trước khi thao tác tiếp.",
+          { className: OPERATIONAL_TOAST_CLASS },
         );
       } else {
         const message =
@@ -436,7 +497,7 @@ function PermissionsContent() {
               ? "Mã quyền đã tồn tại."
               : parsed.message;
         setError(message);
-        toast.error(message);
+        toast.error(message, { className: OPERATIONAL_TOAST_CLASS });
         if (parsed.status === 404 || parsed.status === 409) void list.refetch();
       }
     } finally {
@@ -444,152 +505,230 @@ function PermissionsContent() {
       dispatch(finishIamMutation());
     }
   }
+
+  const parsedListError = list.isError ? normalizeApiError(list.error) : null;
+
   return (
-    <div className="space-y-5">
+    <ManagementPageShell>
       <ManagementPageHeader
         title="Quản lý Quyền"
-        description="Danh mục quyền trong hệ thống"
+        description="Danh mục quyền trong hệ thống, phục vụ gán quyền cho các vai trò nội bộ."
+        group="Hệ thống & Phân quyền"
         breadcrumb="Quyền"
-        icon={<KeyRound className="h-6 w-6" />}
-      />
-      <div className="flex justify-end">
-        <button
-          disabled={needsReload || pendingIamMutations}
-          className="inline-flex items-center gap-2 rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          onClick={() => open({ mode: "create" })}
-        >
-          <Plus className="h-4 w-4" />
-          Thêm quyền
-        </button>
-      </div>
-      <ManagementFilterBar>
-        <ManagementSearch
-          id="permission-search"
-          label="Tìm kiếm"
-          value={search}
-          onChange={(value) => {
-            setSearch(value);
-            setPage(0);
-          }}
-          placeholder="Tìm mã hoặc mô tả"
-          disabled={needsReload || pendingIamMutations}
-        />
-        <ManagementSelect
-          id="permission-sort"
-          label="Sắp xếp theo"
-          value={sortBy}
-          disabled={needsReload || pendingIamMutations}
-          onChange={(value) => {
-            setSort(value as PermissionQuery["sortBy"]);
-            setPage(0);
-          }}
-        >
-          <option value="code">Mã</option>
-          <option value="description">Mô tả</option>
-          <option value="id">ID</option>
-        </ManagementSelect>
-        <ManagementSelect
-          id="permission-direction"
-          label="Thứ tự"
-          value={direction}
-          disabled={needsReload || pendingIamMutations}
-          onChange={(value) => {
-            setDirection(value as PermissionQuery["direction"]);
-            setPage(0);
-          }}
-        >
-          <option value="asc">Tăng dần</option>
-          <option value="desc">Giảm dần</option>
-        </ManagementSelect>
-      </ManagementFilterBar>
-      {needsReload && (
-        <div className="flex items-center justify-between gap-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <span>
-            {reconciliationTarget?.type === "permission"
-              ? "Dữ liệu quyền cần được đối soát sau thao tác chưa xác định kết quả. Vui lòng tải lại dữ liệu từ máy chủ."
-              : "Dữ liệu vai trò đang chờ đối soát. Thao tác quyền bị tạm khóa cho tới khi dữ liệu liên quan được đồng bộ."}
-          </span>
-          <button
-            type="button"
-            className={btn}
-            disabled={pendingIamMutations}
-            onClick={() => void reloadData()}
+        actions={
+          <SakugaActionButton
+            icon={<Plus />}
+            disabled={needsReload || pendingIamMutations}
+            onClick={() => open({ mode: "create" })}
           >
-            Tải lại dữ liệu
-          </button>
+            Thêm quyền
+          </SakugaActionButton>
+        }
+      />
+
+      <ManagementFilterCard
+        headingId="permission-filters-heading"
+        title="Tìm và sắp xếp quyền"
+        description="Kết quả tự cập nhật theo mã quyền, mô tả và thứ tự sắp xếp."
+        hasActiveFilters={hasActiveFilters}
+        resetDisabled={needsReload || pendingIamMutations}
+        onReset={resetFilters}
+        summaryChips={
+          search ? (
+            <ManagementFilterChip>Từ khóa: {search}</ManagementFilterChip>
+          ) : undefined
+        }
+        resultCount={`${totalElements.toLocaleString("vi-VN")} kết quả`}
+      >
+        <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-2 lg:grid-cols-[minmax(260px,2fr)_minmax(170px,1fr)_minmax(170px,1fr)]">
+          <ManagementSearch
+            id="permission-search"
+            label="Tìm kiếm"
+            value={search}
+            onChange={(value) => {
+              setSearch(value);
+              setPage(0);
+            }}
+            placeholder="Tìm mã hoặc mô tả…"
+            disabled={needsReload || pendingIamMutations}
+            className="md:col-span-2 lg:col-span-1"
+          />
+          <ManagementSelect
+            id="permission-sort"
+            label="Sắp xếp theo"
+            value={sortBy}
+            disabled={needsReload || pendingIamMutations}
+            onChange={(value) => {
+              setSort(value as PermissionQuery["sortBy"]);
+              setPage(0);
+            }}
+          >
+            <option value="code">Mã</option>
+            <option value="description">Mô tả</option>
+            <option value="id">ID</option>
+          </ManagementSelect>
+          <ManagementSelect
+            id="permission-direction"
+            label="Thứ tự"
+            value={direction}
+            disabled={needsReload || pendingIamMutations}
+            onChange={(value) => {
+              setDirection(value as PermissionQuery["direction"]);
+              setPage(0);
+            }}
+          >
+            <option value="asc">Tăng dần</option>
+            <option value="desc">Giảm dần</option>
+          </ManagementSelect>
         </div>
-      )}
-      <section className="rounded-lg border border-slate-200 bg-white">
-        <h2 id="permission-list" className="p-4 font-semibold">
-          Danh sách quyền
-        </h2>
-        {list.isLoading ? (
-          <p role="status" className="p-4">
-            Đang tải...
-          </p>
-        ) : list.isError ? (
-          <div className="p-4">
-            <p role="alert">
-              Không tải được danh sách quyền.{" "}
-              {normalizeApiError(list.error).message}
-            </p>
-            <p className="mt-1 text-xs text-slate-600">
-              Mã lỗi:{" "}
-              {normalizeApiError(list.error).code ||
-                String(
-                  normalizeApiError(list.error).status || "không xác định",
-                )}
-            </p>
-            <button
-              className={`${btn} mt-3`}
-              onClick={() => void list.refetch()}
+      </ManagementFilterCard>
+
+      {needsReload && (
+        <Notice tone="warning" role="alert" title="Cần đối soát dữ liệu quyền">
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+            <span>
+              {reconciliationTarget?.type === "permission"
+                ? "Dữ liệu quyền cần được đối soát sau thao tác chưa xác định kết quả. Vui lòng tải lại dữ liệu từ máy chủ."
+                : "Dữ liệu vai trò đang chờ đối soát. Thao tác quyền bị tạm khóa cho tới khi dữ liệu liên quan được đồng bộ."}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={pendingIamMutations}
+              onClick={() => void reloadData()}
             >
-              Thử lại
-            </button>
+              Tải lại dữ liệu
+            </Button>
           </div>
+        </Notice>
+      )}
+
+      <ManagementPanel
+        headingId="permission-list"
+        title="Danh sách quyền"
+        description={`Tổng số ${totalElements.toLocaleString("vi-VN")} quyền trong hệ thống.`}
+        refreshing={list.isFetching && !list.isLoading}
+        busy={list.isFetching}
+      >
+        {list.isLoading ? (
+          <ManagementTableSkeleton
+            rows={6}
+            columns={3}
+            label="Đang tải danh sách quyền"
+          />
+        ) : parsedListError ? (
+          <ErrorState
+            sectionLabel="Danh sách quyền"
+            title="Không tải được danh sách quyền."
+            message={parsedListError.message}
+            errorCode={
+              parsedListError.code ||
+              String(parsedListError.status || "không xác định")
+            }
+            retrying={list.isFetching}
+            retryLabel="Thử lại"
+            onRetry={() => void list.refetch()}
+          />
+        ) : rows.length === 0 ? (
+          <EmptyState
+            title="Không tìm thấy quyền."
+            search={search}
+            hasFilters={hasActiveFilters}
+            onClearSearch={() => {
+              setSearch("");
+              setPage(0);
+            }}
+            onResetFilters={resetFilters}
+          />
         ) : (
           <>
-            <ManagementTable
-              columns={columns}
-              rows={list.data?.data?.items ?? []}
-              rowKey={(item) => item.id}
-              labelledBy="permission-list"
-              emptyMessage="Không tìm thấy quyền."
-            />
-            <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 p-4 text-sm">
-              <button
-                className={btn}
-                disabled={page === 0 || needsReload || pendingIamMutations}
-                onClick={() => setPage(page - 1)}
-              >
-                Trước
-              </button>
-              <span>
-                Trang {page + 1} /{" "}
-                {Math.max(1, list.data?.data?.totalPages ?? 0)}
-              </span>
-              <button
-                className={btn}
-                disabled={needsReload || pendingIamMutations || page + 1 >= (list.data?.data?.totalPages ?? 0)}
-                onClick={() => setPage(page + 1)}
-              >
-                Tiếp
-              </button>
-              <span>Tổng số: {list.data?.data?.totalElements ?? 0}</span>
+            <div className="hidden md:block">
+              <ManagementTable
+                columns={columns}
+                rows={rows}
+                rowKey={(item) => item.id}
+                labelledBy="permission-list"
+                emptyMessage="Không tìm thấy quyền."
+              />
             </div>
+
+            <ManagementMobileList
+              rows={rows}
+              rowKey={(item) => item.id}
+              emptyMessage="Không tìm thấy quyền."
+              renderRow={(item) => (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <CodeChip className="break-all">{item.code}</CodeChip>
+                    <p className="m-0 text-xs text-aqs-ink-muted">
+                      {item.description || "Không có mô tả"}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <IconButton
+                      label={`Xem ${item.code}`}
+                      icon={<Eye />}
+                      disabled={needsReload || pendingIamMutations}
+                      onClick={() => open({ mode: "view", item })}
+                    />
+                    <IconButton
+                      label={`Sửa ${item.code}`}
+                      icon={<Pencil />}
+                      disabled={needsReload || pendingIamMutations}
+                      onClick={() => open({ mode: "edit", item })}
+                    />
+                    <IconButton
+                      label={`Xóa ${item.code}`}
+                      icon={<Trash2 />}
+                      tone="danger"
+                      disabled={needsReload || pendingIamMutations}
+                      onClick={() => open({ mode: "delete", item })}
+                    />
+                  </div>
+                </div>
+              )}
+            />
+
+            <ManagementPagination
+              page={page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              shownCount={rows.length}
+              noun="quyền"
+              disabled={needsReload || pendingIamMutations}
+              onPageChange={setPage}
+              ariaLabel="Phân trang danh sách quyền"
+            />
           </>
         )}
-      </section>
-      {dialog && (
+      </ManagementPanel>
+
+      {dialog && dialog.mode === "delete" && (
+        <DeleteConfirmDialog
+          title="Xác nhận xóa quyền"
+          subject={dialog.item.code}
+          description={`Bạn muốn xóa quyền ${dialog.item.code}? Quyền đang được gán cho vai trò sẽ không thể xóa.`}
+          confirmLabel="Xóa quyền"
+          pendingLabel="Đang xử lý..."
+          pending={pending}
+          error={error || undefined}
+          onClose={() => {
+            if (!inFlight.current) setDialog(null);
+          }}
+          onConfirm={(event) => void submit(event)}
+          asForm
+        />
+      )}
+
+      {dialog && dialog.mode !== "delete" && (
         <ManagementDialog
           title={
             dialog.mode === "create"
               ? "Thêm quyền"
               : dialog.mode === "edit"
                 ? "Sửa quyền"
-                : dialog.mode === "view"
-                  ? "Chi tiết quyền"
-                  : "Xác nhận xóa quyền"
+                : "Chi tiết quyền"
           }
           closeDisabled={pending}
           onClose={() => {
@@ -604,72 +743,76 @@ function PermissionsContent() {
             readOnly={dialog.mode === "view"}
             submitDisabled={pending}
             closeDisabled={pending}
-            submitLabel={
-              pending
-                ? "Đang xử lý..."
-                : dialog.mode === "delete"
-                  ? "Xóa quyền"
-                  : "Lưu"
-            }
+            submitLoading={pending}
+            submitLabel={pending ? "Đang xử lý..." : "Lưu"}
           >
-            {dialog.mode === "delete" ? (
-              <p>
-                Bạn muốn xóa quyền {dialog.item.code}? Quyền đang được gán cho
-                vai trò sẽ không thể xóa.
-              </p>
-            ) : (
-              <>
-                <ManagementFormField
-                  id="iam-permission-code"
-                  label="Mã quyền"
-                  hint="Chữ cái, chữ số và dấu gạch dưới; không bắt đầu ROLE_."
-                  error={invalidField === "code" ? error : undefined}
-                >
-                  <input
-                    id="iam-permission-code"
-                    className={managementFieldClass}
-                    value={code}
-                    disabled={dialog.mode !== "create" || pending}
-                    onChange={(event) => setCode(event.target.value)}
-                    aria-invalid={invalidField === "code"}
-                    aria-describedby={
-                      invalidField === "code"
-                        ? "iam-permission-code-error"
-                        : "iam-permission-code-hint"
-                    }
-                  />
-                </ManagementFormField>
-                <ManagementFormField
-                  id="iam-permission-description"
-                  label="Mô tả"
-                  hint="Không bắt buộc, tối đa 500 ký tự."
-                  error={invalidField === "description" ? error : undefined}
-                >
-                  <textarea
-                    id="iam-permission-description"
-                    className={managementFieldClass}
-                    rows={4}
-                    value={description}
-                    disabled={dialog.mode === "view" || pending}
-                    onChange={(event) => setDescription(event.target.value)}
-                    aria-invalid={invalidField === "description"}
-                    aria-describedby={
-                      invalidField === "description"
-                        ? "iam-permission-description-error"
-                        : "iam-permission-description-hint"
-                    }
-                  />
-                </ManagementFormField>
-              </>
-            )}
+            <ValidationSummary issues={validationIssues} />
+
             {error && !invalidField && (
-              <p role="alert" className="text-sm text-red-700">
+              <Notice tone="danger" role="alert" title="Không thể lưu quyền">
                 {error}
-              </p>
+              </Notice>
             )}
+
+            <ManagementFormField
+              id="iam-permission-code"
+              label="Mã quyền"
+              hint="Chữ cái, chữ số và dấu gạch dưới; không bắt đầu ROLE_."
+              error={invalidField === "code" ? error : undefined}
+            >
+              <input
+                id="iam-permission-code"
+                className={managementFieldClass}
+                value={code}
+                disabled={dialog.mode !== "create" || pending}
+                onChange={(event) => {
+                  setCode(event.target.value);
+                  if (invalidField === "code") {
+                    setInvalidField(null);
+                    setError("");
+                  }
+                }}
+                placeholder="VD: ORDER_APPROVE"
+                aria-invalid={invalidField === "code"}
+                aria-describedby={
+                  invalidField === "code"
+                    ? "iam-permission-code-error"
+                    : "iam-permission-code-hint"
+                }
+              />
+            </ManagementFormField>
+
+            <ManagementFormField
+              id="iam-permission-description"
+              label="Mô tả"
+              hint="Không bắt buộc, tối đa 500 ký tự."
+              error={invalidField === "description" ? error : undefined}
+            >
+              <textarea
+                id="iam-permission-description"
+                className={managementFieldClass}
+                rows={4}
+                value={description}
+                disabled={dialog.mode === "view" || pending}
+                onChange={(event) => {
+                  setDescription(event.target.value);
+                  if (invalidField === "description") {
+                    setInvalidField(null);
+                    setError("");
+                  }
+                }}
+                placeholder="Mô tả phạm vi tác động của quyền..."
+                aria-invalid={invalidField === "description"}
+                aria-describedby={
+                  invalidField === "description"
+                    ? "iam-permission-description-error"
+                    : "iam-permission-description-hint"
+                }
+              />
+            </ManagementFormField>
           </ManagementForm>
         </ManagementDialog>
       )}
-    </div>
+    </ManagementPageShell>
   );
 }

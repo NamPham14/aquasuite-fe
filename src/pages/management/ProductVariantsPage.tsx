@@ -18,7 +18,6 @@ import {
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
-  CatalogPagination,
   type ProductVariant,
   type VariantDeletionEligibility,
   type VariantStatus,
@@ -34,22 +33,24 @@ import {
   useUpdateVariantMutation,
 } from '../../features/catalog'
 import { ManagementDialog, ManagementFormField, managementFieldClass } from '../../shared/ui/ManagementDialog.tsx'
-import { ManagementFilterBar, ManagementPageHeader, ManagementSearch, ManagementSelect } from '../../shared/ui/ManagementPage.tsx'
-import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable.tsx'
+import { ManagementFilterCard, ManagementPageHeader, ManagementPageShell, ManagementPanel, ManagementSearch, ManagementSelect } from '../../shared/ui/ManagementPage.tsx'
+import { ManagementPagination, ManagementTable, ManagementTableSkeleton, type ManagementTableColumn } from '../../shared/ui/ManagementTable.tsx'
+import { CodeChip, StatusBadge as SharedStatusBadge } from '../../shared/ui/Badge.tsx'
+import { ErrorState } from '../../shared/ui/FeedbackStates.tsx'
 import { ActivityLogPanel } from '../../features/audit'
 import { useAuth } from '../../features/iam/hooks/useAuth'
 
 const pageSize = 10
 const primaryButton =
-  'inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-sky-700 px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-45'
+  'inline-flex h-10 items-center justify-center gap-1.5 rounded-control bg-aqs-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-aqs-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:opacity-45'
 const secondaryButton =
-  'inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-45'
+  'inline-flex h-10 items-center justify-center gap-1.5 rounded-control border border-aqs-border bg-aqs-surface px-3.5 text-sm font-medium text-aqs-ink transition-colors hover:border-slate-300 hover:bg-aqs-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:opacity-45'
 const dangerButton =
-  'inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-red-700 px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-45'
+  'inline-flex h-10 items-center justify-center gap-1.5 rounded-control bg-aqs-danger px-4 text-sm font-semibold text-white transition-colors hover:bg-aqs-danger-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-danger disabled:cursor-not-allowed disabled:opacity-45'
 const iconActionButton =
-  'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-sky-700 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-45'
+  'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-aqs-border bg-aqs-surface text-aqs-ink-muted transition-colors hover:border-aqs-accent hover:bg-aqs-accent-soft hover:text-aqs-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:opacity-45'
 const iconDangerButton =
-  'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-red-700 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-45'
+  'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-aqs-danger-border bg-aqs-danger-soft text-aqs-danger transition-colors hover:border-aqs-danger hover:bg-rose-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-danger disabled:cursor-not-allowed disabled:opacity-45'
 
 type DialogState =
   | { kind: 'create' }
@@ -76,29 +77,21 @@ function statusLabel(status: VariantStatus) {
 function StatusBadge({ status, missingPrice }: { status: VariantStatus; missingPrice?: boolean }) {
   if (status === 'INACTIVE' && missingPrice) {
     return (
-      <div className="inline-flex flex-col">
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800">
-          <span className="h-[7px] w-[7px] rounded-full bg-current" aria-hidden="true" />
-          Chưa có giá bán
-        </span>
-        <p className="mt-1 text-[11.5px] text-slate-500">Đang ngừng kinh doanh</p>
+      <div className="inline-flex flex-col items-center">
+        <SharedStatusBadge tone="warning">Chưa có giá bán</SharedStatusBadge>
+        <p className="mt-1 text-[11.5px] text-aqs-ink-muted">Đang ngừng kinh doanh</p>
       </div>
     )
   }
 
-  const style =
+  const tone =
     status === 'ACTIVE'
-      ? 'bg-emerald-50 text-emerald-700'
+      ? ('positive' as const)
       : status === 'INACTIVE'
-        ? 'bg-slate-100 text-slate-600'
-        : 'bg-red-50 text-red-700'
+        ? ('neutral' as const)
+        : ('danger' as const)
 
-  return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${style}`}>
-      <span className="h-[7px] w-[7px] rounded-full bg-current" aria-hidden="true" />
-      {statusLabel(status)}
-    </span>
-  )
+  return <SharedStatusBadge tone={tone}>{statusLabel(status)}</SharedStatusBadge>
 }
 
 function MarginInfo({ costPrice, sellingPrice }: { costPrice?: number | null; sellingPrice?: number | null }) {
@@ -395,32 +388,49 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
 ]
 
   return (
-    <div className="space-y-4">
+    <ManagementPageShell>
       <ManagementPageHeader
         title="Biến thể & Giá"
-        description="Quản lý mã SKU, thuộc tính, giá nhập và giá bán của sản phẩm"
+        description="Quản lý mã SKU, thuộc tính, giá nhập và giá bán của sản phẩm. SKU là mã duy nhất toàn hệ thống."
         breadcrumb="Sản phẩm / Biến thể & Giá"
         group="Danh mục sản phẩm"
-        icon={<Boxes className="h-6 w-6" />}
+        icon={<Boxes className="h-5 w-5" />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Link to="/app/products" className={secondaryButton}>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Danh sách sản phẩm
+            </Link>
+            {canManageVariants && (
+              <>
+                <button type="button" className={secondaryButton} disabled={product.data?.productType === 'BUNDLE'} onClick={() => setDialog({ kind: 'matrix' })}>
+                  <Grid2X2 className="h-4 w-4" aria-hidden="true" />
+                  Tạo ma trận biến thể
+                </button>
+                <button type="button" className={primaryButton} disabled={product.data?.productType === 'BUNDLE'} onClick={() => setDialog({ kind: 'create' })}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Thêm biến thể
+                </button>
+              </>
+            )}
+          </div>
+        }
       />
-      <Link to="/app/products" className="inline-flex w-fit items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900">
-        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Quay về danh sách sản phẩm
-      </Link>
 
       {product.data && (
-        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-2xs">
+        <section className="rounded-card border border-aqs-border bg-aqs-surface p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="font-mono text-xs font-semibold text-sky-800">{product.data.productCode}</p>
-              <h2 className="mt-1 text-base font-bold text-slate-900">{product.data.productName}</h2>
-              <p className="mt-1 text-xs text-slate-600">{product.data.brand?.brandName ?? 'Chưa gắn hãng'} · {product.data.category.categoryName} · {product.data.productType}</p>
+              <CodeChip>{product.data.productCode}</CodeChip>
+              <h2 className="mt-1.5 text-base font-bold text-aqs-ink">{product.data.productName}</h2>
+              <p className="mt-1 text-xs text-aqs-ink-muted">{product.data.brand?.brandName ?? 'Chưa gắn hãng'} · {product.data.category.categoryName} · {product.data.productType}</p>
             </div>
             {product.data.warrantyPolicy ? (
-              <div className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+              <div className="rounded-control border border-aqs-positive-border bg-aqs-positive-soft px-3 py-2 text-xs text-aqs-positive">
                 <strong>Áp dụng tự động: {product.data.warrantyPolicy.policyName}</strong><br />
                 {product.data.warrantyPolicy.warrantyMonths} tháng theo Hãng & Nhóm hàng
               </div>
-            ) : <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">Chưa có chính sách bảo hành áp dụng.</p>}
+            ) : <p className="rounded-control border border-aqs-warning-border bg-aqs-warning-soft px-3 py-2 text-xs text-aqs-warning">Chưa có chính sách bảo hành áp dụng.</p>}
           </div>
         </section>
       )}
@@ -460,100 +470,89 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
         />
       </section>
 
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <p className="text-[13.5px] text-slate-600">
-          SKU là mã duy nhất toàn hệ thống. Giá bán để trống sẽ tự động chuyển về <strong>Ngừng kinh doanh</strong>.
-        </p>
-        {canManageVariants && (
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className={secondaryButton} disabled={product.data?.productType === 'BUNDLE'} onClick={() => setDialog({ kind: 'matrix' })}>
-              <Grid2X2 className="h-4 w-4" aria-hidden="true" />
-              Tạo ma trận biến thể
-            </button>
-            <button type="button" className={primaryButton} disabled={product.data?.productType === 'BUNDLE'} onClick={() => setDialog({ kind: 'create' })}>
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Thêm biến thể
-            </button>
-          </div>
-        )}
-      </div>
-
-      <ManagementFilterBar>
-        <ManagementSearch
-          id="variant-search"
-          label="Tìm kiếm"
-          value={keyword}
-          onChange={(value) => {
-            setKeyword(value)
-            setPage(0)
-          }}
-          placeholder="Mã SKU, tên biến thể, màu sắc..."
-        />
-        <ManagementSelect
-          id="variant-status"
-          label="Trạng thái"
-          value={status}
-          onChange={(value) => chooseStatus(value as VariantStatus | '')}
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="ACTIVE">Đang kinh doanh</option>
-          <option value="INACTIVE">Ngừng kinh doanh</option>
-        </ManagementSelect>
-        <ManagementSelect id="variant-sort" label="Sắp xếp" value={sortBy} onChange={(value) => { setSortBy(value); setPage(0) }}>
-          <option value="default">Mới cập nhật</option>
-          <option value="sku">Mã SKU</option>
-          {canViewCost && <option value="costPrice">Giá nhập</option>}
-          <option value="sellingPrice">Giá bán</option>
-          {canViewCost && <option value="profit">Lợi nhuận</option>}
-        </ManagementSelect>
-        <button
-          type="button"
-          className={secondaryButton}
-          onClick={() => {
-            setKeyword('')
-            chooseStatus('')
-            setMissingPrice(false)
-            setSortBy('default')
-          }}
-        >
-          Đặt lại
-        </button>
-      </ManagementFilterBar>
-
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xs" aria-busy={list.isFetching}>
-        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 pt-3.5 pb-2.5">
-          <h2 id="variant-list" className="text-[15px] font-bold text-slate-900">
-            Danh sách biến thể (SKU)
-          </h2>
-          <p className="text-xs text-slate-600">
-            {list.isFetching && !list.isLoading
-              ? 'Đang cập nhật...'
-              : `${list.data?.totalElements ?? rows.length} biến thể khớp bộ lọc`}
-          </p>
+      <ManagementFilterCard
+        headingId="variant-filters"
+        title="Tìm và lọc biến thể"
+        description="Giá bán để trống sẽ tự động chuyển về Ngừng kinh doanh."
+        resultCount={list.isLoading ? 'Đang tải...' : `${list.data?.totalElements ?? rows.length} biến thể`}
+      >
+        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <ManagementSearch
+            id="variant-search"
+            label="Tìm kiếm"
+            value={keyword}
+            onChange={(value) => {
+              setKeyword(value)
+              setPage(0)
+            }}
+            placeholder="Mã SKU, tên biến thể, màu sắc..."
+          />
+          <ManagementSelect
+            id="variant-status"
+            label="Trạng thái"
+            value={status}
+            onChange={(value) => chooseStatus(value as VariantStatus | '')}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="ACTIVE">Đang kinh doanh</option>
+            <option value="INACTIVE">Ngừng kinh doanh</option>
+          </ManagementSelect>
+          <ManagementSelect id="variant-sort" label="Sắp xếp" value={sortBy} onChange={(value) => { setSortBy(value); setPage(0) }}>
+            <option value="default">Mới cập nhật</option>
+            <option value="sku">Mã SKU</option>
+            {canViewCost && <option value="costPrice">Giá nhập</option>}
+            <option value="sellingPrice">Giá bán</option>
+            {canViewCost && <option value="profit">Lợi nhuận</option>}
+          </ManagementSelect>
+          <button
+            type="button"
+            className={secondaryButton}
+            onClick={() => {
+              setKeyword('')
+              chooseStatus('')
+              setMissingPrice(false)
+              setSortBy('default')
+            }}
+          >
+            Đặt lại
+          </button>
         </div>
+      </ManagementFilterCard>
 
+      <ManagementPanel
+        headingId="variant-list"
+        title="Danh sách biến thể (SKU)"
+        description={`${list.data?.totalElements ?? rows.length} biến thể khớp bộ lọc`}
+        refreshing={list.isFetching && !list.isLoading}
+        busy={list.isFetching}
+      >
+        <div aria-busy={list.isFetching}>
         {list.isError ? (
-          <p role="alert" className="mx-4 mb-4 rounded-md bg-red-50 p-3 text-sm text-red-800">
-            {apiError(list.error)}
-          </p>
+          <div className="p-5">
+            <ErrorState
+              sectionLabel="Danh sách biến thể (SKU)"
+              title="Không thể tải danh sách biến thể"
+              message={apiError(list.error)}
+              onRetry={() => void list.refetch()}
+              retrying={list.isFetching}
+            />
+          </div>
+        ) : list.isLoading && !rows.length ? (
+          <ManagementTableSkeleton columns={canViewCost ? 8 : 7} rows={5} />
         ) : (
           <>
-            <div className="hidden md:block [&_table]:text-sm">
+            <div className="hidden md:block">
               <ManagementTable
                 columns={columns}
                 rows={rows}
                 rowKey={(item) => item.id}
                 wrapCells
                 labelledBy="variant-list"
-                emptyMessage={
-                  list.isLoading
-                    ? 'Đang tải biến thể...'
-                    : 'Không tìm thấy biến thể nào. Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc trạng thái.'
-                }
+                emptyMessage="Không tìm thấy biến thể nào. Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc trạng thái."
               />
             </div>
 
-            <div className="divide-y divide-slate-200 md:hidden">
+            <div className="divide-y divide-aqs-divider md:hidden">
               {rows.length === 0 ? (
                 <div className="px-5 py-10 text-center text-sm text-slate-600">
                   <p className="mb-1 text-[15px] font-bold text-slate-900">
@@ -641,8 +640,7 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
             </div>
           </>
         )}
-
-        <CatalogPagination
+        <ManagementPagination
           page={list.data?.number ?? page}
           totalPages={list.data?.totalPages ?? 0}
           totalElements={list.data?.totalElements ?? 0}
@@ -650,9 +648,10 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
           disabled={list.isFetching}
           onPageChange={setPage}
         />
-      </section>
+        </div>
+      </ManagementPanel>
 
-      <p className="rounded-lg border border-sky-200 bg-sky-50 px-3.5 py-2.5 text-[13px] text-sky-900">
+      <p className="rounded-control border border-aqs-accent/20 bg-aqs-accent-soft px-3.5 py-2.5 text-[13px] text-aqs-ink">
         Chỉ xóa vĩnh viễn được SKU tạo nhầm, chưa từng phát sinh chứng từ và có tồn kho / đặt giữ bằng 0. Nếu đã phát sinh giao dịch, hãy dùng <strong>Ngừng kinh doanh</strong>.
       </p>
 
@@ -660,6 +659,7 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
         entityType="PRODUCT_VARIANT"
         productId={productId}
         enabled={Boolean(productId)}
+        operational
         description="Các lần tạo, chỉnh giá, đổi trạng thái và xóa SKU của sản phẩm này."
       />
 
@@ -707,7 +707,7 @@ const columns: ManagementTableColumn<ProductVariant>[] = [
       {dialog?.kind === 'status' && (
         <StatusChangeDialog variant={dialog.variant} pending={statusState.isLoading} onClose={() => setDialog(null)} onConfirm={() => void switchStatus(dialog.variant)} />
       )}
-    </div>
+    </ManagementPageShell>
   )
 }
 

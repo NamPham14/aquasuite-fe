@@ -5,6 +5,7 @@ import {
   ManagementFormField,
   managementFieldClass,
 } from '../../../shared/ui/ManagementDialog'
+import { Notice } from '../../../shared/ui/Badge'
 
 export type QuotationActionType =
   | 'submit_approval'
@@ -126,13 +127,9 @@ export function QuotationActionDialog({
         closeDisabled={submitting}
       >
         {config.warningMessage && (
-          <div
-            className={`p-3.5 rounded-lg text-sm mb-3 ${
-              config.isDanger ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-sky-50 text-sky-800 border border-sky-200'
-            }`}
-          >
+          <Notice tone={config.isDanger ? 'danger' : 'info'} className="mb-3">
             {config.warningMessage}
-          </div>
+          </Notice>
         )}
 
         {config.label && (

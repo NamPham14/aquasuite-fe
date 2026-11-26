@@ -63,7 +63,7 @@ export function BundleForm({ bundle, pending, blocked, error, fieldErrors, onSub
         <div className="grid gap-4">
         <ManagementFormField id="combo-retail-total" label="Tổng giá lẻ tạm tính"><input id="combo-retail-total" className={`${managementFieldClass} read-only:bg-slate-50`} readOnly value={bundleMoney(total)} /></ManagementFormField>
         <ManagementFormField id="combo-packagePrice" label="Giá gói (VND) *" error={errorFor('packagePrice')}><input {...inputProps('packagePrice')} inputMode="decimal" aria-describedby={errorFor('packagePrice') ? 'combo-packagePrice-error combo-price-note' : 'combo-price-note'} /></ManagementFormField>
-        <ManagementFormField id="combo-saving" label="Tiết kiệm tạm tính"><input id="combo-saving" className={`${managementFieldClass} read-only:bg-sky-50 read-only:text-sky-800`} readOnly value={`${bundleMoney(saving)}${saving != null && total != null && total > 0 ? ` (${(saving / total * 100).toFixed(1)}%)` : ''}`} /></ManagementFormField>
+        <ManagementFormField id="combo-saving" label="Tiết kiệm tạm tính"><input id="combo-saving" className={`${managementFieldClass} read-only:bg-aqs-accent-soft read-only:text-aqs-accent read-only:font-semibold`} readOnly value={`${bundleMoney(saving)}${saving != null && total != null && total > 0 ? ` (${(saving / total * 100).toFixed(1)}%)` : ''}`} /></ManagementFormField>
         </div>
         <p id="combo-price-note" className="text-xs text-slate-500">Máy chủ kiểm tra giá hiện hành khi lưu. Nhập giá bằng số, tối đa 2 chữ số thập phân.</p>
         <span role="status" className="sr-only">Tổng giá lẻ {bundleMoney(total)}. Tiết kiệm {bundleMoney(saving)}.</span>

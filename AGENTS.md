@@ -3,12 +3,13 @@
 ## Phạm vi và tài liệu
 
 - Repo này là `aquasuite-fe`; BE là repository riêng. Không sửa BE trừ khi người dùng yêu cầu rõ ràng.
-- Đọc [bản đồ tài liệu](docs/README.md), [cấu trúc frontend](docs/FRONTEND_PACKAGE_STRUCTURE.md) và [workflow](docs/workflow/feature-delivery.md) theo phạm vi công việc. Đọc spec liên quan nếu có.
+- Đọc [bản đồ tài liệu](docs/README.md), [cấu trúc frontend](docs/FRONTEND_PACKAGE_STRUCTURE.md), [Design System & Shared UI](docs/MANAGEMENT_UI_COMPONENTS.md) và [workflow](docs/workflow/feature-delivery.md) theo phạm vi công việc. Đọc spec liên quan nếu có.
 - Code hiện tại là bằng chứng về hành vi đang có; spec và contract đã thống nhất là mục tiêu. Kiến trúc trong tài liệu là định hướng, không mặc định mọi thư mục đã tồn tại. Nếu có mâu thuẫn ảnh hưởng nghiệp vụ hoặc contract, ghi nhận và làm rõ trước khi thay đổi phần phụ thuộc.
 
 ## Quy tắc frontend
 
-- Tổ chức code theo `app`, `pages`, `layouts`, `features`, `shared` khi phù hợp với công việc; không tái cấu trúc toàn dự án ngoài phạm vi yêu cầu. `shared` không phụ thuộc `features`; tránh circular dependency và dùng public exports khi giao tiếp giữa feature.
+- Tổ chức code theo `app`, `pages`, `layouts`, `features`, `shared` đúng [cấu trúc frontend](docs/FRONTEND_PACKAGE_STRUCTURE.md); không tái cấu trúc toàn dự án ngoài phạm vi yêu cầu. `shared` không phụ thuộc `features`; tránh circular dependency và dùng public exports khi giao tiếp giữa feature.
+- **Bắt buộc tuân thủ Design System & Shared UI cho Management Dashboard (`/app/*`)**: dùng semantic tokens trong `src/assets/styles/tokens.css`, shared motion trong `src/assets/styles/motion.css` và các component dùng chung trong `src/shared/ui/` theo [MANAGEMENT_UI_COMPONENTS.md](docs/MANAGEMENT_UI_COMPONENTS.md). Lấy `ProductsPage` và Sidebar sáng (`ManagementLayout.tsx`) làm chuẩn UI/UX. **Không** tạo thêm file CSS phân tán theo trang/feature, **không** duplicate shared component và **không** dựng hệ thống UI song song trong các feature tiếp theo.
 - Ưu tiên React, TypeScript, Vite và các thư viện đã có trong `package.json`. Chỉ thêm dependency khi có lý do rõ ràng và trong phạm vi được yêu cầu.
 - Kiểm tra contract thực tế của BE và spec liên quan trước khi tích hợp endpoint, dữ liệu, phân trang, lỗi hoặc xác thực; không tự suy đoán contract. Cơ chế refresh token hiện tại là mẫu tạm, chưa phải contract xác thực được xác nhận.
 - Route guard và ẩn nút chỉ hỗ trợ trải nghiệm; BE chịu trách nhiệm thực thi phân quyền. Không đưa secret vào mã frontend, biến `VITE_`, tài liệu hay artifact; dữ liệu `VITE_` có thể xuất hiện trong bundle.

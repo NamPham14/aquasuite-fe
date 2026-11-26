@@ -5,7 +5,12 @@ export type OrderType = 'RETAIL' | 'PROJECT'
 export type OrderChannel = 'COUNTER' | 'POS' | 'ONLINE' | 'DIRECT_SALES'
 
 /** Trạng thái đơn hàng (Khớp 100% OrderStatus.java Backend) */
-export type OrderStatus = 'DRAFT' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED'
+export type OrderStatus =
+  | 'DRAFT'
+  | 'PENDING_CONFIRMATION'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'CANCELLED'
 
 /** Trạng thái thanh toán của đơn hàng (Khớp 100% PaymentStatus.java Backend) */
 export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID'
@@ -57,11 +62,36 @@ export interface UpdateOrderFulfillmentRequest {
   note?: string
 }
 
+export interface ConfirmOnlineOrderRequest {
+  deliveryAddress?: string
+  deliverySchedule?: string
+  note?: string
+}
+
+export interface RejectOnlineOrderRequest {
+  reason: string
+}
+
+export interface PayosPaymentLinkInfo {
+  payosOrderCode: number
+  paymentLinkId: string
+  checkoutUrl: string
+  qrCode?: string | null
+  bin?: string | null
+  accountNumber?: string | null
+  accountName?: string | null
+  amount: number
+  amountPaid: number
+  description?: string | null
+  status: string
+}
+
 export interface SalesOrderFilterParams {
   keyword?: string
   orderStatus?: OrderStatus
   paymentStatus?: PaymentStatus
   orderType?: OrderType
+  orderChannel?: OrderChannel
   fromDate?: string
   toDate?: string
   page?: number
@@ -133,6 +163,7 @@ export interface SalesOrderDetailResponse {
   orderChannel: OrderChannel
   orderStatus: OrderStatus
   paymentStatus: PaymentStatus
+  paymentMethod?: BackendPaymentMethod | string | null
   orderDate: string
   dueDate?: string | null
   subtotal: number
@@ -145,6 +176,7 @@ export interface SalesOrderDetailResponse {
   displayItems?: SalesOrderDisplayItemResponse[]
   items: SalesOrderItemResponse[]
   milestones: SalesOrderMilestoneResponse[]
+  payosPayment?: PayosPaymentLinkInfo | null
 }
 
 export interface SalesOrderSummaryResponse {

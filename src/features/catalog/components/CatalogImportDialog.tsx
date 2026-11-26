@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useEffect, useId, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import {
   AlertCircle,
   AlertTriangle,
@@ -43,6 +43,8 @@ export interface CatalogImportDialogProps {
   onSuccess?: () => void
   /** Callback đóng modal */
   onClose: () => void
+  className?: string
+  toastClassName?: string
 }
 
 type DialogStep = 'idle' | 'uploading' | 'processing' | 'finished'
@@ -60,7 +62,10 @@ export function CatalogImportDialog({
   onDownloadReport,
   onSuccess,
   onClose,
+  className,
+  toastClassName,
 }: CatalogImportDialogProps) {
+  const titleId = useId()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -181,9 +186,9 @@ export function CatalogImportDialog({
     try {
       const blob = await onDownloadTemplate()
       downloadBlobAsFile(blob, templateFileName)
-      toast.success('Đã tải file mẫu thành công.')
+      toast.success('Đã tải file mẫu thành công.', { className: toastClassName })
     } catch (err) {
-      toast.error(getCatalogErrorState(err).message || 'Không thể tải file mẫu.')
+      toast.error(getCatalogErrorState(err).message || 'Không thể tải file mẫu.', { className: toastClassName })
     } finally {
       setIsDownloadingTemplate(false)
     }
@@ -195,9 +200,9 @@ export function CatalogImportDialog({
     try {
       const blob = await onDownloadReport(jobId)
       downloadBlobAsFile(blob, reportFileName)
-      toast.success('Đã tải báo cáo kết quả thành công.')
+      toast.success('Đã tải báo cáo kết quả thành công.', { className: toastClassName })
     } catch (err) {
-      toast.error(getCatalogErrorState(err).message || 'Không thể tải báo cáo kết quả.')
+      toast.error(getCatalogErrorState(err).message || 'Không thể tải báo cáo kết quả.', { className: toastClassName })
     } finally {
       setIsDownloadingReport(false)
     }
@@ -240,7 +245,8 @@ export function CatalogImportDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 z-50 m-auto w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-900/40"
+      aria-labelledby={titleId}
+      className={`fixed inset-0 z-50 m-auto w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-900/40 ${className ?? ''}`}
       onCancel={(e) => {
         if (isBusy) {
           e.preventDefault()
@@ -257,7 +263,7 @@ export function CatalogImportDialog({
               <FileSpreadsheet className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+              <h2 id={titleId} className="text-lg font-semibold text-slate-900">{title}</h2>
               <p className="text-xs text-slate-500">
                 Nhập hàng loạt {entityName} nhanh chóng từ bảng tính Excel
               </p>
@@ -323,10 +329,19 @@ export function CatalogImportDialog({
               <div>
                 <p className="mb-2 text-sm font-medium text-slate-900">2. Chọn file cần nhập</p>
                 <div
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Chọn file Excel để nhập"
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      fileInputRef.current?.click()
+                    }
+                  }}
                   className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
                     isDragging
                       ? 'border-sky-500 bg-sky-50/50'

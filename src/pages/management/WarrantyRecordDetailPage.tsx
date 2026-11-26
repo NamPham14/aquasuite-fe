@@ -41,7 +41,7 @@ export function WarrantyRecordDetailPage({ customerScope = false }: { customerSc
 
   if (activeQuery.isLoading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+      <div className="rounded-card border border-aqs-border bg-aqs-surface p-8 text-center text-sm text-aqs-ink-muted">
         Đang tải hồ sơ thẻ bảo hành...
       </div>
     )
@@ -55,11 +55,11 @@ export function WarrantyRecordDetailPage({ customerScope = false }: { customerSc
       <div className="space-y-4">
         <Link
           to={backPath}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-700 hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-aqs-accent hover:underline"
         >
           <ArrowLeft className="h-4 w-4" /> Quay lại danh sách
         </Link>
-        <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
+        <div role="alert" className="rounded-card border border-aqs-danger-border bg-aqs-danger-soft p-6 text-sm text-aqs-danger">
           {message}
         </div>
       </div>
@@ -71,23 +71,23 @@ export function WarrantyRecordDetailPage({ customerScope = false }: { customerSc
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xs sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-4 rounded-card border border-aqs-border bg-aqs-surface p-5 sm:flex-row sm:items-center">
         <div className="space-y-1.5">
           <Link
             to={backPath}
-            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-sky-700"
+            className="inline-flex items-center gap-1 text-xs font-medium text-aqs-ink-muted hover:text-aqs-accent"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Quay lại danh sách thẻ bảo hành
           </Link>
           <div className="flex flex-wrap items-center gap-3">
-            <ShieldCheck className="h-6 w-6 text-sky-600" />
-            <h1 className="text-xl font-bold text-slate-900">{record.warrantyCode}</h1>
+            <ShieldCheck className="h-6 w-6 text-aqs-accent" />
+            <h1 className="text-xl font-bold text-aqs-ink">{record.warrantyCode}</h1>
             <WarrantyStatusBadge status={record.displayStatus} />
           </div>
-          <p className="text-xs text-slate-500">
-            Thời hạn: <strong className="text-slate-700">{record.warrantyMonths} tháng</strong> • Còn lại:{' '}
-            <strong className="text-slate-700">{record.remainingDays} ngày</strong>
+          <p className="text-xs text-aqs-ink-muted">
+            Thời hạn: <strong className="text-aqs-ink">{record.warrantyMonths} tháng</strong> • Còn lại:{' '}
+            <strong className="text-aqs-ink">{record.remainingDays} ngày</strong>
           </p>
         </div>
 

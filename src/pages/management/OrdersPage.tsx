@@ -5,6 +5,8 @@ import { useGetSalesOrdersQuery } from '../../features/sales/api/salesOrderApi'
 import { useSalesOrderFilters } from '../../features/sales/hooks/useSalesOrderFilters'
 import { OrderFilterBar } from '../../features/sales/components/OrderFilterBar'
 import { OrderTable } from '../../features/sales/components/OrderTable'
+import { ManagementPageHeader, ManagementPageShell, ManagementPanel } from '../../shared/ui/ManagementPage'
+import { Button } from '../../shared/ui/Button'
 
 export function OrdersPage() {
   const { user } = useAuth()
@@ -18,32 +20,26 @@ export function OrdersPage() {
   const totalPages = pageData?.totalPages || 1
 
   return (
-    <div className="space-y-4">
+    <ManagementPageShell>
       {/* Header trang */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
-        <div>
-          <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-sky-600" />
-            <span>Quản lý đơn hàng</span>
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Theo dõi, tra cứu và xử lý các đơn hàng bán lẻ POS và đơn hàng dự án.
-          </p>
-        </div>
-
-        {/* Nút hành động */}
-        {canCreatePOS && (
-          <div className="flex items-center gap-2">
+      <ManagementPageHeader
+        group="Bán hàng & Đơn hàng"
+        breadcrumb="Đơn hàng"
+        title="Quản lý đơn hàng"
+        description="Theo dõi, tra cứu và xử lý đơn hàng bán lẻ POS, đơn hàng Online và đơn hàng dự án."
+        icon={<ShoppingCart className="h-5 w-5" />}
+        actions={
+          canCreatePOS ? (
             <Link
               to="/app/orders/pos"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-md bg-sky-600 text-white hover:bg-sky-700 transition shadow-xs"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-control bg-aqs-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-aqs-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-focus"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="h-4 w-4" aria-hidden="true" />
               <span>Tạo đơn tại quầy (POS)</span>
             </Link>
-          </div>
-        )}
-      </div>
+          ) : undefined
+        }
+      />
 
       {/* Thanh bộ lọc đa năng */}
       <OrderFilterBar
@@ -55,6 +51,8 @@ export function OrdersPage() {
         onChangePaymentStatus={filters.setPaymentStatus}
         orderType={filters.orderType}
         onChangeOrderType={filters.setOrderType}
+        orderChannel={filters.orderChannel}
+        onChangeOrderChannel={filters.setOrderChannel}
         fromDate={filters.fromDate}
         onChangeFromDate={filters.setFromDate}
         toDate={filters.toDate}
@@ -63,39 +61,47 @@ export function OrdersPage() {
         onResetFilters={filters.resetFilters}
       />
 
-      {/* Bảng đơn hàng 5 cột co giãn responsive */}
-      <OrderTable orders={orders} isLoading={isLoading || isFetching} />
+      {/* Bảng đơn hàng */}
+      <ManagementPanel
+        headingId="orders-list-heading"
+        title="Danh sách đơn hàng"
+        description={`Tổng số ${total} đơn hàng khớp bộ lọc hiện tại.`}
+        refreshing={isFetching && !isLoading}
+        busy={isFetching}
+      >
+        <OrderTable orders={orders} isLoading={isLoading || isFetching} />
 
-      {/* Phân trang */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-2 pt-2 text-xs text-slate-500">
-          <div>
-            Hiển thị <span className="font-semibold text-slate-700">{orders.length}</span> /{' '}
-            <span className="font-semibold text-slate-700">{total}</span> đơn hàng
+        {/* Phân trang */}
+        {totalPages > 1 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-aqs-border bg-aqs-surface-subtle/60 px-5 py-3 text-xs text-aqs-ink-muted">
+            <div>
+              Hiển thị <span className="font-semibold tabular-nums text-aqs-ink">{orders.length}</span> /{' '}
+              <span className="font-semibold tabular-nums text-aqs-ink">{total}</span> đơn hàng
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={filters.page <= 1}
+                onClick={() => filters.setPage(filters.page - 1)}
+              >
+                Trước
+              </Button>
+              <span className="px-1 font-medium tabular-nums text-aqs-ink">
+                Trang {filters.page} / {totalPages}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={filters.page >= totalPages}
+                onClick={() => filters.setPage(filters.page + 1)}
+              >
+                Tiếp
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={filters.page <= 1}
-              onClick={() => filters.setPage(filters.page - 1)}
-              className="px-2.5 py-1 rounded border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-            >
-              Trước
-            </button>
-            <span className="px-2 py-1 font-medium text-slate-700">
-              Trang {filters.page} / {totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={filters.page >= totalPages}
-              onClick={() => filters.setPage(filters.page + 1)}
-              className="px-2.5 py-1 rounded border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-            >
-              Tiếp
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </ManagementPanel>
+    </ManagementPageShell>
   )
 }

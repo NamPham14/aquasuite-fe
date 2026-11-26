@@ -1,0 +1,87 @@
+/* AquaSuite Design System — Semantic Tokens (Tailwind CSS 4 @theme).
+ * Single source of truth for Management Dashboard surfaces, ink, borders, semantics, radii, shadow & motion.
+ */
+@theme {
+  /* Surfaces */
+  --color-aqs-page: #f5f8f8;
+  --color-aqs-surface: #ffffff;
+  --color-aqs-surface-subtle: #f2f6f6;
+  --color-aqs-surface-active: #e7f3f3;
+  --color-aqs-surface-hover: #e6edef;
+
+  /* Ink / Typography */
+  --color-aqs-ink: #122b31;
+  --color-aqs-ink-muted: #50666b;
+  --color-aqs-ink-faint: #667a7f;
+
+  /* Borders & Dividers */
+  --color-aqs-border: #dce6e8;
+  --color-aqs-border-strong: #bdcdd1;
+  --color-aqs-border-hover: #8eafb5;
+  --color-aqs-divider: #edf1f2;
+  --color-aqs-skeleton: #e7edef;
+
+  /* Brand Accent (Aquatic Teal) */
+  --color-aqs-accent: #087f8c;
+  --color-aqs-accent-hover: #066a75;
+  --color-aqs-accent-soft: #e3f4f4;
+  --color-aqs-accent-border: #b7dadd;
+  --color-aqs-accent-border-strong: #aad5da;
+  --color-aqs-accent-ink: #0b5159;
+  --color-aqs-focus: #0a8795;
+
+  /* Semantic Statuses */
+  --color-aqs-positive: #24724f;
+  --color-aqs-positive-soft: #e5f4eb;
+  --color-aqs-positive-border: #b9dcc8;
+  --color-aqs-positive-ink: #1e6042;
+
+  --color-aqs-warning: #8a5a14;
+  --color-aqs-warning-soft: #fff3d9;
+  --color-aqs-warning-border: #ead29c;
+  --color-aqs-warning-ink: #74480e;
+
+  --color-aqs-danger: #b72f42;
+  --color-aqs-danger-hover: #982438;
+  --color-aqs-danger-soft: #fdebed;
+  --color-aqs-danger-soft-hover: #fbdce1;
+  --color-aqs-danger-border: #edbdc5;
+  --color-aqs-danger-ink: #842033;
+
+  /* Radii */
+  --radius-card: 8px;
+  --radius-control: 6px;
+  --radius-chip: 4px;
+
+  /* Elevation */
+  --shadow-aqs-float: 0 18px 42px -26px rgba(18, 43, 49, 0.42);
+
+  /* Typography */
+  --font-aqs-sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+  /* Easing */
+  --ease-aqs: cubic-bezier(.2, .8, .2, 1);
+  --ease-aqs-spring: cubic-bezier(.34, 1.45, .64, 1);
+}
+
+:root {
+  /* Lucian UX/UI --ux-* token bridge derived from AquaSuite semantic tokens */
+  --ux-page: var(--color-aqs-page);
+  --ux-surface: var(--color-aqs-surface);
+  --ux-surface-2: var(--color-aqs-surface-subtle);
+  --ux-surface-3: var(--color-aqs-surface-hover);
+  --ux-ink: var(--color-aqs-ink);
+  --ux-ink-2: var(--color-aqs-ink-muted);
+  --ux-ink-3: var(--color-aqs-ink-faint);
+  --ux-line: rgba(18, 43, 49, 0.1);
+  --ux-line-2: rgba(18, 43, 49, 0.18);
+  --ux-accent: var(--color-aqs-accent);
+  --ux-accent-2: #2492a0;
+  --ux-accent-soft: var(--color-aqs-accent-soft);
+  --ux-accent-ink: #ffffff;
+  --ux-mint: var(--color-aqs-positive);
+  --ux-warn: var(--color-aqs-warning);
+  --ux-danger: var(--color-aqs-danger);
+  --ux-ease: var(--ease-aqs);
+  --ux-spring: var(--ease-aqs-spring);
+}

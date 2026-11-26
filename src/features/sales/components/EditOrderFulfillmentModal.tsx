@@ -142,19 +142,19 @@ export function EditOrderFulfillmentModal({
           </div>
 
           {/* Footer Action */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 border-t border-aqs-divider pt-3">
             <button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-3 py-2 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 transition font-medium"
+              className="h-9 rounded-control border border-aqs-border bg-aqs-surface px-3.5 text-xs font-medium text-aqs-ink transition-colors hover:bg-aqs-surface-subtle"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-sky-600 text-white hover:bg-sky-700 transition font-semibold shadow-xs disabled:opacity-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-control bg-aqs-accent px-4 text-xs font-semibold text-white transition-colors hover:bg-aqs-accent-hover disabled:opacity-50"
             >
               {isLoading ? (
                 <>

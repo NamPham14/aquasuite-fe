@@ -4,6 +4,9 @@ import { Check, ChevronLeft, Eye, FileText, Mail, Plus, ReceiptText, Search, Sen
 import { toast } from 'sonner'
 import { normalizeApiError } from '../../shared/api/apiError.ts'
 import { ManagementDialog, managementFieldClass } from '../../shared/ui/ManagementDialog.tsx'
+import { ManagementPageHeader, ManagementPageShell, ManagementPanel, ManagementStatCard, filterControlClass } from '../../shared/ui/ManagementPage.tsx'
+import { CodeChip, StatusBadge } from '../../shared/ui/Badge.tsx'
+import { SakugaActionButton } from '../../shared/ui/Button.tsx'
 import { ActivityLogPanel } from '../../features/audit'
 import { useAuth } from '../../features/iam/hooks/useAuth.ts'
 import {
@@ -31,8 +34,8 @@ import type {
   OrderModificationRequestType,
 } from '../../features/sales/types/orderModificationRequest.types.ts'
 
-const primaryButton = 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md bg-sky-700 px-3 text-xs font-semibold text-white hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50'
-const secondaryButton = 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50'
+const primaryButton = 'inline-flex h-10 items-center justify-center gap-1.5 rounded-control bg-aqs-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-aqs-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:opacity-50'
+const secondaryButton = 'inline-flex h-10 items-center justify-center gap-1.5 rounded-control border border-aqs-border bg-aqs-surface px-3.5 text-sm font-medium text-aqs-ink transition-colors hover:border-slate-300 hover:bg-aqs-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:opacity-50'
 
 const TYPE_LABEL: Record<OrderModificationRequestType, string> = {
   FULL_CANCELLATION: 'Hủy toàn bộ đơn',
@@ -45,6 +48,12 @@ const STATUS_LABEL: Record<OrderModificationRequestStatus, string> = {
   PENDING_CANCEL: 'Chờ hóa đơn / hoàn tiền',
   APPROVED: 'Đã duyệt',
   REJECTED: 'Đã từ chối',
+}
+
+function statusTone(status: OrderModificationRequestStatus) {
+  if (status === 'APPROVED') return 'positive' as const
+  if (status === 'REJECTED') return 'danger' as const
+  return 'warning' as const
 }
 
 function statusClass(status: OrderModificationRequestStatus) {
@@ -98,39 +107,49 @@ function OrderModificationRequestList() {
     REJECTED: (requestsQuery.data?.items ?? []).filter((request) => request.requestStatus === 'REJECTED').length,
   }), [requestsQuery.data])
 
-  return <main className="mx-auto w-full max-w-[1360px] space-y-4 pb-12">
-    <header className="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-      <nav className="mb-1 text-xs text-slate-500">Trang chủ <span className="mx-1 text-slate-300">/</span> Bán hàng <span className="mx-1 text-slate-300">/</span><span className="font-semibold text-sky-700">Yêu cầu đổi / hủy đơn</span></nav>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Xử lý yêu cầu đổi / hủy đơn hàng</h1>
-          <p className="mt-1 text-sm text-slate-500">Duyệt hoặc từ chối yêu cầu thay đổi địa chỉ, đổi hàng và hủy đơn chưa hoàn tất giao hàng.</p>
-        </div>
-        {canCreate && <button type="button" className={primaryButton} onClick={() => setShowCreate(true)}><Plus className="h-4 w-4" />Tạo yêu cầu đổi / hủy đơn</button>}
-      </div>
-    </header>
+  return <ManagementPageShell>
+    <ManagementPageHeader
+      group="Bán hàng"
+      breadcrumb="Yêu cầu đổi / hủy đơn"
+      title="Xử lý yêu cầu đổi / hủy đơn hàng"
+      description="Duyệt hoặc từ chối yêu cầu thay đổi địa chỉ, đổi hàng và hủy đơn chưa hoàn tất giao hàng."
+      actions={
+        canCreate ? (
+          <SakugaActionButton onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Tạo yêu cầu đổi / hủy đơn
+          </SakugaActionButton>
+        ) : undefined
+      }
+    />
 
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {(['PENDING_REVIEW', 'PENDING_CANCEL', 'APPROVED', 'REJECTED'] as const).map((item) => <button key={item} type="button" onClick={() => setStatus(status === item ? '' : item)} className={`rounded-lg border p-4 text-left transition hover:border-sky-300 ${status === item ? 'border-sky-500 bg-sky-50' : 'border-slate-200 bg-slate-50'}`}>
-          <p className="text-xs font-semibold text-slate-500">{STATUS_LABEL[item]}</p><p className="mt-1 text-2xl font-bold text-slate-900">{stats[item]}</p>
-        </button>)}
-      </div>
-      <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 lg:grid-cols-[minmax(0,1fr)_220px_240px_auto]">
-        <label className="relative block"><span className="mb-1 block text-xs font-semibold text-slate-600">Tìm kiếm</span><Search className="pointer-events-none absolute bottom-2.5 left-3 h-4 w-4 text-slate-400" /><input value={keyword} onChange={(event) => setKeyword(event.target.value)} className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100" placeholder="Mã yêu cầu, đơn, khách hàng, số điện thoại…" /></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">Loại yêu cầu</span><select value={type} onChange={(event) => setType(event.target.value as typeof type)} className={managementFieldClass}><option value="">Tất cả loại yêu cầu</option>{Object.entries(TYPE_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label><span className="mb-1 block text-xs font-semibold text-slate-600">Trạng thái</span><select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className={managementFieldClass}><option value="">Tất cả trạng thái</option>{Object.entries(STATUS_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <ManagementStatCard label={STATUS_LABEL.PENDING_REVIEW} value={stats.PENDING_REVIEW} tone="warning" active={status === 'PENDING_REVIEW'} onClick={() => setStatus(status === 'PENDING_REVIEW' ? '' : 'PENDING_REVIEW')} />
+      <ManagementStatCard label={STATUS_LABEL.PENDING_CANCEL} value={stats.PENDING_CANCEL} tone="accent" active={status === 'PENDING_CANCEL'} onClick={() => setStatus(status === 'PENDING_CANCEL' ? '' : 'PENDING_CANCEL')} />
+      <ManagementStatCard label={STATUS_LABEL.APPROVED} value={stats.APPROVED} tone="positive" active={status === 'APPROVED'} onClick={() => setStatus(status === 'APPROVED' ? '' : 'APPROVED')} />
+      <ManagementStatCard label={STATUS_LABEL.REJECTED} value={stats.REJECTED} tone="danger" active={status === 'REJECTED'} onClick={() => setStatus(status === 'REJECTED' ? '' : 'REJECTED')} />
+    </section>
+
+    <section className="rounded-card border border-aqs-border bg-aqs-surface p-4">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_240px_auto]">
+        <label className="relative block"><span className="mb-1.5 block text-xs font-semibold leading-none text-aqs-ink-muted">Tìm kiếm</span><Search className="pointer-events-none absolute bottom-3 left-3 h-4 w-4 text-aqs-ink-faint" /><input value={keyword} onChange={(event) => setKeyword(event.target.value)} className={`${filterControlClass} pl-9`} placeholder="Mã yêu cầu, đơn, khách hàng, số điện thoại…" /></label>
+        <label><span className="mb-1.5 block text-xs font-semibold leading-none text-aqs-ink-muted">Loại yêu cầu</span><select value={type} onChange={(event) => setType(event.target.value as typeof type)} className={filterControlClass}><option value="">Tất cả loại yêu cầu</option>{Object.entries(TYPE_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label><span className="mb-1.5 block text-xs font-semibold leading-none text-aqs-ink-muted">Trạng thái</span><select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className={filterControlClass}><option value="">Tất cả trạng thái</option>{Object.entries(STATUS_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <button type="button" onClick={() => { setKeyword(''); setType(''); setStatus('') }} className={`${secondaryButton} self-end`}>Đặt lại</button>
       </div>
     </section>
 
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-200 px-4 py-3"><h2 className="font-bold text-slate-900">Danh sách yêu cầu đổi / hủy đơn</h2><p className="mt-0.5 text-xs text-slate-500">Hiển thị {visible.length} / {requestsQuery.data?.totalElements ?? 0} yêu cầu đã tải.</p></div>
-      {requestsQuery.isError ? <ErrorBox error={requestsQuery.error} /> : requestsQuery.isLoading ? <p className="p-8 text-center text-sm text-slate-500">Đang tải yêu cầu…</p> : <div className="overflow-x-auto"><table className="min-w-[1080px] w-full text-sm"><thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Mã yêu cầu</th><th className="px-4 py-3">Đơn / khách</th><th className="px-4 py-3">Loại yêu cầu</th><th className="px-4 py-3">Lý do yêu cầu</th><th className="px-4 py-3 text-right">Giá trị đơn</th><th className="px-4 py-3">Trạng thái</th><th className="px-4 py-3">Ngày gửi</th><th className="px-4 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-200">{visible.map((request) => { const order = orders.get(request.orderId); return <tr key={request.id} className="align-top hover:bg-slate-50"><td className="px-4 py-3"><span className="font-mono text-xs font-semibold text-sky-800" title={request.id}>{shortId(request.id)}</span></td><td className="px-4 py-3"><Link to={`/app/orders/${request.orderId}`} className="font-semibold text-sky-800 hover:underline">{order?.orderCode ?? shortId(request.orderId)}</Link><p className="mt-1 text-xs text-slate-500">{order?.customerName ?? shortId(request.customerId)}{order?.customerPhone ? ` · ${order.customerPhone}` : ''}</p>{order?.quotationId && <Link className="mt-1 inline-block text-xs text-slate-500 hover:text-sky-700 hover:underline" to={`/app/quotations/${order.quotationId}`}>Từ báo giá {order.quotationCode ?? ''}</Link>}</td><td className="px-4 py-3 font-medium text-slate-700">{TYPE_LABEL[request.requestType]}</td><td className="max-w-[260px] px-4 py-3 text-xs leading-5 text-slate-600"><span className="line-clamp-3">{request.customerReason}</span></td><td className="px-4 py-3 text-right font-semibold tabular-nums">{order ? money(order.totalAmount) : '—'}</td><td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ring-1 ${statusClass(request.requestStatus)}`}>{STATUS_LABEL[request.requestStatus]}</span><p className="mt-1 text-xs text-slate-500">Đơn: {order?.orderStatus ?? 'Tra cứu chi tiết'}</p></td><td className="px-4 py-3 text-xs text-slate-600">{dateTime(request.createdAt)}</td><td className="px-4 py-3 text-right"><Link className={secondaryButton} to={`/app/order-modification-requests/${request.id}`}><Eye className="h-4 w-4" />Xem chi tiết</Link></td></tr>})}</tbody></table>{!visible.length && <p className="p-10 text-center text-sm text-slate-500">Không có yêu cầu nào khớp bộ lọc hiện tại.</p>}</div>}
-    </section>
-    <ActivityLogPanel entityType="ORDER_MODIFICATION_REQUEST" title="Nhật ký hoạt động" description="Các quyết định duyệt, từ chối, ghi kết quả hóa đơn và email kết quả được lưu tự động." emptyMessage="Chưa có hoạt động xử lý yêu cầu đổi / hủy đơn nào được ghi nhận." />
+    <ManagementPanel
+      headingId="omr-list-heading"
+      title="Danh sách yêu cầu đổi / hủy đơn"
+      description={`Hiển thị ${visible.length} / ${requestsQuery.data?.totalElements ?? 0} yêu cầu đã tải.`}
+      busy={requestsQuery.isFetching}
+    >
+      {requestsQuery.isError ? <div className="p-5"><ErrorBox error={requestsQuery.error} /></div> : requestsQuery.isLoading ? <p className="p-8 text-center text-sm text-aqs-ink-muted">Đang tải yêu cầu…</p> : <div className="overflow-x-auto"><table className="min-w-[1080px] w-full text-sm"><thead className="border-b border-aqs-border bg-aqs-surface-subtle text-left text-xs font-semibold text-aqs-ink-muted"><tr><th className="px-4 py-3">Mã yêu cầu</th><th className="px-4 py-3">Đơn / khách</th><th className="px-4 py-3">Loại yêu cầu</th><th className="px-4 py-3">Lý do yêu cầu</th><th className="px-4 py-3 text-right">Giá trị đơn</th><th className="px-4 py-3">Trạng thái</th><th className="px-4 py-3">Ngày gửi</th><th className="px-4 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-aqs-border">{visible.map((request) => { const order = orders.get(request.orderId); return <tr key={request.id} className="align-top transition-colors hover:bg-aqs-surface-subtle/60"><td className="px-4 py-3"><CodeChip title={request.id}>{shortId(request.id)}</CodeChip></td><td className="px-4 py-3"><Link to={`/app/orders/${request.orderId}`} className="font-semibold text-aqs-accent hover:underline">{order?.orderCode ?? shortId(request.orderId)}</Link><p className="mt-1 text-xs text-aqs-ink-muted">{order?.customerName ?? shortId(request.customerId)}{order?.customerPhone ? ` · ${order.customerPhone}` : ''}</p>{order?.quotationId && <Link className="mt-1 inline-block text-xs text-aqs-ink-muted hover:text-aqs-accent hover:underline" to={`/app/quotations/${order.quotationId}`}>Từ báo giá {order.quotationCode ?? ''}</Link>}</td><td className="px-4 py-3 font-medium text-aqs-ink">{TYPE_LABEL[request.requestType]}</td><td className="max-w-[260px] px-4 py-3 text-xs leading-5 text-aqs-ink-muted"><span className="line-clamp-3">{request.customerReason}</span></td><td className="px-4 py-3 text-right font-semibold tabular-nums text-aqs-ink">{order ? money(order.totalAmount) : '—'}</td><td className="px-4 py-3"><StatusBadge tone={statusTone(request.requestStatus)}>{STATUS_LABEL[request.requestStatus]}</StatusBadge><p className="mt-1 text-xs text-aqs-ink-muted">Đơn: {order?.orderStatus ?? 'Tra cứu chi tiết'}</p></td><td className="px-4 py-3 text-xs tabular-nums text-aqs-ink-muted">{dateTime(request.createdAt)}</td><td className="px-4 py-3 text-right"><Link className={secondaryButton} to={`/app/order-modification-requests/${request.id}`}><Eye className="h-4 w-4" />Xem chi tiết</Link></td></tr>})}</tbody></table>{!visible.length && <p className="p-10 text-center text-sm text-aqs-ink-muted">Không có yêu cầu nào khớp bộ lọc hiện tại.</p>}</div>}
+    </ManagementPanel>
+    <ActivityLogPanel operational entityType="ORDER_MODIFICATION_REQUEST" title="Nhật ký hoạt động" description="Các quyết định duyệt, từ chối, ghi kết quả hóa đơn và email kết quả được lưu tự động." emptyMessage="Chưa có hoạt động xử lý yêu cầu đổi / hủy đơn nào được ghi nhận." />
     {showCreate && <CreateRequestDialog onClose={() => setShowCreate(false)} onSuccess={() => setShowCreate(false)} />}
-  </main>
+  </ManagementPageShell>
 }
 
 function OrderModificationRequestDetail({ requestId }: { requestId: string }) {

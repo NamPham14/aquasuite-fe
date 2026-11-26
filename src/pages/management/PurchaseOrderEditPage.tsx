@@ -18,8 +18,8 @@ export function PurchaseOrderEditPage() {
 
   if (isLoading) {
     return (
-      <div className="py-24 text-center text-slate-500">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mb-3"></div>
+      <div className="py-24 text-center text-aqs-ink-muted">
+        <div className="mb-3 inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-aqs-accent motion-reduce:animate-none"></div>
         <p className="text-sm">Đang tải thông tin đơn mua hàng...</p>
       </div>
     )
@@ -27,17 +27,17 @@ export function PurchaseOrderEditPage() {
 
   if (error || !po) {
     return (
-      <div className="max-w-md mx-auto my-12 bg-white rounded-xl border border-slate-200 p-8 text-center shadow-sm">
-        <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
-        <h2 className="text-base font-bold text-slate-800">Không tìm thấy đơn mua hàng</h2>
-        <p className="text-xs text-slate-500 mt-1 mb-4">
+      <div className="mx-auto my-12 max-w-md rounded-card border border-aqs-border bg-aqs-surface p-8 text-center">
+        <AlertCircle className="mx-auto mb-3 h-10 w-10 text-aqs-danger" />
+        <h2 className="text-base font-bold text-aqs-ink">Không tìm thấy đơn mua hàng</h2>
+        <p className="mt-1 mb-4 text-xs text-aqs-ink-muted">
           Đơn mua hàng không tồn tại hoặc bạn không có quyền truy cập.
         </p>
         <Link
           to="/app/purchase-orders"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
+          className="inline-flex h-10 items-center gap-1.5 rounded-control bg-aqs-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-aqs-accent-hover"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-4 w-4" />
           Về danh sách đơn mua
         </Link>
       </div>
@@ -46,17 +46,17 @@ export function PurchaseOrderEditPage() {
 
   if (po.status !== 'DRAFT') {
     return (
-      <div className="max-w-md mx-auto my-12 bg-white rounded-xl border border-slate-200 p-8 text-center shadow-sm">
-        <AlertCircle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
-        <h2 className="text-base font-bold text-slate-800">Đơn mua hàng đã bị khóa chỉnh sửa</h2>
-        <p className="text-xs text-slate-500 mt-1 mb-4">
+      <div className="mx-auto my-12 max-w-md rounded-card border border-aqs-border bg-aqs-surface p-8 text-center">
+        <AlertCircle className="mx-auto mb-3 h-10 w-10 text-aqs-warning" />
+        <h2 className="text-base font-bold text-aqs-ink">Đơn mua hàng đã bị khóa chỉnh sửa</h2>
+        <p className="mt-1 mb-4 text-xs text-aqs-ink-muted">
           Chỉ có thể sửa đơn mua hàng khi ở trạng thái <strong>Bản nháp (DRAFT)</strong>.
         </p>
         <Link
           to={`/app/purchase-orders/${po.purchaseOrderId}`}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition-colors"
+          className="inline-flex h-10 items-center gap-1.5 rounded-control bg-aqs-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-aqs-accent-hover"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-4 w-4" />
           Xem chi tiết đơn mua
         </Link>
       </div>

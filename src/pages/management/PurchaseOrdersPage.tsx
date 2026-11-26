@@ -26,6 +26,8 @@ import type {
   PurchaseOrderListItemResponse,
   PurchaseOrderStatus,
 } from '../../features/purchasing/types/purchaseOrder.types'
+import { ManagementFilterCard, ManagementPageHeader, ManagementPageShell, filterControlClass } from '../../shared/ui/ManagementPage'
+import { Button } from '../../shared/ui/Button'
 
 export function PurchaseOrdersPage() {
   const {
@@ -135,34 +137,37 @@ export function PurchaseOrdersPage() {
   const totalPages = data?.totalPages ?? 1
 
   return (
-    <div className="space-y-6 pb-12">
+    <ManagementPageShell>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-            <Truck className="w-7 h-7 text-sky-600" />
-            Quản lý đơn mua hàng (PO)
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Lập đơn mua nháp gửi báo giá, thương lượng đơn giá và theo dõi tiến độ nhập kho
-          </p>
-        </div>
-
-        <Link
-          to="/app/purchase-orders/new"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Tạo đơn mua hàng
-        </Link>
-      </div>
+      <ManagementPageHeader
+        group="Kho vận & Cung ứng"
+        breadcrumb="Đơn mua hàng (PO)"
+        title="Quản lý đơn mua hàng (PO)"
+        description="Lập đơn mua nháp gửi báo giá, thương lượng đơn giá và theo dõi tiến độ nhập kho."
+        icon={<Truck className="h-5 w-5" />}
+        actions={
+          <Link
+            to="/app/purchase-orders/new"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-control bg-aqs-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-aqs-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Tạo đơn mua hàng
+          </Link>
+        }
+      />
 
       {/* Filter Section */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <ManagementFilterCard
+        headingId="po-filters"
+        title="Tìm và lọc đơn mua hàng"
+        resultCount={`Hiển thị ${data?.items?.length ?? 0} / ${data?.totalElements ?? 0} đơn mua hàng`}
+        hasActiveFilters={Boolean(search || supplierId || status || fromDate || toDate)}
+        onReset={resetFilters}
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {/* Search PO Code */}
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-aqs-ink-faint" />
             <input
               type="text"
               value={search}
@@ -171,20 +176,20 @@ export function PurchaseOrdersPage() {
                 setPage(1)
               }}
               placeholder="Tìm mã đơn PO..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent placeholder:text-slate-400"
+              className={`${filterControlClass} pl-9`}
             />
           </div>
 
           {/* Supplier */}
           <div className="relative">
-            <Building2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-aqs-ink-faint" />
             <select
               value={supplierId}
               onChange={(e) => {
                 setSupplierId(e.target.value)
                 setPage(1)
               }}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              className={`${filterControlClass} pl-9`}
             >
               <option value="">Tất cả nhà cung cấp</option>
               {suppliers.map((s) => (
@@ -197,14 +202,14 @@ export function PurchaseOrdersPage() {
 
           {/* Status */}
           <div className="relative">
-            <Filter className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-aqs-ink-faint" />
             <select
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value as PurchaseOrderStatus | '')
                 setPage(1)
               }}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              className={`${filterControlClass} pl-9`}
             >
               <option value="">Tất cả trạng thái</option>
               <option value="DRAFT">Bản nháp</option>
@@ -216,7 +221,7 @@ export function PurchaseOrdersPage() {
           </div>
 
           {/* Date range from / to */}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <input
               type="date"
               value={fromDate}
@@ -224,10 +229,10 @@ export function PurchaseOrdersPage() {
                 setFromDate(e.target.value)
                 setPage(1)
               }}
-              className="w-1/2 px-2 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className={`${filterControlClass} min-w-0 flex-1 px-2 text-xs`}
               title="Từ ngày"
             />
-            <span className="text-slate-400">-</span>
+            <span className="shrink-0 text-aqs-ink-faint">-</span>
             <input
               type="date"
               value={toDate}
@@ -235,27 +240,20 @@ export function PurchaseOrdersPage() {
                 setToDate(e.target.value)
                 setPage(1)
               }}
-              className="w-1/2 px-2 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className={`${filterControlClass} min-w-0 flex-1 px-2 text-xs`}
               title="Đến ngày"
             />
           </div>
         </div>
 
         {/* Action reset */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
-          <span>
-            Hiển thị {data?.items?.length ?? 0} / {data?.totalElements ?? 0} đơn mua hàng
-          </span>
-          <button
-            type="button"
-            onClick={resetFilters}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors font-medium"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
+        <div className="mt-3 flex items-center justify-end border-t border-aqs-border pt-3">
+          <Button variant="secondary" size="sm" onClick={resetFilters}>
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
             Đặt lại bộ lọc
-          </button>
+          </Button>
         </div>
-      </div>
+      </ManagementFilterCard>
 
       {/* Main Table */}
       <PurchaseOrderTable
@@ -309,6 +307,6 @@ export function PurchaseOrdersPage() {
         }}
         onConfirm={handleExecuteAction}
       />
-    </div>
+    </ManagementPageShell>
   )
 }

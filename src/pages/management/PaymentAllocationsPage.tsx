@@ -55,11 +55,11 @@ interface CreatedVoucherState {
 }
 
 const primaryBtn =
-  'inline-flex min-h-8 items-center justify-center gap-1.5 rounded bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none'
+  'inline-flex h-9 items-center justify-center gap-1.5 rounded-control bg-aqs-accent px-3.5 text-xs font-semibold text-white transition-colors hover:bg-aqs-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:bg-aqs-surface-subtle disabled:text-aqs-ink-faint'
 const secondaryBtn =
-  'inline-flex min-h-8 items-center justify-center gap-1.5 rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-45'
+  'inline-flex h-9 items-center justify-center gap-1.5 rounded-control border border-aqs-border bg-aqs-surface px-3 text-xs font-medium text-aqs-ink transition-colors hover:border-slate-300 hover:bg-aqs-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:opacity-45'
 const dangerSmallBtn =
-  'inline-flex min-h-8 items-center justify-center gap-1 rounded border border-rose-300 bg-white px-2.5 py-1 text-xs font-medium text-rose-800 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-400 disabled:cursor-not-allowed disabled:opacity-45'
+  'inline-flex h-9 items-center justify-center gap-1 rounded-control border border-aqs-danger-border bg-aqs-danger-soft px-3 text-xs font-semibold text-aqs-danger transition-colors hover:bg-rose-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-danger disabled:cursor-not-allowed disabled:opacity-45'
 
 function createRequestId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()

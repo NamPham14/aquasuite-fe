@@ -1,5 +1,7 @@
 import { Edit3, ShoppingBag } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { ManagementTableSkeleton } from '../../../shared/ui/ManagementTable'
+import { CodeChip } from '../../../shared/ui/Badge'
 import type { OrderStatus, PaymentStatus, SalesOrderSummaryResponse } from '../types/salesOrder.types'
 
 const ORDER_STATUS_CONFIG: Record<
@@ -8,6 +10,12 @@ const ORDER_STATUS_CONFIG: Record<
 > = {
   DRAFT: {
     label: 'Nháp (Chờ duyệt nợ)',
+    className: 'bg-amber-50 text-amber-800',
+    border: 'border-amber-300',
+    dotColor: 'bg-amber-500',
+  },
+  PENDING_CONFIRMATION: {
+    label: 'Chờ xác nhận',
     className: 'bg-amber-50 text-amber-800',
     border: 'border-amber-300',
     dotColor: 'bg-amber-500',
@@ -56,6 +64,13 @@ const PAYMENT_STATUS_CONFIG: Record<
   },
 }
 
+const CHANNEL_LABEL: Record<string, { label: string; cls: string }> = {
+  ONLINE: { label: 'Online', cls: 'bg-sky-50 text-sky-700 border-sky-200' },
+  COUNTER: { label: 'Tại quầy', cls: 'bg-slate-100 text-slate-700 border-slate-200' },
+  POS: { label: 'Tại quầy', cls: 'bg-slate-100 text-slate-700 border-slate-200' },
+  DIRECT_SALES: { label: 'Dự án', cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+}
+
 interface OrderTableProps {
   orders: SalesOrderSummaryResponse[]
   isLoading?: boolean
@@ -82,25 +97,17 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
   }
 
   if (isLoading) {
-    return (
-      <div className="border border-slate-200 rounded-lg bg-white overflow-hidden shadow-2xs">
-        <div className="p-4 space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-10 bg-slate-100 rounded animate-pulse" />
-          ))}
-        </div>
-      </div>
-    )
+    return <ManagementTableSkeleton columns={7} rows={5} />
   }
 
   if (!orders || orders.length === 0) {
     return (
-      <div className="border border-slate-200 rounded-lg bg-white p-12 text-center shadow-2xs">
-        <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
-          <ShoppingBag className="w-6 h-6" />
+      <div className="p-12 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-aqs-surface-subtle text-aqs-ink-faint">
+          <ShoppingBag className="h-6 w-6" />
         </div>
-        <h4 className="text-sm font-semibold text-slate-900">Không tìm thấy đơn hàng nào</h4>
-        <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+        <h4 className="text-sm font-semibold text-aqs-ink">Không tìm thấy đơn hàng nào</h4>
+        <p className="mx-auto mt-1 max-w-sm text-xs text-aqs-ink-muted">
           Không có đơn hàng nào khớp với bộ lọc hiện tại hoặc hệ thống chưa phát sinh đơn hàng.
         </p>
       </div>
@@ -108,21 +115,20 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
   }
 
   return (
-    <div className="border border-slate-200 rounded-lg bg-white overflow-hidden shadow-2xs">
-      <div className="w-full overflow-x-auto">
-        <table className="w-full text-xs text-slate-700 table-fixed min-w-[880px]">
-          <thead className="bg-slate-50 text-slate-600 text-[11px] uppercase border-b border-slate-200 font-semibold tracking-wider">
-            <tr>
-              <th className="px-4 py-3 w-[16%] text-left">Mã & Ngày tạo</th>
-              <th className="px-2 py-3 w-[11%] text-center">Loại đơn</th>
-              <th className="px-4 py-3 w-[21%] text-left">Khách hàng & Kênh</th>
-              <th className="px-4 py-3 w-[14%] text-right">Tổng tiền</th>
-              <th className="px-2 py-3 w-[14%] text-center">Trạng thái đơn</th>
-              <th className="px-2 py-3 w-[15%] text-center">Thanh toán</th>
-              <th className="px-2 py-3 w-[9%] text-center">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
+    <div className="w-full overflow-x-auto">
+      <table className="w-full min-w-[880px] table-fixed text-xs text-aqs-ink-muted">
+        <thead className="border-b border-aqs-border bg-aqs-surface-subtle text-xs font-semibold text-aqs-ink-muted">
+          <tr>
+            <th className="w-[16%] px-4 py-3 text-left">Mã & Ngày tạo</th>
+            <th className="w-[11%] px-2 py-3 text-center">Loại đơn</th>
+            <th className="w-[21%] px-4 py-3 text-left">Khách hàng & Kênh</th>
+            <th className="w-[14%] px-4 py-3 text-right">Tổng tiền</th>
+            <th className="w-[14%] px-2 py-3 text-center">Trạng thái đơn</th>
+            <th className="w-[15%] px-2 py-3 text-center">Thanh toán</th>
+            <th className="w-[9%] px-2 py-3 text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-aqs-divider">
             {orders.map((order) => {
               const isProject = order.orderType === 'PROJECT'
               const orderStatusConfig = ORDER_STATUS_CONFIG[order.orderStatus] ?? {
@@ -142,11 +148,8 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
                 <tr key={order.orderId} className="hover:bg-slate-50/70 transition-colors">
                   {/* Cột 1: Mã & Ngày tạo */}
                   <td className="px-4 py-3.5 align-middle text-left">
-                    <Link
-                      to={`/app/orders/${order.orderId}`}
-                      className="font-mono font-bold text-xs text-sky-700 hover:text-sky-800 hover:underline block"
-                    >
-                      {order.orderCode}
+                    <Link to={`/app/orders/${order.orderId}`} className="inline-block hover:opacity-85">
+                      <CodeChip>{order.orderCode}</CodeChip>
                     </Link>
                     <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
                       <span>{formatDate(order.orderDate || order.createdAt)}</span>
@@ -181,10 +184,24 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
 
                   {/* Cột 3: Khách hàng & Kênh */}
                   <td className="px-4 py-3.5 align-middle text-left">
-                    <div className="font-semibold text-slate-900 truncate">
-                      {order.customerName && order.customerName !== 'Walk-in Retail Customer'
-                        ? order.customerName
-                        : 'Khách lẻ tại quầy'}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-semibold text-slate-900 truncate">
+                        {order.customerName && order.customerName !== 'Walk-in Retail Customer'
+                          ? order.customerName
+                          : 'Khách lẻ tại quầy'}
+                      </span>
+                      {order.orderChannel && (
+                        <span
+                          className={`shrink-0 inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold border ${
+                            (CHANNEL_LABEL[order.orderChannel] ?? {
+                              label: order.orderChannel,
+                              cls: 'bg-slate-100 text-slate-700 border-slate-200',
+                            }).cls
+                          }`}
+                        >
+                          {(CHANNEL_LABEL[order.orderChannel] ?? { label: order.orderChannel }).label}
+                        </span>
+                      )}
                     </div>
                     {order.customerPhone && order.customerPhone !== '0000000000' && (
                       <div className="text-[11px] text-slate-500 mt-0.5">
@@ -232,14 +249,24 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
                     </div>
                   </td>
 
-                  {/* Cột 7: Thao tác (Chỉ để thao tác Chỉnh sửa) */}
+                  {/* Cột 7: Thao tác (Xác nhận / Chỉnh sửa đơn hàng) */}
                   <td className="px-2 py-3.5 align-middle text-center">
                     <div className="flex items-center justify-center">
-                      {order.orderStatus === 'PROCESSING' ? (
+                      {order.orderStatus === 'PROCESSING' ||
+                      order.orderStatus === 'PENDING_CONFIRMATION' ||
+                      order.orderStatus === 'DRAFT' ? (
                         <Link
                           to={`/app/orders/${order.orderId}`}
-                          className="inline-flex items-center justify-center p-1.5 rounded text-amber-600 hover:text-amber-700 hover:bg-amber-50 transition"
-                          title="Chỉnh sửa thông tin đơn hàng"
+                          className={`inline-flex items-center justify-center p-1.5 rounded transition ${
+                            order.orderStatus === 'PENDING_CONFIRMATION'
+                              ? 'text-sky-600 hover:text-sky-700 hover:bg-sky-50'
+                              : 'text-amber-600 hover:text-amber-700 hover:bg-amber-50'
+                          }`}
+                          title={
+                            order.orderStatus === 'PENDING_CONFIRMATION'
+                              ? 'Xác nhận & xử lý đơn hàng Online'
+                              : 'Chỉnh sửa & xử lý thông tin đơn hàng'
+                          }
                         >
                           <Edit3 className="w-4 h-4" />
                         </Link>
@@ -259,6 +286,5 @@ export function OrderTable({ orders, isLoading = false }: OrderTableProps) {
           </tbody>
         </table>
       </div>
-    </div>
   )
 }

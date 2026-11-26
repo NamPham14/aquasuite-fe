@@ -1,9 +1,9 @@
 import { normalizeApiError } from '../../../shared/api/apiError.ts'
 
-const controlClass = 'inline-flex min-h-10 items-center justify-center rounded-md border px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50'
-export const bundleButtonClass = `${controlClass} border-slate-300 bg-white text-slate-700 hover:bg-slate-50`
-export const bundlePrimaryClass = `${controlClass} border-sky-700 bg-sky-700 text-white hover:bg-sky-800`
-export const bundleDangerClass = `${controlClass} border-rose-700 bg-rose-700 text-white hover:bg-rose-800`
+const controlClass = 'inline-flex h-10 items-center justify-center rounded-control border px-3.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:cursor-not-allowed disabled:opacity-50'
+export const bundleButtonClass = `${controlClass} border-aqs-border bg-aqs-surface text-aqs-ink hover:border-slate-300 hover:bg-aqs-surface-subtle`
+export const bundlePrimaryClass = `${controlClass} border-aqs-accent bg-aqs-accent font-semibold text-white hover:bg-aqs-accent-hover`
+export const bundleDangerClass = `${controlClass} border-aqs-danger bg-aqs-danger font-semibold text-white hover:bg-aqs-danger-hover`
 export const publicationLabels = { DRAFT: 'Bản nháp', PUBLISHED: 'Đã công bố', UNPUBLISHED: 'Ngừng công bố' }
 export function bundleMoney(value: number | null | undefined): string {
   return value == null ? 'Chưa xác định' : `${value.toLocaleString('vi-VN', { maximumFractionDigits: 2 })} ₫`

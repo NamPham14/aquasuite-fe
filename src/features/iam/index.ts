@@ -27,6 +27,7 @@ export { PublicOnlyRoute } from './components/PublicOnlyRoute.tsx'
 export { UserAccountForm } from './components/UserAccountForm.tsx'
 export { UserAccountDetailDialog } from './components/UserAccountDetailDialog.tsx'
 export { UserAccountStatusDialog } from './components/UserAccountStatusDialog.tsx'
+export { IamAccessGate } from './components/IamAccessGate.tsx'
 export { iamAccessApi, useRolesQuery, useRoleQuery, usePermissionsQuery, usePermissionQuery, useCreatePermissionMutation, useUpdatePermissionMutation, useDeletePermissionMutation, useChangeAssignmentMutation } from './api/iamAccessApi.ts'
 export type { IamRole, IamPermission, PermissionQuery } from './api/iamAccessApi.ts'
 export {

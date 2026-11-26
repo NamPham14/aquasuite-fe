@@ -4,9 +4,6 @@ import { toast } from 'sonner'
 import {
   BrandForm,
   BrandImportDialog,
-  CatalogDeleteDialog,
-  CatalogMobileList,
-  CatalogPagination,
   CatalogStatusBadge,
   getCatalogErrorState,
   useCatalogListState,
@@ -18,20 +15,26 @@ import {
   type CatalogDialogMode,
   type ValidBrandFormValues,
 } from '../../features/catalog'
-import { ManagementDialog } from '../../shared/ui/ManagementDialog'
+import { DeleteConfirmDialog, ManagementDialog } from '../../shared/ui/ManagementDialog'
 import {
-  ManagementFilterBar,
+  ManagementFilterCard,
   ManagementPageHeader,
+  ManagementPageShell,
+  ManagementPanel,
   ManagementSearch,
   ManagementSelect,
 } from '../../shared/ui/ManagementPage'
 import { ManagementRowActions } from '../../shared/ui/ManagementRowActions'
-import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
-
-const secondaryButton =
-  'inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50'
-const primaryButton =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600'
+import {
+  ManagementMobileList,
+  ManagementPagination,
+  ManagementTable,
+  ManagementTableSkeleton,
+  type ManagementTableColumn,
+} from '../../shared/ui/ManagementTable'
+import { Button, SakugaActionButton } from '../../shared/ui/Button'
+import { CodeChip } from '../../shared/ui/Badge'
+import { EmptyState, ErrorState, OPERATIONAL_TOAST_CLASS } from '../../shared/ui/FeedbackStates'
 
 /** Chế độ hộp thoại và thương hiệu được chọn; tạo mới không cần bản ghi. */
 interface BrandDialogState {
@@ -54,6 +57,7 @@ export function BrandsPage() {
   const [deleteError, setDeleteError] = useState('')
   const data = list.data
   const rows = data?.items ?? []
+  const hasFilters = Boolean(filters.search.trim() || filters.status)
 
   useEffect(() => {
     if (data && data.totalPages > 0 && page >= data.totalPages) {
@@ -81,7 +85,7 @@ export function BrandsPage() {
           description: values.description || null,
           status: values.status,
         }).unwrap()
-        toast.success('Đã tạo thương hiệu.')
+        toast.success('Đã tạo thương hiệu.', { className: OPERATIONAL_TOAST_CLASS })
       } else if (dialog?.mode === 'edit' && dialog.item) {
         await updateBrand({
           id: dialog.item.id,
@@ -91,7 +95,7 @@ export function BrandsPage() {
             status: values.status,
           },
         }).unwrap()
-        toast.success('Đã cập nhật thương hiệu.')
+        toast.success('Đã cập nhật thương hiệu.', { className: OPERATIONAL_TOAST_CLASS })
       }
       setDialog(null)
     } catch (error) {
@@ -108,133 +112,222 @@ export function BrandsPage() {
     try {
       await deleteBrand(dialog.item.id).unwrap()
       setDialog(null)
-      toast.success('Đã xóa thương hiệu.')
+      toast.success('Đã xóa thương hiệu.', { className: OPERATIONAL_TOAST_CLASS })
     } catch (error) {
       setDeleteError(getCatalogErrorState(error).message)
     }
   }
 
   const columns: ManagementTableColumn<Brand>[] = [
-    { key: 'code', header: 'Mã thương hiệu', cell: (item) => <span className="font-medium text-slate-900">{item.code}</span> },
-    { key: 'name', header: 'Tên thương hiệu', cell: (item) => item.name },
-    { key: 'status', header: 'Trạng thái', cell: (item) => <CatalogStatusBadge status={item.status} /> },
+    {
+      key: 'code',
+      header: 'Mã thương hiệu',
+      cell: (item) => <CodeChip>{item.code}</CodeChip>,
+    },
+    {
+      key: 'name',
+      header: 'Tên thương hiệu',
+      cell: (item) => <span className="font-semibold text-aqs-ink">{item.name}</span>,
+    },
+    {
+      key: 'status',
+      header: 'Trạng thái',
+      align: 'center',
+      cell: (item) => <CatalogStatusBadge status={item.status} />,
+    },
     {
       key: 'actions',
       header: 'Thao tác',
+      align: 'center',
       cell: (item) => (
-        <ManagementRowActions actions={[
-          { variant: 'view', label: 'Xem', ariaLabel: `Xem ${item.name}`, onClick: () => openDialog('view', item) },
-          { variant: 'edit', label: 'Sửa', ariaLabel: `Sửa ${item.name}`, onClick: () => openDialog('edit', item) },
-          { variant: 'delete', label: 'Xóa', ariaLabel: `Xóa ${item.name}`, onClick: () => openDialog('delete', item) },
-        ]} />
+        <ManagementRowActions
+          actions={[
+            { variant: 'view', label: 'Xem', ariaLabel: `Xem ${item.name}`, onClick: () => openDialog('view', item) },
+            { variant: 'edit', label: 'Sửa', ariaLabel: `Sửa ${item.name}`, onClick: () => openDialog('edit', item) },
+            { variant: 'delete', label: 'Xóa', ariaLabel: `Xóa ${item.name}`, onClick: () => openDialog('delete', item) },
+          ]}
+        />
       ),
     },
   ]
 
   const listError = list.isError ? getCatalogErrorState(list.error).message : ''
+  const totalElements = data?.totalElements ?? rows.length
+
   return (
-    <div className="space-y-5">
+    <ManagementPageShell>
       <ManagementPageHeader
         title="Quản lý Thương hiệu"
-        description="Quản lý mã, tên và trạng thái thương hiệu sản phẩm"
+        description="Quản lý mã, tên và trạng thái thương hiệu sản phẩm. Mã thương hiệu là khóa ổn định và không thể sửa sau khi tạo."
         breadcrumb="Thương hiệu"
         group="Quản lý danh mục"
-        icon={<Tags className="h-6 w-6" />}
-      />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-600">Mã thương hiệu là khóa ổn định và không thể sửa sau khi tạo.</p>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className={secondaryButton}
-            onClick={() => setIsImportOpen(true)}
-          >
-            <FileSpreadsheet className="h-4 w-4" aria-hidden="true" /> Nhập Excel
-          </button>
-          <button type="button" className={primaryButton} onClick={() => openDialog('create')}>
-            <Plus className="h-4 w-4" aria-hidden="true" /> Thêm thương hiệu
-          </button>
-        </div>
-      </div>
-      <ManagementFilterBar>
-        <ManagementSearch
-          id="brand-search"
-          label="Tìm kiếm"
-          value={filters.search}
-          onChange={filters.setSearch}
-          placeholder="Tìm theo mã hoặc tên..."
-          disabled={list.isLoading}
-        />
-        <ManagementSelect id="brand-status-filter" label="Trạng thái" value={filters.status} onChange={filters.setStatus} disabled={list.isLoading}>
-          <option value="">Tất cả</option>
-          <option value="ACTIVE">Hoạt động</option>
-          <option value="INACTIVE">Ngừng hoạt động</option>
-        </ManagementSelect>
-        <ManagementSelect id="brand-sort" label="Sắp xếp theo" value={filters.sortBy} onChange={filters.setSortBy} disabled={list.isLoading}>
-          <option value="code">Mã</option>
-          <option value="name">Tên</option>
-          <option value="status">Trạng thái</option>
-        </ManagementSelect>
-        <ManagementSelect id="brand-direction" label="Thứ tự" value={filters.direction} onChange={filters.setDirection} disabled={list.isLoading}>
-          <option value="asc">Tăng dần</option>
-          <option value="desc">Giảm dần</option>
-        </ManagementSelect>
-        <button type="button" className={secondaryButton} onClick={filters.reset} disabled={list.isLoading}>Đặt lại</button>
-      </ManagementFilterBar>
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white" aria-busy={list.isFetching}>
-        <div className="flex items-center justify-between gap-3 px-4 py-4">
-          <h2 id="brand-list" className="text-base font-semibold text-slate-900">Danh sách thương hiệu</h2>
-          {list.isFetching && !list.isLoading && <span className="text-xs text-slate-500">Đang cập nhật...</span>}
-        </div>
-        {listError && (
-          <div role="alert" className="mx-4 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-rose-50 p-3 text-sm text-rose-800">
-            <span>{listError}</span>
-            <button type="button" className={secondaryButton} onClick={() => void list.refetch()}>Thử lại</button>
+        icon={<Tags className="h-5 w-5" />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={() => setIsImportOpen(true)}>
+              <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
+              Nhập Excel
+            </Button>
+            <SakugaActionButton onClick={() => openDialog('create')}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Thêm thương hiệu
+            </SakugaActionButton>
           </div>
-        )}
-        <div className="hidden sm:block [&_table]:text-sm">
-          <ManagementTable
-            columns={columns}
-            rows={rows}
-            rowKey={(item) => item.id}
-            labelledBy="brand-list"
-            emptyMessage={list.isLoading ? 'Đang tải thương hiệu...' : listError ? 'Chưa thể tải dữ liệu.' : 'Không tìm thấy thương hiệu phù hợp.'}
+        }
+      />
+
+      <ManagementFilterCard
+        headingId="brand-filters"
+        title="Tìm và lọc thương hiệu"
+        description="Kết quả tự cập nhật theo từ khóa, trạng thái và thứ tự sắp xếp."
+        resultCount={list.isLoading ? 'Đang tải...' : `${totalElements} kết quả`}
+        hasActiveFilters={hasFilters}
+        onReset={filters.reset}
+      >
+        <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]">
+          <ManagementSearch
+            id="brand-search"
+            label="Tìm kiếm"
+            value={filters.search}
+            onChange={filters.setSearch}
+            placeholder="Tìm theo mã hoặc tên..."
+            disabled={list.isLoading}
+          />
+          <ManagementSelect
+            id="brand-status-filter"
+            label="Trạng thái"
+            value={filters.status}
+            onChange={filters.setStatus}
+            disabled={list.isLoading}
+          >
+            <option value="">Tất cả</option>
+            <option value="ACTIVE">Hoạt động</option>
+            <option value="INACTIVE">Ngừng hoạt động</option>
+          </ManagementSelect>
+          <ManagementSelect
+            id="brand-sort"
+            label="Sắp xếp theo"
+            value={filters.sortBy}
+            onChange={filters.setSortBy}
+            disabled={list.isLoading}
+          >
+            <option value="code">Mã</option>
+            <option value="name">Tên</option>
+            <option value="status">Trạng thái</option>
+          </ManagementSelect>
+          <ManagementSelect
+            id="brand-direction"
+            label="Thứ tự"
+            value={filters.direction}
+            onChange={filters.setDirection}
+            disabled={list.isLoading}
+          >
+            <option value="asc">Tăng dần</option>
+            <option value="desc">Giảm dần</option>
+          </ManagementSelect>
+          <Button variant="secondary" onClick={filters.reset} disabled={list.isLoading}>
+            Đặt lại
+          </Button>
+        </div>
+      </ManagementFilterCard>
+
+      <ManagementPanel
+        headingId="brand-list"
+        title="Danh sách thương hiệu"
+        description={`Tổng số ${totalElements} thương hiệu được đồng bộ từ hệ thống.`}
+        refreshing={list.isFetching && !list.isLoading}
+        busy={list.isFetching}
+      >
+        <div aria-busy={list.isFetching}>
+          {listError ? (
+            <div className="p-5">
+              <ErrorState
+                sectionLabel="Danh sách thương hiệu"
+                title="Không thể tải danh sách thương hiệu"
+                message={listError}
+                onRetry={() => void list.refetch()}
+                retrying={list.isFetching}
+              />
+            </div>
+          ) : list.isLoading && !rows.length ? (
+            <ManagementTableSkeleton columns={4} rows={5} />
+          ) : !rows.length ? (
+            <div className="p-5">
+              <EmptyState
+                title={hasFilters ? 'Không tìm thấy thương hiệu phù hợp' : 'Chưa có thương hiệu nào'}
+                description={
+                  hasFilters
+                    ? 'Hãy thử điều chỉnh từ khóa hoặc bỏ bộ lọc trạng thái.'
+                    : 'Bắt đầu bằng cách thêm thương hiệu đầu tiên hoặc nhập từ Excel.'
+                }
+                search={filters.search}
+                hasFilters={hasFilters}
+                onClearSearch={filters.search ? () => filters.setSearch('') : undefined}
+                onResetFilters={hasFilters ? filters.reset : undefined}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="hidden sm:block">
+                <ManagementTable
+                  columns={columns}
+                  rows={rows}
+                  rowKey={(item) => item.id}
+                  labelledBy="brand-list"
+                  emptyMessage="Không tìm thấy thương hiệu phù hợp."
+                />
+              </div>
+              <ManagementMobileList
+                breakpoint="sm"
+                rows={rows}
+                rowKey={(item) => item.id}
+                emptyMessage="Không tìm thấy thương hiệu phù hợp."
+                renderRow={(item) => (
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-aqs-ink">{item.name}</p>
+                        <div className="mt-1">
+                          <CodeChip>{item.code}</CodeChip>
+                        </div>
+                      </div>
+                      <CatalogStatusBadge status={item.status} />
+                    </div>
+                    {item.description && (
+                      <p className="line-clamp-2 text-sm text-aqs-ink-muted">{item.description}</p>
+                    )}
+                    <ManagementRowActions
+                      actions={[
+                        { variant: 'view', label: 'Xem', ariaLabel: `Xem ${item.name}`, onClick: () => openDialog('view', item) },
+                        { variant: 'edit', label: 'Sửa', ariaLabel: `Sửa ${item.name}`, onClick: () => openDialog('edit', item) },
+                        { variant: 'delete', label: 'Xóa', ariaLabel: `Xóa ${item.name}`, onClick: () => openDialog('delete', item) },
+                      ]}
+                    />
+                  </div>
+                )}
+              />
+            </>
+          )}
+          <ManagementPagination
+            page={data?.page ?? filters.page}
+            totalPages={data?.totalPages ?? 0}
+            totalElements={data?.totalElements ?? 0}
+            noun="thương hiệu"
+            disabled={list.isFetching}
+            onPageChange={filters.setPage}
           />
         </div>
-        <CatalogMobileList
-          rows={rows}
-          rowKey={(item) => item.id}
-          emptyMessage={list.isLoading ? 'Đang tải thương hiệu...' : listError ? 'Chưa thể tải dữ liệu.' : 'Không tìm thấy thương hiệu phù hợp.'}
-          renderRow={(item) => (
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-slate-900">{item.name}</p>
-                  <p className="mt-0.5 text-sm text-slate-600">{item.code}</p>
-                </div>
-                <CatalogStatusBadge status={item.status} />
-              </div>
-              {item.description && <p className="line-clamp-2 text-sm text-slate-600">{item.description}</p>}
-              <ManagementRowActions actions={[
-                { variant: 'view', label: 'Xem', ariaLabel: `Xem ${item.name}`, onClick: () => openDialog('view', item) },
-                { variant: 'edit', label: 'Sửa', ariaLabel: `Sửa ${item.name}`, onClick: () => openDialog('edit', item) },
-                { variant: 'delete', label: 'Xóa', ariaLabel: `Xóa ${item.name}`, onClick: () => openDialog('delete', item) },
-              ]} />
-            </div>
-          )}
-        />
-        <CatalogPagination
-          page={data?.page ?? filters.page}
-          totalPages={data?.totalPages ?? 0}
-          totalElements={data?.totalElements ?? 0}
-          noun="thương hiệu"
-          disabled={list.isFetching}
-          onPageChange={filters.setPage}
-        />
-      </section>
+      </ManagementPanel>
+
       {dialog && dialog.mode !== 'delete' && (
         <ManagementDialog
-          title={dialog.mode === 'create' ? 'Thêm thương hiệu' : dialog.mode === 'edit' ? 'Sửa thương hiệu' : 'Chi tiết thương hiệu'}
+          title={
+            dialog.mode === 'create'
+              ? 'Thêm thương hiệu'
+              : dialog.mode === 'edit'
+                ? 'Sửa thương hiệu'
+                : 'Chi tiết thương hiệu'
+          }
           onClose={() => setDialog(null)}
           closeDisabled={createState.isLoading || updateState.isLoading}
         >
@@ -251,12 +344,14 @@ export function BrandsPage() {
         </ManagementDialog>
       )}
       {dialog?.mode === 'delete' && dialog.item && (
-        <CatalogDeleteDialog
-          kind="thương hiệu"
-          code={dialog.item.code}
-          name={dialog.item.name}
+        <DeleteConfirmDialog
+          title="Xác nhận xóa thương hiệu"
+          subject={`${dialog.item.code} — ${dialog.item.name}`}
+          description="Thao tác này xóa vĩnh viễn thương hiệu. Máy chủ sẽ từ chối nếu dữ liệu đang được tham chiếu."
+          confirmLabel="Xóa thương hiệu"
+          pendingLabel="Đang xóa..."
           pending={deleteState.isLoading}
-          error={deleteError}
+          error={deleteError || undefined}
           onClose={() => setDialog(null)}
           onConfirm={() => void confirmDelete()}
         />
@@ -267,6 +362,6 @@ export function BrandsPage() {
           onClose={() => setIsImportOpen(false)}
         />
       )}
-    </div>
+    </ManagementPageShell>
   )
 }

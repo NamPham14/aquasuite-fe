@@ -200,7 +200,7 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
   },
 ]
 
-function NavList({ navId, onItemClick, dark = false }: { navId: string; onItemClick?: () => void; dark?: boolean }) {
+function NavList({ navId, onItemClick }: { navId: string; onItemClick?: () => void }) {
   const { user } = useAuth()
   const location = useLocation()
   const roles = user?.roles ?? []
@@ -226,21 +226,17 @@ function NavList({ navId, onItemClick, dark = false }: { navId: string; onItemCl
         return (
           <div
             key={section.group}
-            className={index > 0 ? (dark ? 'border-t border-slate-800/90 pt-3' : 'border-t border-slate-200/80 pt-3') : ''}
+            className={index > 0 ? 'border-t border-aqs-border pt-3' : ''}
           >
             {!section.pinned && (
               <button
                 type="button"
                 onClick={() => toggleGroup(section.group)}
                 aria-expanded={!isCollapsed}
-                className={`mb-1.5 flex w-full items-center justify-between rounded px-2.5 py-1 text-left text-[11px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 ${
-                  dark
-                    ? hasActiveItem
-                      ? 'text-sky-300 hover:text-white'
-                      : 'text-slate-400 hover:text-slate-200'
-                    : hasActiveItem
-                      ? 'text-sky-700 hover:text-sky-900'
-                      : 'text-slate-500 hover:text-slate-800'
+                className={`mb-1.5 flex w-full cursor-pointer items-center justify-between rounded px-2.5 py-1 text-left text-[11px] font-bold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-aqs-focus ${
+                  hasActiveItem
+                    ? 'text-aqs-accent-hover hover:text-aqs-ink'
+                    : 'text-aqs-ink-faint hover:text-aqs-ink'
                 }`}
               >
                 <span>{section.group}</span>
@@ -265,18 +261,18 @@ function NavList({ navId, onItemClick, dark = false }: { navId: string; onItemCl
                       end={shouldEndMatch}
                       onClick={onItemClick}
                       className={({ isActive }) =>
-                        `group flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                        `group flex items-center gap-3 rounded-control px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-aqs-focus ${
                           isActive
-                            ? dark ? 'bg-sky-700 text-white font-semibold shadow-sm' : 'bg-sky-100 text-sky-800 font-semibold'
-                            : dark ? 'text-slate-200 hover:bg-slate-800 hover:text-white' : 'text-slate-700 hover:bg-slate-100'
+                            ? 'bg-aqs-accent-soft font-semibold text-aqs-accent-hover'
+                            : 'text-aqs-ink-muted hover:bg-aqs-surface-subtle hover:text-aqs-ink'
                         }`
                       }
                     >
                       {({ isActive }) => (
                         <>
                           <Icon
-                            className={`w-4 h-4 shrink-0 transition-colors ${
-                              isActive ? (dark ? 'text-white' : 'text-sky-600') : (dark ? 'text-slate-400 group-hover:text-slate-200' : 'text-slate-500')
+                            className={`h-4 w-4 shrink-0 transition-colors ${
+                              isActive ? 'text-aqs-accent' : 'text-aqs-ink-faint group-hover:text-aqs-ink'
                             }`}
                             aria-hidden="true"
                           />
@@ -403,26 +399,26 @@ export function ManagementLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="flex min-h-screen bg-aqs-page">
       {/* Desktop Sidebar (fixed width, hidden on mobile) */}
       <aside
-        className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 shrink-0 sticky top-0 h-screen overflow-y-auto"
+        className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-aqs-border bg-aqs-surface md:flex"
         aria-label="Sidebar điều hướng desktop"
       >
         {/* Brand Header */}
-        <div className="h-16 flex items-center gap-3 px-5 border-b border-slate-700 shrink-0">
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-aqs-border px-5">
           <Link
             to="/app/dashboard"
-            className="flex items-center gap-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500 rounded-lg p-1 -ml-1 transition-colors"
+            className="-ml-1 flex items-center gap-2.5 rounded-lg p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-aqs-focus"
           >
-            <div className="w-8 h-8 text-sky-400 flex items-center justify-center shrink-0">
-              <Droplets className="w-7 h-7" aria-hidden="true" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center text-aqs-accent">
+              <Droplets className="h-7 w-7" aria-hidden="true" />
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-bold text-white tracking-tight leading-none">
+              <span className="text-base font-bold leading-none tracking-tight text-aqs-ink">
                 AquaSuite
               </span>
-              <span className="text-[9px] font-medium text-slate-300 mt-0.5">
+              <span className="mt-0.5 text-[10px] font-medium text-aqs-ink-faint">
                 HỆ THỐNG QUẢN LÝ
               </span>
             </div>
@@ -431,16 +427,23 @@ export function ManagementLayout() {
 
         {/* Sidebar Nav Items (Unique ID: desktop-sidebar-navigation) */}
         <div className="flex-1 overflow-y-auto">
-          <NavList navId="desktop-sidebar-navigation" dark />
+          <NavList navId="desktop-sidebar-navigation" />
         </div>
 
         {/* Sidebar Footer User Info & System Info Link (NO Logout here) */}
         {user && (
-          <Link to="/app/system-info" aria-label="Hồ sơ cá nhân" className="p-4 border-t border-slate-700 flex items-center gap-3 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-400 shrink-0">
-            <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-900 flex items-center justify-center shrink-0 text-xs font-semibold">
-              {user.username ? user.username.slice(0, 2).toUpperCase() : <UserIcon className="w-4 h-4" aria-hidden="true" />}
+          <Link
+            to="/app/system-info"
+            aria-label="Hồ sơ cá nhân"
+            className="flex shrink-0 items-center gap-3 border-t border-aqs-border p-4 transition-colors hover:bg-aqs-surface-subtle focus:outline-none focus:ring-2 focus:ring-inset focus:ring-aqs-focus"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-aqs-accent-soft text-xs font-semibold text-aqs-accent-hover">
+              {user.username ? user.username.slice(0, 2).toUpperCase() : <UserIcon className="h-4 w-4" aria-hidden="true" />}
             </div>
-            <div className="min-w-0"><p className="text-sm font-semibold text-white truncate">{user.username}</p><p className="text-xs text-slate-300 truncate">{user.email}</p></div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-aqs-ink">{user.username}</p>
+              <p className="truncate text-xs text-aqs-ink-faint">{user.email}</p>
+            </div>
           </Link>
         )}
       </aside>
@@ -496,15 +499,15 @@ export function ManagementLayout() {
                     {user.username ? user.username.slice(0, 2).toUpperCase() : <UserIcon className="w-4 h-4" aria-hidden="true" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-slate-900 truncate">{user.username}</p>
-                    <p className="text-2xs text-slate-500 truncate">{user.email}</p>
+                    <p className="truncate text-xs font-semibold text-aqs-ink">{user.username}</p>
+                    <p className="truncate text-[11px] text-aqs-ink-faint">{user.email}</p>
                   </div>
                 </div>
 
                 <Link
                   to="/app/system-info"
                   onClick={closeMobileDrawer}
-                  className="mt-3 w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-2xs font-medium text-slate-600 bg-white border border-slate-200/80 hover:bg-slate-50 hover:text-sky-700 hover:border-sky-200 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors"
+                  className="mt-3 flex w-full items-center justify-between rounded-control border border-aqs-border bg-aqs-surface px-2.5 py-1.5 text-[11px] font-medium text-aqs-ink-muted transition-colors hover:border-aqs-accent-border hover:bg-aqs-surface-subtle hover:text-aqs-accent-hover focus:outline-none focus:ring-2 focus:ring-aqs-focus"
                 >
                   <span className="flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-sky-600" aria-hidden="true" />
@@ -521,8 +524,8 @@ export function ManagementLayout() {
       {/* Main Container Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Top Header Bar */}
-        <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30">
-          <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-30 border-b border-aqs-border bg-aqs-surface">
+          <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             {/* Left: Mobile Toggle & Mobile Logo */}
             <div className="flex items-center gap-3">
               <button
@@ -577,12 +580,12 @@ export function ManagementLayout() {
         </header>
 
         {/* Content area */}
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 lg:px-8">
           <Outlet />
         </main>
 
         {/* Global Footer */}
-        <footer className="bg-white border-t border-slate-200/80 py-4 text-center text-xs text-slate-500">
+        <footer className="border-t border-aqs-border bg-aqs-surface py-4 text-center text-xs text-aqs-ink-faint">
           AquaSuite — Hệ thống quản lý đại lý thiết bị vệ sinh
         </footer>
       </div>

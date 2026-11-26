@@ -3,8 +3,11 @@ import { Eye, Pencil, Plus, ShieldCheck, ShieldOff, Trash2, Wrench } from 'lucid
 import { toast } from 'sonner'
 import { normalizeApiError } from '../../shared/api/apiError'
 import { ManagementDialog, ManagementFormField, managementFieldClass } from '../../shared/ui/ManagementDialog'
-import { ManagementFilterBar, ManagementPageHeader, ManagementSearch, ManagementSelect } from '../../shared/ui/ManagementPage'
-import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
+import { ManagementFilterCard, ManagementPageHeader, ManagementPageShell, ManagementPanel, ManagementSearch, ManagementSelect } from '../../shared/ui/ManagementPage'
+import { ManagementPagination, ManagementTable, ManagementTableSkeleton, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
+import { CodeChip, StatusBadge } from '../../shared/ui/Badge'
+import { SakugaActionButton } from '../../shared/ui/Button'
+import { ErrorState } from '../../shared/ui/FeedbackStates'
 import {
   useCreateWarrantyPolicyMutation,
   useDeactivateWarrantyPolicyMutation,
@@ -21,14 +24,16 @@ import { ActivityLogPanel } from '../../features/audit'
 
 type DialogMode = 'create' | 'edit' | 'view' | 'deactivate' | 'activate' | 'delete' | null
 const emptyForm: UpsertWarrantyPolicyRequest = { policyName: '', brandId: '', categoryId: '', warrantyPeriodMonths: 24, coverageConditions: '', status: 'ACTIVE' }
-const secondary = 'inline-flex min-h-9 items-center justify-center gap-1 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50'
-const activateBtn = 'inline-flex min-h-9 items-center justify-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50'
-const primary = 'inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-50'
+const secondary = 'inline-flex h-9 items-center justify-center gap-1.5 rounded-control border border-aqs-border bg-aqs-surface px-3 text-sm font-medium text-aqs-ink transition-colors hover:border-slate-300 hover:bg-aqs-surface-subtle disabled:cursor-not-allowed disabled:opacity-50'
+const activateBtn = 'inline-flex h-9 items-center justify-center gap-1.5 rounded-control border border-aqs-positive-border bg-aqs-positive-soft px-3 text-sm font-medium text-aqs-positive transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50'
+const primary = 'inline-flex h-10 items-center justify-center gap-2 rounded-control bg-aqs-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-aqs-accent-hover disabled:cursor-not-allowed disabled:opacity-50'
 
 function policyStatus(status: WarrantyPolicyStatus) {
-  return status === 'ACTIVE'
-    ? <span className="inline-flex rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">● Đang áp dụng</span>
-    : <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">● Đã ngừng</span>
+  return (
+    <StatusBadge tone={status === 'ACTIVE' ? 'positive' : 'neutral'}>
+      {status === 'ACTIVE' ? 'Đang áp dụng' : 'Đã ngừng'}
+    </StatusBadge>
+  )
 }
 
 /** Trang quản lý chính sách bảo hành. Mọi thao tác cập nhật đều được kiểm tra phân quyền Chủ cửa hàng tại Backend. */
@@ -117,7 +122,7 @@ export function WarrantyPoliciesPage() {
   }
 
   const columns: ManagementTableColumn<WarrantyPolicy>[] = useMemo(() => [
-    { key: 'policy', header: 'Tên chính sách', cell: (item) => <div><p className="font-semibold text-slate-900">{item.policyName}</p><p className="text-xs text-slate-500">{item.policyCode}</p></div> },
+    { key: 'policy', header: 'Tên chính sách', cell: (item) => <div><p className="font-semibold text-aqs-ink">{item.policyName}</p><div className="mt-1"><CodeChip>{item.policyCode}</CodeChip></div></div> },
     { key: 'brand', header: 'Hãng', cell: (item) => item.brandName },
     { key: 'category', header: 'Nhóm hàng', cell: (item) => item.categoryName },
     { key: 'period', header: 'Thời hạn', cell: (item) => `${item.warrantyPeriodMonths} tháng` },
@@ -134,23 +139,67 @@ export function WarrantyPoliciesPage() {
     </div> },
   ], [])
 
-  return <div className="space-y-5">
-    <ManagementPageHeader title="Chính sách bảo hành" description="Chính sách bảo hành áp dụng cho các sản phẩm" breadcrumb="Chính sách bảo hành" group="Bảo hành" icon={<Wrench className="h-6 w-6" />} />
-    <ManagementFilterBar>
-      <ManagementSearch id="warranty-policy-search" label="Tìm kiếm" value={keyword} onChange={setKeyword} placeholder="Tên chính sách, hãng, nhóm hàng..." disabled={policies.isFetching} />
-      <ManagementSelect id="warranty-policy-status" label="Trạng thái" value={status} onChange={(value) => setStatus(value as WarrantyPolicyStatus | '')} disabled={policies.isFetching}>
-        <option value="">Tất cả</option><option value="ACTIVE">Đang áp dụng</option><option value="INACTIVE">Đã ngừng</option>
-      </ManagementSelect>
-      <button className={secondary} type="button" onClick={() => { setKeyword(''); setStatus(''); setPage(0) }}>Đặt lại</button>
-      <button className={`${primary} sm:ml-auto`} type="button" onClick={() => open('create')}><Plus className="h-4 w-4" />Tạo chính sách</button>
-    </ManagementFilterBar>
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white" aria-busy={policies.isFetching}>
-      <div className="flex items-center justify-between px-4 py-4"><h2 id="warranty-policy-list" className="text-base font-semibold text-slate-900">Danh sách chính sách</h2><span className="text-sm text-slate-500">{policies.data?.totalElements ?? 0} chính sách</span></div>
-      {listError && <div role="alert" className="mx-4 mb-4 rounded-md bg-rose-50 p-3 text-sm text-rose-800">{listError}</div>}
-      <ManagementTable columns={columns} rows={rows} rowKey={(item) => item.policyId} labelledBy="warranty-policy-list" emptyMessage={policies.isLoading ? 'Đang tải chính sách...' : 'Không tìm thấy chính sách phù hợp.'} />
-      <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-600"><span>Trang {page + 1}/{Math.max(policies.data?.totalPages ?? 0, 1)}</span><div className="flex gap-2"><button className={secondary} disabled={page === 0 || policies.isFetching} onClick={() => setPage(page - 1)}>Trước</button><button className={secondary} disabled={!policies.data || page + 1 >= policies.data.totalPages || policies.isFetching} onClick={() => setPage(page + 1)}>Sau</button></div></div>
-    </section>
-    <ActivityLogPanel entityType="WARRANTY_POLICY" description="Các lần tạo, cập nhật, ngừng áp dụng và xóa chính sách bảo hành." />
+  return <ManagementPageShell>
+    <ManagementPageHeader
+      title="Chính sách bảo hành"
+      description="Chính sách bảo hành áp dụng cho các sản phẩm theo hãng và nhóm hàng."
+      breadcrumb="Chính sách bảo hành"
+      group="Bảo hành"
+      icon={<Wrench className="h-5 w-5" />}
+      actions={
+        <SakugaActionButton onClick={() => open('create')}>
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Tạo chính sách
+        </SakugaActionButton>
+      }
+    />
+    <ManagementFilterCard
+      headingId="warranty-policy-filters"
+      title="Tìm và lọc chính sách bảo hành"
+      resultCount={`${policies.data?.totalElements ?? 0} chính sách`}
+      hasActiveFilters={Boolean(keyword || status)}
+      onReset={() => { setKeyword(''); setStatus(''); setPage(0) }}
+    >
+      <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto]">
+        <ManagementSearch id="warranty-policy-search" label="Tìm kiếm" value={keyword} onChange={setKeyword} placeholder="Tên chính sách, hãng, nhóm hàng..." disabled={policies.isFetching} />
+        <ManagementSelect id="warranty-policy-status" label="Trạng thái" value={status} onChange={(value) => setStatus(value as WarrantyPolicyStatus | '')} disabled={policies.isFetching}>
+          <option value="">Tất cả</option><option value="ACTIVE">Đang áp dụng</option><option value="INACTIVE">Đã ngừng</option>
+        </ManagementSelect>
+        <button className={secondary} type="button" onClick={() => { setKeyword(''); setStatus(''); setPage(0) }}>Đặt lại</button>
+      </div>
+    </ManagementFilterCard>
+    <ManagementPanel
+      headingId="warranty-policy-list"
+      title="Danh sách chính sách"
+      description={`Tổng số ${policies.data?.totalElements ?? 0} chính sách bảo hành.`}
+      refreshing={policies.isFetching && rows.length > 0}
+      busy={policies.isFetching}
+    >
+      {listError ? (
+        <div className="p-5">
+          <ErrorState
+            sectionLabel="Danh sách chính sách bảo hành"
+            title="Không thể tải danh sách chính sách"
+            message={listError}
+            onRetry={() => void policies.refetch()}
+            retrying={policies.isFetching}
+          />
+        </div>
+      ) : policies.isLoading && !rows.length ? (
+        <ManagementTableSkeleton columns={8} rows={5} />
+      ) : (
+        <ManagementTable columns={columns} rows={rows} rowKey={(item) => item.policyId} labelledBy="warranty-policy-list" emptyMessage="Không tìm thấy chính sách phù hợp." />
+      )}
+      <ManagementPagination
+        page={page}
+        totalPages={policies.data?.totalPages ?? 0}
+        totalElements={policies.data?.totalElements ?? 0}
+        noun="chính sách"
+        disabled={policies.isFetching}
+        onPageChange={setPage}
+      />
+    </ManagementPanel>
+    <ActivityLogPanel operational entityType="WARRANTY_POLICY" description="Các lần tạo, cập nhật, ngừng áp dụng và xóa chính sách bảo hành." />
     {(dialog === 'create' || dialog === 'edit') && <ManagementDialog title={dialog === 'create' ? 'Tạo chính sách bảo hành' : 'Sửa chính sách bảo hành'} onClose={() => setDialog(null)} closeDisabled={pending}><form className="space-y-4 p-5 sm:p-6" onSubmit={submit} noValidate>
       {formError && <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">{formError}</p>}
       <ManagementFormField id="policy-name" label="Tên chính sách *"><input id="policy-name" className={managementFieldClass} value={form.policyName} disabled={pending} onChange={(event) => setForm({ ...form, policyName: event.target.value })} /></ManagementFormField>
@@ -162,8 +211,8 @@ export function WarrantyPoliciesPage() {
     {dialog === 'view' && selected && <ManagementDialog title="Chi tiết chính sách" onClose={() => setDialog(null)}><div className="space-y-5 p-5 sm:p-6">{detail.isLoading ? <p>Đang tải chi tiết...</p> : currentDetail ? <><dl className="grid gap-3 text-sm sm:grid-cols-2"><Detail label="Mã chính sách" value={currentDetail.policy.policyCode} /><Detail label="Tên chính sách" value={currentDetail.policy.policyName} /><Detail label="Hãng" value={currentDetail.policy.brandName} /><Detail label="Nhóm hàng" value={currentDetail.policy.categoryName} /><Detail label="Thời hạn bảo hành" value={`${currentDetail.policy.warrantyPeriodMonths} tháng`} /><Detail label="Trạng thái" value={currentDetail.policy.status === 'ACTIVE' ? 'Đang áp dụng' : 'Đã ngừng'} /></dl><div><p className="mb-1 text-sm font-medium">Điều kiện bảo hành</p><p className="whitespace-pre-wrap text-sm text-slate-700">{currentDetail.policy.coverageConditions}</p></div><div><h3 className="mb-2 text-sm font-semibold">Biến thể sản phẩm đang áp dụng chính sách này</h3><div className="overflow-x-auto rounded-md border border-slate-200"><table className="min-w-full text-sm"><thead className="bg-slate-50 text-left text-slate-500"><tr><th className="px-3 py-2">Tên biến thể</th><th className="px-3 py-2">SKU</th></tr></thead><tbody>{currentDetail.variants.map((variant) => <tr className="border-t border-slate-100" key={variant.variantId}><td className="px-3 py-2">{variant.variantName}</td><td className="px-3 py-2">{variant.sku}</td></tr>)}{currentDetail.variants.length === 0 && <tr><td className="px-3 py-3 text-slate-500" colSpan={2}>Chưa có biến thể sản phẩm tham chiếu.</td></tr>}</tbody></table></div></div><p className="rounded-md bg-sky-50 p-3 text-sm text-sky-800">Đổi chính sách chỉ áp dụng cho phiếu lập sau; phiếu đã phát hành giữ nguyên điều khoản.</p></> : <p className="text-rose-700">Không thể tải chi tiết chính sách.</p>}<div className="flex flex-wrap justify-end gap-2"><button type="button" className={secondary} onClick={() => setDialog(null)}>Đóng</button>{selected.status === 'ACTIVE' ? <button type="button" className={secondary} onClick={() => open('deactivate', selected)}><ShieldOff className="h-4 w-4" />Ngừng áp dụng</button> : <button type="button" className={activateBtn} onClick={() => open('activate', selected)}><ShieldCheck className="h-4 w-4" />Áp dụng lại</button>}<button type="button" className={primary} onClick={() => open('edit', selected)}>Sửa</button></div></div></ManagementDialog>}
     {dialog === 'deactivate' && selected && <ConfirmDialog title="Ngừng áp dụng chính sách" pending={pending} error={formError} onClose={() => setDialog(null)} onConfirm={() => void deactivate()} confirmLabel="Ngừng áp dụng"><p>Ngừng áp dụng chính sách này? Phiếu đã phát hành không bị ảnh hưởng.</p><p className="text-sm text-slate-500">{selected.policyCode} · {selected.policyName}</p></ConfirmDialog>}
     {dialog === 'activate' && selected && <ConfirmDialog title="Áp dụng lại chính sách" pending={pending} error={formError} onClose={() => setDialog(null)} onConfirm={() => void activate()} confirmLabel="Áp dụng lại"><p>Kích hoạt áp dụng lại chính sách bảo hành này cho hãng <strong>{selected.brandName}</strong> · nhóm <strong>{selected.categoryName}</strong>? Các phiếu bảo hành lập mới sau thời điểm này sẽ áp dụng chính sách này.</p><p className="text-sm text-slate-500">{selected.policyCode} · {selected.policyName}</p></ConfirmDialog>}
-    {dialog === 'delete' && selected && <ConfirmDialog title={selected.variantReferenceCount > 0 ? 'Không thể xóa chính sách' : 'Xóa chính sách'} pending={pending} error={formError} onClose={() => setDialog(null)} onConfirm={() => selected.variantReferenceCount > 0 ? void deactivate() : void remove()} confirmLabel={selected.variantReferenceCount > 0 ? 'Ngừng áp dụng thay thế' : 'Xác nhận xóa'}><p>{selected.variantReferenceCount > 0 ? `Chính sách ${selected.policyCode} đang được ${selected.variantReferenceCount} biến thể sản phẩm áp dụng nên không thể xóa.` : `Xóa vĩnh viễn chính sách ${selected.policyCode} “${selected.policyName}”? Thao tác này không thể hoàn tác.`}</p>{selected.variantReferenceCount > 0 && <p className="text-sm text-slate-500">Muốn ngừng dùng chính sách này, hãy ngừng áp dụng thay vì xóa.</p>}</ConfirmDialog>}
-  </div>
+    {dialog === 'delete' && selected && <ConfirmDialog title={selected.variantReferenceCount > 0 ? 'Không thể xóa chính sách' : 'Xóa chính sách'} pending={pending} error={formError} onClose={() => setDialog(null)} onConfirm={() => selected.variantReferenceCount > 0 ? void deactivate() : void remove()} confirmLabel={selected.variantReferenceCount > 0 ? 'Ngừng áp dụng thay thế' : 'Xác nhận xóa'}><p>{selected.variantReferenceCount > 0 ? `Chính sách ${selected.policyCode} đang được ${selected.variantReferenceCount} biến thể sản phẩm áp dụng nên không thể xóa.` : `Xóa vĩnh viễn chính sách ${selected.policyCode} “${selected.policyName}”? Thao tác này không thể hoàn tác.`}</p>{selected.variantReferenceCount > 0 && <p className="text-sm text-aqs-ink-muted">Muốn ngừng dùng chính sách này, hãy ngừng áp dụng thay vì xóa.</p>}</ConfirmDialog>}
+  </ManagementPageShell>
 }
 
 function Detail({ label, value }: { label: string; value: string }) { return <div><dt className="text-xs uppercase tracking-wide text-slate-500">{label}</dt><dd className="mt-1 font-medium text-slate-900">{value}</dd></div> }

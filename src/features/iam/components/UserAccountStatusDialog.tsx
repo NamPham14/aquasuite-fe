@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { ManagementDialog, ManagementForm, ManagementFormField, managementFieldClass } from '../../../shared/ui/ManagementDialog.tsx'
+import { Notice, StatusBadge, type StatusTone } from '../../../shared/ui/Badge'
 import type { UserAccount, UserAccountStatus } from '../types/userAccount.types.ts'
 
 function titleFor(status: UserAccountStatus) {
@@ -14,6 +15,12 @@ function confirmationFor(status: UserAccountStatus) {
     return 'Khóa tài khoản sẽ ngăn tài khoản tiếp tục truy cập hệ thống.'
   }
   return 'Kích hoạt sẽ cho phép tài khoản truy cập lại theo các vai trò đang được gán.'
+}
+
+function statusMeta(status: UserAccountStatus): { label: string; tone: StatusTone } {
+  if (status === 'ACTIVE') return { label: 'Đang hoạt động', tone: 'positive' }
+  if (status === 'INACTIVE') return { label: 'Ngừng hoạt động', tone: 'neutral' }
+  return { label: 'Đã khóa', tone: 'danger' }
 }
 
 export function UserAccountStatusDialog({
@@ -32,6 +39,9 @@ export function UserAccountStatusDialog({
   onConfirm: (reason: string) => Promise<void>
 }) {
   const [reason, setReason] = useState('')
+  const currentMeta = statusMeta(account.status)
+  const targetMeta = statusMeta(targetStatus)
+  const noticeTone = targetStatus === 'LOCKED' ? 'danger' : targetStatus === 'INACTIVE' ? 'warning' : 'info'
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -43,19 +53,43 @@ export function UserAccountStatusDialog({
       <ManagementForm
         onSubmit={submit}
         onClose={onClose}
-        submitLabel={targetStatus === 'ACTIVE' ? 'Kích hoạt' : targetStatus === 'LOCKED' ? 'Khóa tài khoản' : 'Vô hiệu hóa'}
+        submitLabel={
+          pending
+            ? 'Đang cập nhật...'
+            : targetStatus === 'ACTIVE'
+              ? 'Kích hoạt'
+              : targetStatus === 'LOCKED'
+                ? 'Khóa tài khoản'
+                : 'Vô hiệu hóa'
+        }
         submitDisabled={pending}
         closeDisabled={pending}
+        submitVariant={targetStatus === 'LOCKED' ? 'danger' : 'primary'}
+        submitLoading={pending}
       >
-        <p className="text-[14.5px] text-slate-600">{confirmationFor(targetStatus)}</p>
-        <p className="text-[13.5px] text-slate-600">
-          Tài khoản: <strong className="font-bold text-slate-900">{account.username}</strong>
-        </p>
+        <div className="grid gap-2.5 rounded-card border border-aqs-border bg-aqs-surface-subtle px-4 py-3.5">
+          <div className="grid gap-0.5">
+            <span className="text-[11.5px] font-semibold text-aqs-ink-faint">Tài khoản mục tiêu</span>
+            <span className="text-[13.5px] font-semibold text-aqs-ink">{account.username}</span>
+            <span className="text-xs text-aqs-ink-muted">{account.email}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-aqs-ink-muted">
+            <StatusBadge tone={currentMeta.tone}>{currentMeta.label}</StatusBadge>
+            <span aria-hidden="true">→</span>
+            <StatusBadge tone={targetMeta.tone}>{targetMeta.label}</StatusBadge>
+          </div>
+        </div>
+
+        <Notice tone={noticeTone} title="Lưu ý tác động">
+          {confirmationFor(targetStatus)}
+        </Notice>
+
         {error && (
-          <p role="alert" className="rounded-[11px] bg-red-50 px-3.5 py-2.5 text-[13.5px] font-semibold text-red-700">
+          <Notice tone="danger" role="alert" title="Không thể cập nhật trạng thái">
             {error}
-          </p>
+          </Notice>
         )}
+
         <ManagementFormField id="user-account-status-reason" label="Lý do (tùy chọn)">
           <textarea
             id="user-account-status-reason"
@@ -63,6 +97,7 @@ export function UserAccountStatusDialog({
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             rows={3}
+            placeholder="Nhập lý do thay đổi trạng thái (sẽ được lưu vào nhật ký hoạt động)..."
             disabled={pending}
           />
         </ManagementFormField>

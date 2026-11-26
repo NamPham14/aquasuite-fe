@@ -4,6 +4,7 @@ import {
   ManagementFormField,
   managementFieldClass,
 } from '../../../shared/ui/ManagementDialog'
+import { Notice } from '../../../shared/ui/Badge'
 import { brandSchema, type BrandFormValues, type ValidBrandFormValues } from '../schemas/brand.schema'
 import type { Brand, CatalogDialogMode } from '../types'
 
@@ -66,7 +67,7 @@ export function BrandForm({
       closeDisabled={pending}
       submitLabel={pending ? 'Đang lưu...' : mode === 'create' ? 'Tạo thương hiệu' : 'Lưu thay đổi'}
     >
-      {apiError && <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">{apiError}</p>}
+      {apiError && <Notice tone="danger">{apiError}</Notice>}
       <div className="grid gap-4 sm:grid-cols-2">
         <ManagementFormField
           id="brand-code"

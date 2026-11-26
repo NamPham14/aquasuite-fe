@@ -36,22 +36,22 @@ export function QuotationRevisionHistoryDrawer({
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
       <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
-        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col border-l border-slate-200">
+        <div className="flex w-screen max-w-md flex-col border-l border-aqs-border bg-aqs-surface shadow-aqs-float">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-slate-50/70">
+          <div className="flex items-center justify-between border-b border-aqs-border bg-aqs-surface-subtle px-5 py-4">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-sky-100 text-sky-700 rounded-lg">
+              <div className="rounded-lg bg-aqs-accent-soft p-2 text-aqs-accent">
                 <GitCommit className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Lịch sử Phiên bản</h3>
-                <p className="text-xs text-slate-500 font-medium">Mã báo giá: {quotationCode}</p>
+                <h3 className="text-base font-bold text-aqs-ink">Lịch sử Phiên bản</h3>
+                <p className="text-xs font-medium text-aqs-ink-muted">Mã báo giá: {quotationCode}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 transition"
+              className="rounded-md p-1.5 text-aqs-ink-faint transition hover:bg-aqs-surface-subtle hover:text-aqs-ink"
               aria-label="Đóng ngăn kéo"
             >
               <X className="w-5 h-5" />
@@ -115,7 +115,7 @@ export function QuotationRevisionHistoryDrawer({
                               rev.{item.revisionNo}
                             </span>
                             {isCurrent && (
-                              <span className="text-2xs font-semibold uppercase tracking-wider text-sky-700 bg-sky-100 px-1.5 py-0.5 rounded">
+                              <span className="rounded bg-aqs-accent-soft px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-aqs-accent">
                                 Đang xem
                               </span>
                             )}
@@ -123,21 +123,21 @@ export function QuotationRevisionHistoryDrawer({
                           <QuotationStatusBadge status={item.status} />
                         </div>
 
-                        <div className="text-sm font-bold text-slate-900 mb-1">
+                        <div className="mb-1 text-sm font-bold tabular-nums text-aqs-ink">
                           {formatMoney(item.totalAmount)}
                         </div>
 
-                        <div className="space-y-1 text-xs text-slate-500">
+                        <div className="space-y-1 text-xs text-aqs-ink-muted">
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            <Calendar className="h-3.5 w-3.5 text-aqs-ink-faint" />
                             <span>Ngày lập: {item.quotationDate}</span>
                           </div>
                           {item.createdByName && (
-                            <div className="text-2xs text-slate-400">Người lập: {item.createdByName}</div>
+                            <div className="text-[11px] text-aqs-ink-faint">Người lập: {item.createdByName}</div>
                           )}
                         </div>
 
-                        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-sky-700 font-semibold group-hover:text-sky-800">
+                        <div className="mt-3 flex items-center justify-between border-t border-aqs-border pt-2.5 text-xs font-semibold text-aqs-accent group-hover:text-aqs-accent-hover">
                           <span>Xem chi tiết bản này</span>
                           <ArrowRight className="w-3.5 h-3.5 transition transform group-hover:translate-x-0.5" />
                         </div>

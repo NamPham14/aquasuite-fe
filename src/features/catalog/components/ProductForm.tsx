@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { Image as ImageIcon, Plus, Trash2 } from 'lucide-react'
 import {
   ManagementForm,
@@ -18,6 +18,8 @@ import type {
   ProductStatus,
   ProductType,
 } from '../types'
+import { Notice } from '../../../shared/ui/Badge'
+import { ValidationSummary, type ValidationIssue } from '../../../shared/ui/FeedbackStates'
 
 type FieldErrors = Partial<Record<keyof ProductFormValues, string>>
 
@@ -31,6 +33,18 @@ function validationErrors(result: ReturnType<typeof productSchema.safeParse>): F
 interface SpecRow {
   key: string
   value: string
+}
+
+const productFieldMeta: Partial<Record<keyof ProductFormValues, { id: string; label: string }>> = {
+  productCode: { id: 'product-code', label: 'Mã sản phẩm' },
+  productName: { id: 'product-name', label: 'Tên sản phẩm' },
+  categoryId: { id: 'product-category', label: 'Danh mục' },
+  brandId: { id: 'product-brand', label: 'Thương hiệu' },
+  productType: { id: 'product-type', label: 'Loại sản phẩm' },
+  status: { id: 'product-status', label: 'Trạng thái' },
+  description: { id: 'product-description', label: 'Mô tả chi tiết' },
+  imageUrls: { id: 'product-image-url', label: 'Hình ảnh sản phẩm' },
+  specifications: { id: 'product-spec-key', label: 'Thông số kỹ thuật' },
 }
 
 export function ProductForm({
@@ -59,6 +73,7 @@ export function ProductForm({
   onSubmit: (values: ValidProductFormValues) => Promise<void>
 }) {
   const readOnly = mode === 'view'
+  const formRef = useRef<HTMLFormElement>(null)
 
   // Initialize values
   const [productCode, setProductCode] = useState(product?.productCode ?? '')
@@ -87,6 +102,16 @@ export function ProductForm({
   const [newSpecValue, setNewSpecValue] = useState('')
 
   const [errors, setErrors] = useState<FieldErrors>({})
+
+  const validationIssues = useMemo(() => {
+    const combined = { ...errors, ...apiFieldErrors }
+    return Object.entries(combined).flatMap(([field, message]) => {
+      const meta = productFieldMeta[field as keyof ProductFormValues]
+      return meta && message
+        ? [{ fieldId: meta.id, label: meta.label, message } satisfies ValidationIssue]
+        : []
+    })
+  }, [errors, apiFieldErrors])
 
   function handleAddImage() {
     setImageUrlError('')
@@ -149,7 +174,17 @@ export function ProductForm({
     const nextErrors = validationErrors(result)
     setErrors(nextErrors)
 
-    if (!result.success) return
+    if (!result.success) {
+      const firstField = String(result.error.issues[0]?.path[0] ?? '') as keyof ProductFormValues
+      const firstId = productFieldMeta[firstField]?.id
+      requestAnimationFrame(() => {
+        const field = firstId ? document.getElementById(firstId) : formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        field?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' })
+        field?.focus({ preventScroll: true })
+      })
+      return
+    }
     await onSubmit(result.data)
   }
 
@@ -158,20 +193,20 @@ export function ProductForm({
 
   return (
     <ManagementForm
+      formRef={formRef}
       onSubmit={handleSubmit}
       onClose={onClose}
       readOnly={readOnly}
       submitDisabled={pending || (mode !== 'view' && categoryLoading)}
       closeDisabled={pending}
+      submitLoading={pending}
       submitLabel={
         pending ? 'Đang lưu...' : mode === 'create' ? 'Tạo sản phẩm' : 'Lưu thay đổi'
       }
     >
-      {apiError && (
-        <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">
-          {apiError}
-        </p>
-      )}
+      {apiError && <Notice tone="danger" role="alert" title="Không thể lưu sản phẩm">{apiError}</Notice>}
+
+      <ValidationSummary issues={validationIssues} />
 
       {/* Basic information */}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -195,6 +230,7 @@ export function ProductForm({
             autoComplete="off"
             onChange={(e) => setProductCode(e.target.value.toUpperCase())}
             aria-invalid={!!fieldError('productCode')}
+            aria-describedby={fieldError('productCode') ? 'product-code-error' : 'product-code-hint'}
           />
         </ManagementFormField>
 
@@ -213,6 +249,7 @@ export function ProductForm({
             placeholder="Ví dụ: Máy lọc nước RO AquaPure 5 lõi"
             onChange={(e) => setProductName(e.target.value)}
             aria-invalid={!!fieldError('productName')}
+            aria-describedby={fieldError('productName') ? 'product-name-error' : 'product-name-hint'}
           />
         </ManagementFormField>
 
@@ -229,6 +266,7 @@ export function ProductForm({
             disabled={readOnly || pending || categoryLoading}
             onChange={(e) => setCategoryId(e.target.value)}
             aria-invalid={!!fieldError('categoryId')}
+            aria-describedby={fieldError('categoryId') ? 'product-category-error' : categoryLoading ? 'product-category-hint' : undefined}
           >
             <option value="">-- Chọn danh mục --</option>
             {categoryOptions.map((opt) => (
@@ -251,6 +289,8 @@ export function ProductForm({
             value={brandId}
             disabled={readOnly || pending || brandLoading}
             onChange={(e) => setBrandId(e.target.value)}
+            aria-invalid={!!fieldError('brandId')}
+            aria-describedby={fieldError('brandId') ? 'product-brand-error' : brandLoading ? 'product-brand-hint' : undefined}
           >
             <option value="">-- Không có thương hiệu --</option>
             {brandOptions.map((opt) => (
@@ -272,6 +312,8 @@ export function ProductForm({
             value={productType}
             disabled={readOnly || pending}
             onChange={(e) => setProductType(e.target.value as ProductType)}
+            aria-invalid={!!fieldError('productType')}
+            aria-describedby={fieldError('productType') ? 'product-type-error' : undefined}
           >
             <option value="NORMAL">Sản phẩm thông thường</option>
             <option value="BUNDLE">Gói combo thiết bị</option>
@@ -289,6 +331,8 @@ export function ProductForm({
             value={status}
             disabled={readOnly || pending}
             onChange={(e) => setStatus(e.target.value as ProductStatus)}
+            aria-invalid={!!fieldError('status')}
+            aria-describedby={fieldError('status') ? 'product-status-error' : undefined}
           >
             <option value="DRAFT">Bản nháp</option>
             <option value="ACTIVE">Đang kinh doanh</option>
@@ -313,12 +357,14 @@ export function ProductForm({
           disabled={readOnly || pending}
           placeholder="Mô tả đặc điểm nổi bật, ứng dụng của sản phẩm..."
           onChange={(e) => setDescription(e.target.value)}
+          aria-invalid={!!fieldError('description')}
+          aria-describedby={fieldError('description') ? 'product-description-error' : 'product-description-hint'}
         />
       </ManagementFormField>
 
       {/* Image URLs manager */}
       <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-        <label className="text-sm font-medium text-slate-800">
+        <label htmlFor="product-image-url" className="text-sm font-medium text-slate-800">
           Hình ảnh sản phẩm ({imageUrls.length})
         </label>
 
@@ -326,6 +372,7 @@ export function ProductForm({
           <div className="space-y-1">
             <div className="flex gap-2">
               <input
+                id="product-image-url"
                 type="url"
                 className={managementFieldClass}
                 placeholder="Nhập URL ảnh (https://...)"
@@ -341,20 +388,21 @@ export function ProductForm({
                     handleAddImage()
                   }
                 }}
+                aria-invalid={!!imageUrlError || !!fieldError('imageUrls')}
+                aria-describedby={imageUrlError ? 'product-image-url-error' : fieldError('imageUrls') ? 'product-image-url-schema-error' : undefined}
               />
               <button
                 type="button"
                 onClick={handleAddImage}
                 disabled={pending || !newImageUrl.trim()}
-                className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="aqs-button aqs-button--secondary aqs-button--md mt-1 shrink-0"
               >
                 <Plus className="h-4 w-4" />
                 Thêm ảnh
               </button>
             </div>
-            {imageUrlError && (
-              <p className="text-xs text-rose-600">{imageUrlError}</p>
-            )}
+            {imageUrlError && <p id="product-image-url-error" role="alert" className="text-xs text-rose-700">{imageUrlError}</p>}
+            {!imageUrlError && fieldError('imageUrls') && <p id="product-image-url-schema-error" role="alert" className="text-xs text-rose-700">{fieldError('imageUrls')}</p>}
           </div>
         )}
 
@@ -398,7 +446,7 @@ export function ProductForm({
                     onClick={() => handleRemoveImage(idx)}
                     disabled={pending}
                     aria-label={`Xóa ảnh ${idx + 1}`}
-                    className="absolute right-1 top-1 rounded bg-black/60 p-1 text-white opacity-0 transition-opacity hover:bg-rose-600 group-hover:opacity-100"
+                    className="absolute right-1 top-1 rounded bg-slate-950/75 p-1.5 text-white opacity-100 transition-colors hover:bg-rose-700 focus-visible:outline-2 focus-visible:outline-white"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -411,14 +459,16 @@ export function ProductForm({
 
       {/* Specifications */}
       <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-        <label className="text-sm font-medium text-slate-800">
+        <p className="text-sm font-medium text-slate-800">
           Thông số kỹ thuật ({specs.length})
-        </label>
+        </p>
 
         {!readOnly && (
           <div className="flex flex-col gap-2 sm:flex-row">
             <input
+              id="product-spec-key"
               type="text"
+              aria-label="Tên thông số kỹ thuật"
               placeholder="Tên thông số (VD: Công suất)"
               className={managementFieldClass}
               value={newSpecKey}
@@ -426,7 +476,9 @@ export function ProductForm({
               onChange={(e) => setNewSpecKey(e.target.value)}
             />
             <input
+              id="product-spec-value"
               type="text"
+              aria-label="Giá trị thông số kỹ thuật"
               placeholder="Giá trị (VD: 50W, 220V)"
               className={managementFieldClass}
               value={newSpecValue}
@@ -443,7 +495,7 @@ export function ProductForm({
               type="button"
               onClick={handleAddSpec}
               disabled={pending || !newSpecKey.trim()}
-              className="mt-1 inline-flex shrink-0 items-center justify-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="aqs-button aqs-button--secondary aqs-button--md mt-1 shrink-0"
             >
               <Plus className="h-4 w-4" />
               Thêm

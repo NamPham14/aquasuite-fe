@@ -1,25 +1,12 @@
+import { StatusBadge, type StatusTone } from '../../../shared/ui/Badge'
 import type { OrderStatus } from '../types/salesOrder.types'
 
-const STATUS_CONFIG: Record<
-  OrderStatus,
-  { label: string; className: string }
-> = {
-  DRAFT: {
-    label: 'Nháp (Chờ duyệt nợ)',
-    className: 'bg-amber-50 text-amber-800 border-amber-300',
-  },
-  PROCESSING: {
-    label: 'Đang xử lý',
-    className: 'bg-sky-50 text-sky-700 border-sky-200',
-  },
-  COMPLETED: {
-    label: 'Hoàn tất',
-    className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  },
-  CANCELLED: {
-    label: 'Đã hủy',
-    className: 'bg-rose-50 text-rose-700 border-rose-200',
-  },
+const STATUS_CONFIG: Record<OrderStatus, { label: string; tone: StatusTone }> = {
+  DRAFT: { label: 'Nháp (Chờ duyệt nợ)', tone: 'warning' },
+  PENDING_CONFIRMATION: { label: 'Chờ xác nhận', tone: 'warning' },
+  PROCESSING: { label: 'Đang xử lý', tone: 'accent' },
+  COMPLETED: { label: 'Hoàn tất', tone: 'positive' },
+  CANCELLED: { label: 'Đã hủy', tone: 'danger' },
 }
 
 interface OrderStatusBadgeProps {
@@ -30,15 +17,12 @@ interface OrderStatusBadgeProps {
 export function OrderStatusBadge({ status, className = '' }: OrderStatusBadgeProps) {
   const config = STATUS_CONFIG[status as OrderStatus] ?? {
     label: status,
-    className: 'bg-slate-50 text-slate-700 border-slate-200',
+    tone: 'neutral' as const,
   }
 
   return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${config.className} ${className}`}
-    >
-      <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-70" />
+    <StatusBadge tone={config.tone} className={className}>
       {config.label}
-    </span>
+    </StatusBadge>
   )
 }

@@ -14,7 +14,7 @@ import {
 } from '../src/features/iam/model/authSlice.ts'
 import { tokenStorage } from '../src/shared/lib/tokenStorage.ts'
 import { useAuthBootstrap } from '../src/features/iam/hooks/useAuthBootstrap.ts'
-import { filterProducts } from '../src/pages/management/productFilters.ts'
+import { filterProducts } from '../src/features/catalog/lib/productFilters.ts'
 
 // Register ESM loader for TSX support in Node.js test runner
 register('./loader.mjs', import.meta.url)

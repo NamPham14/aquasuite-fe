@@ -1,126 +1,117 @@
-# Component dùng chung cho trang quản lý
+# Component dùng chung & Design System cho trang quản lý
 
-Tài liệu này giúp thành viên và coding agent tìm các **React component** đang có trước khi tạo giao diện quản lý mới. Các component nằm trong `src/shared/ui/`; chúng cung cấp giao diện và cấu trúc, còn dữ liệu, nghiệp vụ và xử lý API thuộc trang hoặc feature sử dụng chúng.
+Tài liệu này giúp thành viên và coding agent sử dụng đúng **Design Tokens (Tailwind CSS 4)** và các **React component dùng chung** trong `src/shared/ui/` trước khi xây dựng hoặc nâng cấp giao diện Management Dashboard (`/app/*`). Các component này chỉ chịu trách nhiệm trình bày, bố cục và khả năng tiếp cận (accessibility); dữ liệu, nghiệp vụ, phân quyền và gọi API thuộc về `pages/` và `features/`.
 
-Các file và export dưới đây là hiện trạng code, không phải một thư viện CRUD hoàn chỉnh. Xem [cấu trúc frontend](FRONTEND_PACKAGE_STRUCTURE.md) và contract/spec liên quan trước khi tích hợp dữ liệu thật.
+Xem thêm [cấu trúc frontend](FRONTEND_PACKAGE_STRUCTURE.md) và `AGENTS.md` trước khi tích hợp dữ liệu thật. Không để `src/shared/` phụ thuộc vào `src/features/` hay `src/pages/`.
 
-## Chọn component nào?
+## 1. Design Tokens & Styles toàn cục (Tailwind CSS 4)
 
-| Nhu cầu | Component | File |
+Hệ thống style dùng Tailwind CSS 4 làm chuẩn, tổ chức tập trung thành 3 file:
+
+| File | Vai trò |
+| --- | --- |
+| `src/assets/styles/tokens.css` | Khai báo semantic design tokens bằng `@theme` (`--color-aqs-*`, `--radius-card/control/chip`, `--shadow-aqs-float`, `--font-aqs-sans`, `--ease-aqs*`) và bridge `--ux-*` cho Lucian UX/UI. |
+| `src/assets/styles/motion.css` | Keyframes và micro-interaction dùng chung (Lucian `#090/#092/#244/#436`, Sakuga primary action ticks, spinner/skeleton, `@media (prefers-reduced-motion: reduce)`). |
+| `src/index.css` | Entry point global styles: `@import "tailwindcss"`, import `tokens.css` và `motion.css`, base font và style Storefront. |
+
+Quy tắc bắt buộc:
+- Lấy `ProductsPage` và Sidebar sáng (`src/layouts/ManagementLayout.tsx`) làm chuẩn UI/UX cho toàn bộ Management Dashboard (`/app/*`).
+- Ưu tiên Tailwind utilities gắn với semantic tokens đã khai báo trong `tokens.css` (`bg-aqs-page`, `bg-aqs-surface`, `text-aqs-ink`, `text-aqs-ink-muted`, `border-aqs-border`, `border-aqs-divider`, `bg-aqs-accent`, `rounded-card`, `rounded-control`, v.v.).
+- Không tạo file CSS phân tán cho từng page hoặc từng feature, không duplicate component đã có trong `src/shared/ui/` và không xây dựng hệ thống UI song song.
+- Không lạm dụng `!important` (chỉ dùng cho khối `@media (prefers-reduced-motion: reduce)` và phần Storefront cũ nếu cần).
+
+## 2. Danh mục Shared UI (`src/shared/ui/`)
+
+| Nhu cầu | Component / Export | File |
 | --- | --- | --- |
-| Tiêu đề, breadcrumb và liên kết về dashboard | `ManagementPageHeader` | `src/shared/ui/ManagementPage.tsx` |
-| Nhóm ô tìm kiếm và bộ lọc | `ManagementFilterBar` | `src/shared/ui/ManagementPage.tsx` |
-| Ô tìm kiếm có nhãn | `ManagementSearch` | `src/shared/ui/ManagementPage.tsx` |
-| Bộ chọn lọc có nhãn | `ManagementSelect` | `src/shared/ui/ManagementPage.tsx` |
-| Bảng với cột và ô do trang tự định nghĩa | `ManagementTable`, `ManagementTableColumn<T>` | `src/shared/ui/ManagementTable.tsx` |
-| Nút thao tác phân biệt theo ý nghĩa của từng dòng | `ManagementRowActions`, `ManagementActionButton` | `src/shared/ui/ManagementRowActions.tsx` |
-| Hộp thoại mở phía trên trang | `ManagementDialog` | `src/shared/ui/ManagementDialog.tsx` |
-| Khung form và các nút đóng/lưu | `ManagementForm` | `src/shared/ui/ManagementDialog.tsx` |
-| Nhãn, gợi ý hoặc lỗi cho một trường | `ManagementFormField` | `src/shared/ui/ManagementDialog.tsx` |
-| Style chung cho input/select/textarea trong form | `managementFieldClass` | `src/shared/ui/ManagementDialog.tsx` |
+| Nút bấm, icon button, tooltip, primary CTA có micro-interaction Sakuga | `Button`, `IconButton`, `Tooltip`, `SakugaActionButton` | `src/shared/ui/Button.tsx` |
+| Nhãn trạng thái, mã định danh (code chip), thông báo inline | `StatusBadge`, `CodeChip`, `Notice` | `src/shared/ui/Badge.tsx` |
+| Trạng thái rỗng (`#092`), lỗi có retry (`#090`), tóm tắt lỗi form (`#244`), class toast | `EmptyState`, `ErrorState`, `ValidationSummary`, `OPERATIONAL_TOAST_CLASS` | `src/shared/ui/FeedbackStates.tsx` |
+| Khung trang, header + breadcrumb, card bộ lọc, ô tìm kiếm, select, panel, stat card | `ManagementPageShell`, `ManagementPageHeader`, `ManagementFilterCard`, `ManagementFilterChip`, `ManagementFilterBar`, `ManagementSearch`, `ManagementSelect`, `ManagementPanel`, `ManagementStatCard`, `filterControlClass` | `src/shared/ui/ManagementPage.tsx` |
+| Bảng dữ liệu, skeleton tải dữ liệu, danh sách mobile, phân trang | `ManagementTable`, `ManagementTableColumn<T>`, `ManagementTableSkeleton`, `ManagementMobileList`, `ManagementPagination` | `src/shared/ui/ManagementTable.tsx` |
+| Nhóm nút thao tác từng dòng (Xem/Sửa/Xóa/Gán quyền/Gỡ quyền) | `ManagementRowActions`, `ManagementActionButton` | `src/shared/ui/ManagementRowActions.tsx` |
+| Hộp thoại native `<dialog>`, form, trường nhập liệu, hộp thoại xác nhận xóa (`#436`) | `ManagementDialog`, `ManagementForm`, `ManagementFormField`, `managementFieldClass`, `DeleteConfirmDialog` | `src/shared/ui/ManagementDialog.tsx` |
 
-Trong TypeScript/React đây là function component, type và hằng style; không phải class. Các trang [Danh mục](../src/pages/management/CategoriesPage.tsx), [Thương hiệu](../src/pages/management/BrandsPage.tsx), [Sản phẩm](../src/pages/management/ProductsPage.tsx) và [Vai trò/Quyền](../src/pages/management/AccessPlaceholderPage.tsx) là ví dụ đang dùng các thành phần này. Danh mục và Thương hiệu đã kết nối CRUD thật qua `features/catalog`, gồm phân trang/lọc phía server, form và trạng thái loading/error/empty; contract vẫn được xác định bởi BE và spec WORK-013, không phải bởi component trình bày. Không coi việc hiện hoặc ẩn nút trên FE là chính sách thực thi phân quyền.
+Các trang mẫu chuẩn đang sử dụng đầy đủ hệ thống này:
+- [Sản phẩm](../src/pages/management/ProductsPage.tsx)
+- [Tài khoản người dùng](../src/pages/management/UsersPage.tsx)
+- [Vai trò](../src/pages/management/RolesPage.tsx)
+- [Quyền](../src/pages/management/PermissionsPage.tsx)
 
-## Tiêu đề, tìm kiếm và lọc
+## 3. Khung trang, tiêu đề, bộ lọc và panel
 
-`ManagementPageHeader` nhận `title`, `description`, `breadcrumb`, `icon` và `group` tùy chọn. Component có icon và liên kết về `/app/dashboard`; dùng cùng cách trình bày trên các trang quản lý, gồm Combo. `ManagementFilterBar` chỉ sắp xếp các control trong vùng tìm kiếm. `ManagementSearch` và `ManagementSelect` là controlled component: trang giữ `value`, truyền `onChange`, tự lọc hoặc gọi API.
+- `ManagementPageShell`: bọc nội dung trang quản lý với khoảng cách chuẩn (`space-y-5`).
+- `ManagementPageHeader`: nhận `title`, `description`, `breadcrumb`, `group`, `icon` và `actions` tùy chọn. Luôn hiển thị breadcrumb liên kết về `/app/dashboard`.
+- `ManagementFilterCard`: card bộ lọc chuẩn với `title`, `description`, `chips`, `resultSummary`, `onReset` và `children`.
+- `ManagementFilterBar`, `ManagementSearch`, `ManagementSelect`: controlled components; trang tự quản lý state và đồng bộ API/filter theo contract.
+- `ManagementPanel`: card chứa bảng hoặc khu vực nội dung phụ (`title`, `subtitle`, `actions`, `flush`, `footer`).
+- `ManagementStatCard`: thẻ KPI có trạng thái active để lọc nhanh (ví dụ trên `UsersPage`).
 
 ```tsx
 import { useState } from 'react'
-import { Package } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import {
-  ManagementPageHeader, ManagementFilterBar, ManagementSearch, ManagementSelect,
+  ManagementPageShell,
+  ManagementPageHeader,
+  ManagementFilterCard,
+  ManagementPanel,
+  filterControlClass,
 } from '../../shared/ui/ManagementPage'
+import { SakugaActionButton } from '../../shared/ui/Button'
 
 export function ExamplePage() {
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
 
-  return <>
-    <ManagementPageHeader title="Quản lý sản phẩm" description="Danh sách sản phẩm"
-      breadcrumb="Sản phẩm" group="Danh mục" icon={<Package />} />
-    <ManagementFilterBar>
-      <ManagementSearch id="product-query" label="Tìm kiếm" value={search}
-        onChange={setSearch} placeholder="Tìm theo mã hoặc tên" />
-      <ManagementSelect id="product-status" label="Trạng thái" value={status} onChange={setStatus}>
-        <option value="">Tất cả</option>
-        <option value="ACTIVE">Hoạt động</option>
-      </ManagementSelect>
-    </ManagementFilterBar>
-  </>
+  return (
+    <ManagementPageShell>
+      <ManagementPageHeader
+        title="Quản lý sản phẩm"
+        description="Kiểm soát thông tin định danh và trạng thái kinh doanh."
+        breadcrumb="Sản phẩm"
+        group="Quản lý danh mục"
+        actions={
+          <SakugaActionButton onClick={() => {}}>
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Tạo sản phẩm
+          </SakugaActionButton>
+        }
+      />
+      <ManagementFilterCard title="Tìm và lọc" resultSummary="12 kết quả">
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Tìm theo mã hoặc tên..."
+          className={filterControlClass}
+        />
+      </ManagementFilterCard>
+      <ManagementPanel title="Danh sách" flush>
+        {/* ManagementTable */}
+      </ManagementPanel>
+    </ManagementPageShell>
+  )
 }
 ```
 
-Mỗi `id` phải duy nhất trên trang và `label` mô tả đúng control. Chỉ thêm những bộ lọc có ích cho nghiệp vụ: không bắt buộc mọi trang dùng cùng số lượng filter. Với dữ liệu thật, trang cần xử lý loading, lỗi, rỗng, phân trang và đồng bộ filter theo contract; các component này không tự thực hiện việc đó.
+## 4. Bảng, Skeleton, Mobile List và Phân trang
 
-## Bảng: `ManagementTable<T>`
+- `ManagementTable<T>`: khai báo `columns: ManagementTableColumn<T>[]` với `key`, `header`, `cell(row)`, `align` (`left` | `center` | `right`), `cellClassName`, `headerClassName` và prop `compact` tùy chọn. `rowKey` phải ổn định và duy nhất; `labelledBy` trỏ đến `id` của tiêu đề bảng.
+- `ManagementTableSkeleton`: hiển thị skeleton trong khi tải bảng.
+- `ManagementMobileList<T>`: danh sách dạng thẻ cho màn hình `< 768px`.
+- `ManagementPagination`: thanh phân trang chuẩn (`page`, `totalPages`, `totalElements`, `displayedCount`, `itemLabel`, `onPageChange`, `disabled`).
+- `ManagementRowActions` / `ManagementActionButton`: nhóm nút thao tác ngữ nghĩa (`view`, `edit`, `delete`, `assign`, `revoke`). Component chỉ trình bày nút, không tự gọi API hay xác nhận thao tác nguy hiểm.
 
-Khai báo kiểu dữ liệu từng dòng và mảng `ManagementTableColumn<T>`. Mỗi cột có `key` duy nhất, `header`, hàm `cell(row)`, `align` tùy chọn (`left`, `center`, `right`) và `cellClassName` tùy chọn. `cell` có thể trả về text, số hoặc JSX như badge/nút. Trang quyết định các trường và hành vi của nút.
+## 5. Dialog, Form và Trạng thái phản hồi
 
-```tsx
-import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable'
+- `ManagementDialog`: dùng thẻ HTML `<dialog>` + `showModal()`, hỗ trợ `size="default"` (640px) và `size="wide"` (960px), `closeDisabled`, phím `Escape` và trả focus về phần tử kích hoạt khi đóng. Không render nhiều `ManagementDialog` đồng thời.
+- `ManagementForm`: khung `<form noValidate>` chuẩn với nút Hủy/Đóng và Lưu (`submitLabel`, `submitDisabled`, `closeDisabled`, `readOnly`, `submitVariant`).
+- `ManagementFormField`: gắn `label` qua `id`, ưu tiên hiển thị `error` trước `hint`. Input bên trong nên dùng `managementFieldClass` và gắn `aria-invalid`, `aria-describedby` tương ứng.
+- `DeleteConfirmDialog`: hộp thoại xác nhận xóa/hành động nguy hiểm chuẩn (port từ Lucian `#436`, giữ license MIT), hỗ trợ cả mode nút bấm thường và `asForm`.
+- `EmptyState` (`#092`), `ErrorState` (`#090`), `ValidationSummary` (`#244`): các trạng thái phản hồi thống nhất, có recovery action và focus về trường lỗi.
+- `StatusBadge`, `CodeChip`, `Notice`: hiển thị trạng thái (`success`, `warning`, `danger`, `neutral`, `info`), mã code tabular và banner cảnh báo inline.
 
-type Item = { id: string; name: string; quantity: number }
-const columns: ManagementTableColumn<Item>[] = [
-  { key: 'name', header: 'Tên', cell: (row) => row.name },
-  { key: 'quantity', header: 'Số lượng', cell: (row) => row.quantity, align: 'right', cellClassName: 'tabular-nums' },
-]
+## 6. Quy tắc cho coding agent
 
-function ItemTable({ items }: { items: Item[] }) {
-  return <section>
-    <h2 id="item-list">Danh sách</h2>
-    <ManagementTable columns={columns} rows={items} rowKey={(row) => row.id}
-      labelledBy="item-list" emptyMessage="Không có dữ liệu." />
-  </section>
-}
-```
+> Đọc `AGENTS.md`, `docs/README.md`, `docs/FRONTEND_PACKAGE_STRUCTURE.md` và `docs/MANAGEMENT_UI_COMPONENTS.md`. Kiểm tra `src/shared/ui/` trước khi tạo component mới. Dùng lại tokens từ `src/assets/styles/tokens.css` và các shared component phù hợp; mỗi feature tự xử lý dữ liệu, mapping trạng thái và validation nghiệp vụ. Không suy đoán contract API hoặc quyền; không đưa business logic vào `src/shared/ui/`.
 
-`rowKey` phải ổn định và duy nhất trong danh sách. `labelledBy` phải trỏ đến `id` của tiêu đề có thật. Bảng cung cấp hàng rỗng và vùng cuộn ngang có thể focus; không tự tải dữ liệu, phân trang, tìm kiếm, sắp xếp, chọn dòng hay cấp quyền. Hiện ô mặc định `whitespace-nowrap`, nên nội dung dài có thể làm bảng cuộn ngang; xem xét nội dung và kiểm tra mobile khi dùng.
-
-`ManagementRowActions` dùng cho nhóm hành động của từng dòng: truyền mảng action có `variant`, `label`, `ariaLabel`, `onClick` và `disabled` tùy chọn. Màu và biểu tượng thể hiện ngữ nghĩa nhất quán: Xem trung tính, Sửa xanh nhạt, Xóa đỏ nhạt. Với hành động ngoài bộ Xem/Sửa/Xóa, dùng `ManagementActionButton` trực tiếp; Gán quyền có nền xanh đậm, Gỡ quyền có nền đỏ nhạt. Component chỉ trình bày nút, không xác nhận thao tác nguy hiểm hay gọi API; trang vẫn chịu trách nhiệm xử lý nghiệp vụ và xác nhận xóa/gỡ.
-
-## Dialog và form
-
-Combo dùng nguyên phong cách component của Danh mục/Thương hiệu: header có icon, bộ lọc có nhãn, bảng chia hàng, nút thao tác có icon và màu, phân trang chuẩn và `ManagementForm`. Ảnh wireframe chỉ hướng dẫn nội dung/luồng; không dùng CSS riêng để đổi theme, border-radius hoặc typography của Combo.
-
-`ManagementDialog` nhận `size` tùy chọn: `"default"` (640px tối đa như trước) hoặc `"wide"` (960px tối đa). Cả hai giới hạn 94vw và giữ nguyên màu sắc, bo góc, padding, backdrop, focus và hành vi đóng. Form Combo dùng `size="wide"` để chứa bảng SKU; chi tiết/xác nhận và các trang khác giữ mặc định. Bảng vẫn cuộn ngang trong dialog khi cần trên mobile.
-
-`ManagementDialog` dùng thẻ HTML `<dialog>` và gọi `showModal()` khi được mount. Trang quản lý state mở/đóng bằng conditional render; nút X và Escape gọi `onClose`. Khi unmount, dialog trả focus về phần tử mở ban đầu nếu phần tử đó còn trong DOM. `closeDisabled` tùy chọn, mặc định `false`, khóa nút X và Escape trong lúc chờ. Không render nhiều dialog này đồng thời: tiêu đề hiện dùng cùng một `id`. Kiểm tra focus, bàn phím và hành vi trình duyệt cho luồng thực tế.
-
-`ManagementForm` tạo thẻ `<form noValidate>`, bố trí phần nội dung và nút Hủy/Đóng, Lưu. `onSubmit` và `submitLabel` là bắt buộc; `readOnly` ẩn nút submit nhưng **không tự khóa các input**. `submitDisabled` tùy chọn (mặc định `false`) vô hiệu hóa nút submit; `closeDisabled` khóa nút Hủy/Đóng. Trang vẫn phải chặn gửi lặp trong handler và quản lý state, validation, pending, lỗi, đóng dialog và xử lý lưu. Không dùng một form giả để thể hiện thao tác đã kết nối backend.
-
-`ManagementFormField` liên kết `label` với control qua `id`, và hiển thị `error` hoặc `hint` (`error` được ưu tiên). Nó không tự gắn thuộc tính vào input: khi có lỗi, trang cần gắn `aria-invalid` và `aria-describedby` tới `${id}-error`; khi có hint, có thể gắn tới `${id}-hint`. Dùng ID riêng cho từng trường.
-
-```tsx
-import { useState, type FormEvent } from 'react'
-import { ManagementDialog, ManagementForm, ManagementFormField, managementFieldClass } from '../../shared/ui/ManagementDialog'
-
-function ExampleForm({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [error, setError] = useState('')
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!name.trim()) { setError('Vui lòng nhập tên.'); return }
-    // Gọi xử lý lưu của feature sau khi đã xác nhận contract.
-  }
-  return <ManagementDialog title="Thêm mục" onClose={onClose}>
-    <ManagementForm onSubmit={submit} onClose={onClose} submitLabel="Lưu">
-      <ManagementFormField id="item-name" label="Tên *" error={error}>
-        <input id="item-name" className={managementFieldClass} value={name}
-          onChange={(event) => setName(event.target.value)} aria-invalid={!!error}
-          aria-describedby={error ? 'item-name-error' : undefined} />
-      </ManagementFormField>
-    </ManagementForm>
-  </ManagementDialog>
-}
-```
-
-`ManagementForm` là khung chung; nội dung form của mỗi nghiệp vụ vẫn riêng. Không bắt buộc trường của Thương hiệu giống Danh mục. Nếu một nhu cầu chung còn thiếu, cân nhắc mở rộng component hiện có mà vẫn tương thích các trang đang dùng, thay vì sao chép một phiên bản mới.
-
-## Khi giao việc cho coding agent
-
-Có thể đưa yêu cầu sau vào prompt:
-
-> Đọc `AGENTS.md`, `docs/README.md` và `docs/MANAGEMENT_UI_COMPONENTS.md`; kiểm tra các component `src/shared/ui/` và trang tương tự trước khi tạo component mới. Dùng lại bảng, form và control phù hợp; mỗi trang tự định nghĩa cột, trường và validation. Không suy đoán contract API hoặc quyền, không coi dữ liệu mẫu là dữ liệu thật.
-
-Khi bổ sung hoặc thay đổi API component dùng chung, cập nhật tài liệu này cùng ví dụ và kiểm tra các trang đang sử dụng. Không thêm dependency, API, phân quyền hay hành vi CRUD chỉ vì ví dụ có form hoặc bảng.
+Khi bổ sung hoặc thay đổi API của shared component, cập nhật tài liệu này và kiểm tra toàn bộ consumer đang dùng.

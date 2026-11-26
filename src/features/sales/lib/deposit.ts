@@ -7,8 +7,8 @@ export const demoSkus: DemoSku[] = [
   { id: 'toilet', code: 'BC-003', name: 'Bồn cầu một khối', price: 6800000, available: 3 },
 ]
 export const money = (value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
-export const secondaryButton = 'inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:opacity-50'
-export const primaryButton = 'inline-flex min-h-10 items-center justify-center rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:opacity-50'
+export const secondaryButton = 'inline-flex h-10 items-center justify-center rounded-control border border-aqs-border bg-aqs-surface px-3.5 text-sm font-medium text-aqs-ink transition-colors hover:border-slate-300 hover:bg-aqs-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:opacity-50'
+export const primaryButton = 'inline-flex h-10 items-center justify-center rounded-control bg-aqs-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-aqs-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent disabled:opacity-50'
 export function totals(order: DepositOrder) {
   const requested = order.lines.reduce((sum, line) => sum + demoSkus.find((sku) => sku.id === line.skuId)!.price * line.requested, 0)
   const p = order.payment

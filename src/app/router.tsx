@@ -23,7 +23,7 @@ import { RolesPage } from '../pages/management/RolesPage'
 import { PermissionsPage } from '../pages/management/PermissionsPage'
 import { UsersPage } from '../pages/management/UsersPage'
 import { CustomerDebtsPage } from '../pages/management/CustomerDebtsPage'
-import { CustomerDebtDetailPage } from '../features/finance'
+import { CustomerDebtDetailPage } from '../pages/management/CustomerDebtDetailPage'
 import { CreditProfileApprovalsPage } from '../pages/management/CreditProfileApprovalsPage'
 import { PaymentVerificationsPage } from '../pages/management/PaymentVerificationsPage'
 import { PaymentAllocationsPage } from '../pages/management/PaymentAllocationsPage'
@@ -47,8 +47,7 @@ import { MyWarrantyTicketsPage } from '../pages/customer/MyWarrantyTicketsPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { DeliveriesPage, MyDeliveriesPage, IssueNotesPage } from '../pages/management/DeliveriesPage'
 import { DeliveryDetailPage } from '../pages/management/DeliveryDetailPage'
-import { ProtectedRoute } from '../features/iam/components/ProtectedRoute'
-import { PublicOnlyRoute } from '../features/iam/components/PublicOnlyRoute'
+import { ProtectedRoute, PublicOnlyRoute } from '../features/iam'
 
 export const routeConfig: RouteObject[] = [
   {

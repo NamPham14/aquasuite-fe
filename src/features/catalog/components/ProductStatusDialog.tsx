@@ -1,12 +1,9 @@
 import { useState } from 'react'
 import { ManagementDialog } from '../../../shared/ui/ManagementDialog'
+import { Button } from '../../../shared/ui/Button'
+import { Notice } from '../../../shared/ui/Badge'
 import type { ProductDetail, ProductStatus, ProductSummary } from '../types'
 import { ProductStatusBadge } from './ProductStatusBadge'
-
-const secondaryButton =
-  'min-h-10 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50'
-const primaryButton =
-  'min-h-10 rounded-md bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-sky-600 disabled:cursor-not-allowed disabled:opacity-50'
 
 interface ProductStatusDialogProps {
   product: ProductSummary | ProductDetail
@@ -14,6 +11,7 @@ interface ProductStatusDialogProps {
   apiError?: string
   onClose: () => void
   onConfirm: (status: ProductStatus) => Promise<void>
+  operational?: boolean
 }
 
 const statusOptions: { value: ProductStatus; label: string; desc: string }[] = [
@@ -38,32 +36,28 @@ export function ProductStatusDialog({
   }
 
   return (
-    <ManagementDialog
-      title="Cập nhật trạng thái sản phẩm"
-      onClose={onClose}
-      closeDisabled={pending}
-    >
+    <ManagementDialog title="Cập nhật trạng thái sản phẩm" onClose={onClose} closeDisabled={pending}>
       <form onSubmit={handleSubmit} className="space-y-4 p-5 sm:p-6">
         <div>
-          <p className="font-medium text-slate-900">
+          <p className="font-semibold text-aqs-ink">
             {product.productCode} — {product.productName}
           </p>
-          <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+          <div className="mt-2 flex items-center gap-2 text-sm text-aqs-ink-muted">
             <span>Trạng thái hiện tại:</span>
             <ProductStatusBadge status={product.status} />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Chọn trạng thái mới</label>
+          <label className="text-[13px] font-semibold text-aqs-ink-muted">Chọn trạng thái mới</label>
           <div className="space-y-2">
             {statusOptions.map((opt) => (
               <label
                 key={opt.value}
-                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                className={`flex cursor-pointer items-start gap-3 rounded-control border p-3 transition-colors ${
                   selectedStatus === opt.value
-                    ? 'border-sky-600 bg-sky-50/50'
-                    : 'border-slate-200 hover:bg-slate-50'
+                    ? 'border-aqs-accent bg-aqs-accent-soft'
+                    : 'border-aqs-border hover:bg-aqs-surface-subtle'
                 }`}
               >
                 <input
@@ -73,11 +67,11 @@ export function ProductStatusDialog({
                   checked={selectedStatus === opt.value}
                   onChange={() => setSelectedStatus(opt.value)}
                   disabled={pending}
-                  className="mt-1 h-4 w-4 text-sky-600 focus:ring-sky-500"
+                  className="mt-1 h-4 w-4 accent-aqs-accent"
                 />
                 <div className="text-sm">
-                  <div className="font-medium text-slate-800">{opt.label}</div>
-                  <div className="text-xs text-slate-500">{opt.desc}</div>
+                  <div className="font-semibold text-aqs-ink">{opt.label}</div>
+                  <div className="text-xs text-aqs-ink-muted">{opt.desc}</div>
                 </div>
               </label>
             ))}
@@ -85,36 +79,31 @@ export function ProductStatusDialog({
         </div>
 
         {selectedStatus === 'DISCONTINUED' && (
-          <p className="rounded-md bg-amber-50 p-3 text-xs text-amber-900">
+          <Notice tone="warning" title="Lưu ý khi ngừng kinh doanh">
             Lưu ý: Chuyển sang &quot;Ngừng kinh doanh&quot; sẽ ngăn chặn sản phẩm này khỏi việc tạo mới trong báo giá và đơn hàng bán mới.
-          </p>
+          </Notice>
         )}
 
         {apiError && (
-          <p role="alert" className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">
+          <Notice tone="danger" role="alert" title="Không thể cập nhật trạng thái">
             {apiError}
-          </p>
+          </Notice>
         )}
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-          <button
-            type="button"
-            className={secondaryButton}
-            disabled={pending}
-            onClick={onClose}
-          >
+        <div className="flex justify-end gap-2 border-t border-aqs-border pt-4">
+          <Button type="button" variant="secondary" disabled={pending} onClick={onClose}>
             Hủy
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className={primaryButton}
+            variant="primary"
+            loading={pending}
             disabled={pending || selectedStatus === product.status}
           >
             {pending ? 'Đang cập nhật...' : 'Cập nhật trạng thái'}
-          </button>
+          </Button>
         </div>
       </form>
     </ManagementDialog>
   )
 }
-

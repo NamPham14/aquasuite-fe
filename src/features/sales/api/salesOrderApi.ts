@@ -1,12 +1,14 @@
 import { baseApi } from '../../../shared/api/baseApi.ts'
 import type { PageResponse } from '../../../shared/api/types.ts'
 import type {
+  ConfirmOnlineOrderRequest,
   CreateDraftInvoiceRequest,
   CreateSalesOrderRequest,
   CreditCheckRequest,
   CreditCheckResponse,
   CustomerCreditSummaryResponse,
   OrderPaymentSummaryResponse,
+  RejectOnlineOrderRequest,
   SalesInvoiceResponse,
   SalesOrderDetailResponse,
   SalesOrderFilterParams,
@@ -133,6 +135,55 @@ export const salesOrderApi = baseApi.injectEndpoints({
       ],
     }),
 
+    // ========== XÁC NHẬN & XỬ LÝ ĐƠN HÀNG ONLINE (UC-22) ==========
+    confirmOnlineOrder: builder.mutation<
+      SalesOrderDetailResponse,
+      { orderId: string; body?: ConfirmOnlineOrderRequest }
+    >({
+      query: ({ orderId, body }) => ({
+        url: `/sales/orders/${orderId}/confirm`,
+        method: 'PATCH',
+        body: body ?? {},
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, { orderId }) => [
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'OrderPayment', id: orderId },
+      ],
+    }),
+
+    rejectOnlineOrder: builder.mutation<
+      SalesOrderDetailResponse,
+      { orderId: string; body: RejectOnlineOrderRequest }
+    >({
+      query: ({ orderId, body }) => ({
+        url: `/sales/orders/${orderId}/reject`,
+        method: 'PATCH',
+        body,
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, { orderId }) => [
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'OrderPayment', id: orderId },
+      ],
+    }),
+
+    syncOnlineOrderPayosPayment: builder.mutation<SalesOrderDetailResponse, string>({
+      query: (orderId) => ({
+        url: `/sales/orders/${orderId}/payos/sync`,
+        method: 'POST',
+      }),
+      transformResponse: (res: any) => res?.data ?? res,
+      invalidatesTags: (_res, _err, orderId) => [
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'OrderPayment', id: orderId },
+      ],
+    }),
+
     // ========== QUẢN LÝ HÓA ĐƠN BÁN HÀNG (DRAFT -> ISSUED) ==========
     getOrderInvoices: builder.query<SalesInvoiceResponse[], string>({
       query: (orderId) => `/sales/orders/${orderId}/invoices`,
@@ -217,6 +268,9 @@ export const {
   useGetOrderPaymentSummaryQuery,
   useUpdateOrderFulfillmentMutation,
   useCompleteSalesOrderMutation,
+  useConfirmOnlineOrderMutation,
+  useRejectOnlineOrderMutation,
+  useSyncOnlineOrderPayosPaymentMutation,
   useGetOrderInvoicesQuery,
   useCreateDraftInvoiceMutation,
   useUpdateDraftInvoiceMutation,

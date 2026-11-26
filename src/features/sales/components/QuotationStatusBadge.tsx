@@ -63,7 +63,7 @@ export function QuotationStatusBadge({ status, className = '' }: QuotationStatus
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium border uppercase tracking-wider whitespace-nowrap shadow-2xs ${config.badgeClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide whitespace-nowrap ${config.badgeClass} ${className}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${config.dotClass}`} />
       <span>{config.label}</span>

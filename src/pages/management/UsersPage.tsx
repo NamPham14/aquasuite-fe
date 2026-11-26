@@ -1,7 +1,8 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { Ban, CheckCircle2, Eye, LockKeyhole, Plus, UsersRound } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Eye, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import {
+  IamAccessGate,
   UserAccountDetailDialog,
   UserAccountForm,
   UserAccountStatusDialog,
@@ -19,25 +20,32 @@ import {
   type UserAccountFormValues,
   type UserAccountStatus,
 } from '../../features/iam'
-import { ManagementDialog } from '../../shared/ui/ManagementDialog.tsx'
-import { ManagementFilterBar, ManagementPageHeader, ManagementSearch, ManagementSelect } from '../../shared/ui/ManagementPage.tsx'
-import { ManagementTable, type ManagementTableColumn } from '../../shared/ui/ManagementTable.tsx'
-import { IamAccessGate } from './IamAccessGate.tsx'
+import { ManagementDialog } from '../../shared/ui/ManagementDialog'
+import {
+  ManagementMobileList,
+  ManagementPagination,
+  ManagementTable,
+  ManagementTableSkeleton,
+  type ManagementTableColumn,
+} from '../../shared/ui/ManagementTable'
+import {
+  ManagementFilterCard,
+  ManagementFilterChip,
+  ManagementPageHeader,
+  ManagementPageShell,
+  ManagementPanel,
+  ManagementSearch,
+  ManagementSelect,
+  ManagementStatCard,
+} from '../../shared/ui/ManagementPage'
+import { Button, IconButton, SakugaActionButton, Tooltip } from '../../shared/ui/Button'
+import { Notice, StatusBadge, type StatusTone } from '../../shared/ui/Badge'
+import { EmptyState, ErrorState, OPERATIONAL_TOAST_CLASS } from '../../shared/ui/FeedbackStates'
 import { ActivityLogPanel } from '../../features/audit'
 
 const pageSize = 10
-const primaryButton =
-  'inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-sky-700 px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-45'
-const secondaryButton =
-  'inline-flex h-8 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-45'
-const rowGhostButton =
-  'inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-45'
-const rowDangerGhostButton =
-  'inline-flex h-7 items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 text-xs font-medium text-red-700 transition-colors hover:border-red-700 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-45'
-const rowPrimaryButton =
-  'inline-flex h-7 items-center justify-center rounded-md bg-sky-700 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-sky-800 focus-visible:outline-2 focus-visible:outline-sky-700 disabled:cursor-not-allowed disabled:opacity-45'
 
-const AVATAR_COLORS = ['#0369a1', '#256d85', '#8a5a12', '#7a4a8c', '#a03b32', '#3c6e47', '#5b5f97', '#14666e']
+const AVATAR_COLORS = ['#087f8c', '#256d85', '#8a5a12', '#6a4b7c', '#983d36', '#24724f', '#4e598c', '#14666e']
 
 const ROLE_LABELS: Record<string, string> = {
   SHOP_OWNER: 'Chủ cửa hàng',
@@ -78,6 +86,10 @@ function statusLabel(status: UserAccountStatus) {
   return status === 'ACTIVE' ? 'Đang hoạt động' : status === 'INACTIVE' ? 'Ngừng hoạt động' : 'Đã khóa'
 }
 
+function statusTone(status: UserAccountStatus): StatusTone {
+  return status === 'ACTIVE' ? 'positive' : status === 'INACTIVE' ? 'neutral' : 'danger'
+}
+
 function avatarColor(name: string) {
   let hash = 0
   for (let i = 0; i < name.length; i += 1) {
@@ -86,28 +98,13 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length]
 }
 
-function StatusBadge({ status }: { status: UserAccountStatus }) {
-  const style =
-    status === 'ACTIVE'
-      ? 'bg-green-50 text-green-700'
-      : status === 'INACTIVE'
-        ? 'bg-slate-100 text-slate-600'
-        : 'bg-red-50 text-red-700'
-  return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold ${style}`}>
-      <span className="h-[7px] w-[7px] rounded-full bg-current" aria-hidden="true" />
-      {statusLabel(status)}
-    </span>
-  )
-}
-
 function AccountAvatar({ account }: { account: UserAccount }) {
   const [avatarFailed, setAvatarFailed] = useState(false)
   const bg = avatarColor(account.username || '?')
   return (
     <div
       style={!account.avatarUrl || avatarFailed ? { backgroundColor: bg } : undefined}
-      className="flex h-[38px] w-[38px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-sky-700 text-[13.5px] font-bold text-white"
+      className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full text-xs font-bold tracking-wide text-white"
     >
       {account.avatarUrl && !avatarFailed ? (
         <img src={account.avatarUrl} alt="" className="h-full w-full object-cover" onError={() => setAvatarFailed(true)} />
@@ -158,6 +155,12 @@ function UsersContent() {
 
   const rows = list.data?.content ?? []
   const savingForm = createState.isLoading || updateState.isLoading
+  const hasActiveFilters = Boolean(keyword || roleId || status)
+  const selectedRoleLabel = useMemo(() => {
+    if (!roleId) return ''
+    const found = (roles.data ?? []).find((r) => r.id === roleId)
+    return found ? roleLabel(found.code) : 'Vai trò đã chọn'
+  }, [roleId, roles.data])
 
   function resetFilters() {
     setKeyword('')
@@ -179,7 +182,7 @@ function UsersContent() {
   }
   function openDialog(next: DialogState) {
     if (next.type === 'status' && next.account.currentUser && next.targetStatus !== 'ACTIVE') {
-      toast.error('Không thể đổi trạng thái tài khoản của chính mình.')
+      toast.error('Không thể đổi trạng thái tài khoản của chính mình.', { className: OPERATIONAL_TOAST_CLASS })
       return
     }
     setFormError('')
@@ -204,7 +207,9 @@ function UsersContent() {
           confirmTemporaryPassword: values.autoGenerateTemporaryPassword ? undefined : values.confirmTemporaryPassword,
         }
         await createAccount(request).unwrap()
-        toast.success('Đã tạo tài khoản nhân viên và gửi thông tin đăng nhập qua email.')
+        toast.success('Đã tạo tài khoản nhân viên và gửi thông tin đăng nhập qua email.', {
+          className: OPERATIONAL_TOAST_CLASS,
+        })
       } else if (dialog?.type === 'edit') {
         const request: UpdateUserAccountRequest = {
           username: values.username,
@@ -214,7 +219,7 @@ function UsersContent() {
           avatarUrl: values.avatarUrl || undefined,
         }
         await updateAccount({ id: dialog.account.id, data: request }).unwrap()
-        toast.success('Đã cập nhật thông tin tài khoản.')
+        toast.success('Đã cập nhật thông tin tài khoản.', { className: OPERATIONAL_TOAST_CLASS })
       }
       setDialog(null)
     } catch (error) {
@@ -232,7 +237,9 @@ function UsersContent() {
         id: dialog.account.id,
         data: { targetStatus: dialog.targetStatus, reason: reason || undefined },
       }).unwrap()
-      toast.success(`Đã cập nhật trạng thái tài khoản thành ${statusLabel(dialog.targetStatus).toLowerCase()}.`)
+      toast.success(`Đã cập nhật trạng thái tài khoản thành ${statusLabel(dialog.targetStatus).toLowerCase()}.`, {
+        className: OPERATIONAL_TOAST_CLASS,
+      })
       setDialog(null)
     } catch (error) {
       setStatusError(getUserAccountErrorState(error).message)
@@ -243,19 +250,20 @@ function UsersContent() {
     {
       key: 'user',
       header: 'Người dùng',
+      cellClassName: '!whitespace-normal',
       cell: (account) => (
-        <div className="flex min-w-44 items-center gap-2.5">
+        <div className="flex min-w-[160px] items-center gap-2.5">
           <AccountAvatar account={account} />
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5 text-sm font-bold text-slate-900">
+            <div className="flex flex-wrap items-center gap-1.5 text-[13.5px] font-semibold text-aqs-ink">
               <span className="truncate">{account.username}</span>
               {account.currentUser && (
-                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10.5px] font-extrabold tracking-wide text-sky-700">
+                <span className="rounded-chip border border-aqs-accent-border bg-aqs-accent-soft px-1.5 py-0.5 text-[11px] font-bold text-aqs-accent-hover">
                   Bạn
                 </span>
               )}
             </div>
-            <p className="max-w-[190px] truncate font-mono text-xs text-slate-500" title={account.id}>
+            <p className="mt-0.5 max-w-[145px] truncate text-[11.5px] tabular-nums text-aqs-ink-faint" title={account.id}>
               {account.id}
             </p>
           </div>
@@ -265,24 +273,28 @@ function UsersContent() {
     {
       key: 'contact',
       header: 'Liên hệ',
+      cellClassName: '!whitespace-normal',
       cell: (account) => (
-        <div className="whitespace-normal text-[13.5px] text-slate-900">
-          <p>{account.email}</p>
-          <p className="text-[11.5px] text-slate-500">{formatPhone(account.phone)}</p>
+        <div className="space-y-0.5">
+          <div className="font-medium text-aqs-ink">{account.email}</div>
+          <div className="text-xs tabular-nums text-aqs-ink-faint">{formatPhone(account.phone)}</div>
         </div>
       ),
     },
     {
       key: 'roles',
       header: 'Vai trò',
+      cellClassName: '!whitespace-normal',
       cell: (account) => (
-        <div className="flex max-w-[210px] flex-wrap gap-1">
+        <div className="flex max-w-[190px] flex-wrap gap-1">
           {account.roles.map((role) => (
             <span
               key={role.id}
               title={role.code}
-              className={`inline-block whitespace-nowrap rounded-lg px-2 py-0.5 text-xs font-bold ${
-                isOwnerRole(role.code) ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-600'
+              className={`inline-flex items-center whitespace-nowrap rounded-chip border px-2 py-0.5 text-xs font-semibold ${
+                isOwnerRole(role.code)
+                  ? 'border-aqs-accent-border bg-aqs-accent-soft text-aqs-accent-hover'
+                  : 'border-aqs-border bg-aqs-surface-subtle text-aqs-ink-muted'
               }`}
             >
               {roleLabel(role.code)}
@@ -294,65 +306,95 @@ function UsersContent() {
     {
       key: 'status',
       header: 'Trạng thái',
-      cell: (account) => <StatusBadge status={account.status} />,
+      align: 'center',
+      cell: (account) => (
+        <StatusBadge tone={statusTone(account.status)}>{statusLabel(account.status)}</StatusBadge>
+      ),
     },
     {
       key: 'createdAt',
       header: 'Ngày tạo',
+      align: 'center',
       cell: (account) => (
-        <span className="whitespace-nowrap text-[13px] text-slate-600">{formatDateTime(account.createdAt)}</span>
+        <span className="whitespace-nowrap text-[13px] tabular-nums text-aqs-ink-muted">
+          {formatDateTime(account.createdAt)}
+        </span>
       ),
     },
     {
       key: 'actions',
       header: 'Thao tác',
+      align: 'center',
       cell: (account) => (
-        <div className="flex min-w-64 flex-wrap items-center justify-end gap-1.5">
-          <button
-            type="button"
-            title="Xem chi tiết"
-            aria-label={`Xem chi tiết ${account.username}`}
+        <div className="flex flex-nowrap items-center justify-center gap-1.5">
+          <IconButton
+            size="sm"
+            label={`Xem chi tiết ${account.username}`}
+            icon={<Eye />}
             onClick={() => openDialog({ type: 'detail', accountId: account.id })}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:border-sky-700 hover:text-sky-700 focus-visible:outline-2 focus-visible:outline-sky-700"
-          >
-            <Eye className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <button
+          />
+          <Button
             type="button"
+            size="sm"
+            variant="secondary"
+            className="min-h-8 px-2.5 text-xs"
             onClick={() => openDialog({ type: 'edit', account })}
-            className={rowGhostButton}
           >
             Sửa
-          </button>
+          </Button>
           {account.status === 'ACTIVE' ? (
             <>
-              <button
-                type="button"
-                disabled={account.currentUser}
-                title={account.currentUser ? 'Không thể vô hiệu hóa chính tài khoản của bạn.' : undefined}
-                onClick={() => openDialog({ type: 'status', account, targetStatus: 'INACTIVE' })}
-                className={rowGhostButton}
-              >
-                Vô hiệu hóa
-              </button>
-              <button
-                type="button"
-                disabled={account.currentUser}
-                title={account.currentUser ? 'Không thể khóa chính tài khoản của bạn.' : undefined}
-                onClick={() => openDialog({ type: 'status', account, targetStatus: 'LOCKED' })}
-                className={rowDangerGhostButton}
-              >
-                Khóa
-              </button>
+              {account.currentUser ? (
+                <Tooltip label="Không thể vô hiệu hóa chính tài khoản của bạn.">
+                  <Button type="button" size="sm" variant="secondary" className="min-h-8 px-2.5 text-xs" disabled>
+                    Vô hiệu hóa
+                  </Button>
+                </Tooltip>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="min-h-8 px-2.5 text-xs"
+                  onClick={() => openDialog({ type: 'status', account, targetStatus: 'INACTIVE' })}
+                >
+                  Vô hiệu hóa
+                </Button>
+              )}
+              {account.currentUser ? (
+                <Tooltip label="Không thể khóa chính tài khoản của bạn.">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="danger-outline"
+                    className="min-h-8 px-2.5 text-xs"
+                    disabled
+                  >
+                    Khóa
+                  </Button>
+                </Tooltip>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="danger-outline"
+                  className="min-h-8 px-2.5 text-xs"
+                  onClick={() => openDialog({ type: 'status', account, targetStatus: 'LOCKED' })}
+                >
+                  Khóa
+                </Button>
+              )}
             </>
           ) : (
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant="primary"
+              className="min-h-8 px-2.5 text-xs"
               onClick={() => openDialog({ type: 'status', account, targetStatus: 'ACTIVE' })}
-              className={rowPrimaryButton}
             >
               Kích hoạt
-            </button>
+            </Button>
           )}
         </div>
       ),
@@ -362,258 +404,298 @@ function UsersContent() {
   const listError = list.isError ? getUserAccountErrorState(list.error).message : ''
   const statsError = stats.isError ? getUserAccountErrorState(stats.error).message : ''
   const totalMatched = list.data?.totalElements ?? rows.length
+  const totalPages = list.data?.totalPages ?? 0
 
   return (
-    <div className="space-y-4">
+    <ManagementPageShell>
       <ManagementPageHeader
         title="Quản lý tài khoản người dùng"
-        description="Quản lý tài khoản nội bộ, vai trò và trạng thái truy cập"
-        breadcrumb="Tài khoản người dùng"
+        description="Quản lý tài khoản nội bộ, vai trò và trạng thái truy cập. Chỉ Chủ cửa hàng có thể thay đổi tài khoản nội bộ."
         group="Quản lý truy cập"
-        icon={<UsersRound className="h-6 w-6" />}
+        breadcrumb="Tài khoản người dùng"
+        actions={
+          <SakugaActionButton icon={<Plus />} onClick={() => openDialog({ type: 'create' })}>
+            Tạo tài khoản
+          </SakugaActionButton>
+        }
       />
 
       {statsError && (
-        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-red-50 p-3 text-sm text-red-800">
-          <span>Không thể tải thống kê: {statsError}</span>
-          <button type="button" className={secondaryButton} onClick={() => void stats.refetch()}>
-            Thử lại
-          </button>
-        </div>
+        <Notice tone="danger" role="alert" title="Không thể tải thống kê tài khoản">
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+            <span>{statsError}</span>
+            <Button type="button" size="sm" variant="secondary" onClick={() => void stats.refetch()}>
+              Thử lại
+            </Button>
+          </div>
+        </Notice>
       )}
 
-      <section aria-label="Thống kê tài khoản" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-busy={stats.isLoading}>
-        <StatisticCard
+      <section
+        aria-label="Thống kê tài khoản"
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        aria-busy={stats.isLoading}
+      >
+        <ManagementStatCard
           label="Tổng tài khoản"
           value={stats.data?.total}
-          icon={<UsersRound className="h-5 w-5" />}
+          loading={stats.isLoading}
           tone="accent"
           active={status === ''}
           onClick={() => changeStatusFilter('')}
         />
-        <StatisticCard
+        <ManagementStatCard
           label="Đang hoạt động"
           value={stats.data?.active}
-          icon={<CheckCircle2 className="h-5 w-5" />}
-          tone="ok"
+          loading={stats.isLoading}
+          tone="positive"
           active={status === 'ACTIVE'}
           onClick={() => changeStatusFilter('ACTIVE')}
         />
-        <StatisticCard
+        <ManagementStatCard
           label="Ngừng hoạt động"
           value={stats.data?.inactive}
-          icon={<Ban className="h-5 w-5" />}
-          tone="warn"
+          loading={stats.isLoading}
+          tone="warning"
           active={status === 'INACTIVE'}
           onClick={() => changeStatusFilter('INACTIVE')}
         />
-        <StatisticCard
+        <ManagementStatCard
           label="Đã khóa"
           value={stats.data?.locked}
-          icon={<LockKeyhole className="h-5 w-5" />}
+          loading={stats.isLoading}
           tone="danger"
           active={status === 'LOCKED'}
           onClick={() => changeStatusFilter('LOCKED')}
         />
       </section>
 
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <p className="text-[13.5px] text-slate-600">Chỉ Chủ cửa hàng có thể thay đổi tài khoản nội bộ.</p>
-        <button type="button" className={primaryButton} onClick={() => openDialog({ type: 'create' })}>
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          Tạo tài khoản
-        </button>
-      </div>
-
-      <ManagementFilterBar>
-        <ManagementSearch
-          id="user-account-search"
-          label="Tìm kiếm"
-          value={keyword}
-          onChange={changeKeyword}
-          placeholder="Tên người dùng, email hoặc số điện thoại"
-          disabled={list.isLoading}
-        />
-        <ManagementSelect
-          id="user-account-role-filter"
-          label="Vai trò"
-          value={roleId}
-          onChange={changeRole}
-          disabled={list.isLoading || roles.isLoading}
-        >
-          <option value="">Tất cả vai trò</option>
-          {(roles.data ?? []).map((role) => (
-            <option key={role.id} value={role.id}>
-              {roleLabel(role.code)}
-            </option>
-          ))}
-        </ManagementSelect>
-        <ManagementSelect
-          id="user-account-status-filter"
-          label="Trạng thái"
-          value={status}
-          onChange={(value) => changeStatusFilter(value as UserAccountStatus | '')}
-          disabled={list.isLoading}
-        >
-          <option value="">Tất cả</option>
-          <option value="ACTIVE">Đang hoạt động</option>
-          <option value="INACTIVE">Ngừng hoạt động</option>
-          <option value="LOCKED">Đã khóa</option>
-        </ManagementSelect>
-        <button type="button" className={secondaryButton} onClick={resetFilters} disabled={list.isLoading}>
-          Đặt lại
-        </button>
-      </ManagementFilterBar>
-
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xs" aria-busy={list.isFetching}>
-        <div className="flex flex-wrap items-baseline justify-between gap-2 px-4 pt-3.5 pb-2.5">
-          <h2 id="user-account-list" className="text-[15px] font-bold text-slate-900">
-            Danh sách tài khoản hệ thống
-          </h2>
-          <p className="text-xs text-slate-600">
-            {list.isFetching && !list.isLoading
-              ? 'Đang cập nhật...'
-              : `${totalMatched} tài khoản khớp bộ lọc hiện tại`}
-          </p>
-        </div>
-
-        {listError && (
-          <div role="alert" className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-3 rounded-md bg-red-50 p-3 text-sm text-red-800">
-            <span>{listError}</span>
-            <button type="button" className={secondaryButton} onClick={() => void list.refetch()}>
-              Thử lại
-            </button>
-          </div>
-        )}
-
-        <div className="hidden md:block [&_table]:text-sm">
-          <ManagementTable
-            columns={columns}
-            rows={rows}
-            rowKey={(account) => account.id}
-            labelledBy="user-account-list"
-            emptyMessage={
-              list.isLoading
-                ? 'Đang tải tài khoản...'
-                : listError
-                  ? 'Chưa thể tải dữ liệu.'
-                  : 'Không tìm thấy tài khoản phù hợp. Thử đổi từ khóa tìm kiếm hoặc bỏ bớt bộ lọc vai trò / trạng thái.'
-            }
+      <ManagementFilterCard
+        headingId="user-filters-heading"
+        title="Tìm và lọc tài khoản"
+        description="Kết quả tự cập nhật theo từ khóa, vai trò hoặc trạng thái hoạt động."
+        hasActiveFilters={hasActiveFilters}
+        resetLabel="Đặt lại"
+        resetDisabled={list.isLoading}
+        onReset={resetFilters}
+        summaryChips={
+          <>
+            {keyword && <ManagementFilterChip>Từ khóa: {keyword}</ManagementFilterChip>}
+            {roleId && <ManagementFilterChip>Vai trò: {selectedRoleLabel}</ManagementFilterChip>}
+            {status && <ManagementFilterChip>Trạng thái: {statusLabel(status)}</ManagementFilterChip>}
+          </>
+        }
+        resultCount={`${totalMatched.toLocaleString('vi-VN')} kết quả`}
+      >
+        <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-2 lg:grid-cols-[minmax(260px,2fr)_minmax(180px,1fr)_minmax(180px,1fr)]">
+          <ManagementSearch
+            id="user-account-search"
+            label="Tìm kiếm"
+            value={keyword}
+            onChange={changeKeyword}
+            placeholder="Tên người dùng, email hoặc số điện thoại…"
+            disabled={list.isLoading}
+            className="md:col-span-2 lg:col-span-1"
           />
+          <ManagementSelect
+            id="user-account-role-filter"
+            label="Vai trò"
+            value={roleId}
+            onChange={changeRole}
+            disabled={list.isLoading || roles.isLoading}
+          >
+            <option value="">Tất cả vai trò</option>
+            {(roles.data ?? []).map((role) => (
+              <option key={role.id} value={role.id}>
+                {roleLabel(role.code)}
+              </option>
+            ))}
+          </ManagementSelect>
+          <ManagementSelect
+            id="user-account-status-filter"
+            label="Trạng thái"
+            value={status}
+            onChange={(value) => changeStatusFilter(value as UserAccountStatus | '')}
+            disabled={list.isLoading}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="ACTIVE">Đang hoạt động</option>
+            <option value="INACTIVE">Ngừng hoạt động</option>
+            <option value="LOCKED">Đã khóa</option>
+          </ManagementSelect>
         </div>
+      </ManagementFilterCard>
 
-        <div className="divide-y divide-slate-200 md:hidden">
-          {rows.length === 0 ? (
-            <div className="px-5 py-11 text-center text-sm text-slate-600">
-              <p className="mb-1 text-[15.5px] font-bold text-slate-900">
-                {list.isLoading
-                  ? 'Đang tải tài khoản...'
-                  : listError
-                    ? 'Chưa thể tải dữ liệu.'
-                    : 'Không tìm thấy tài khoản phù hợp.'}
-              </p>
-              {!list.isLoading && !listError && (
-                <p>Thử đổi từ khóa tìm kiếm hoặc bỏ bớt bộ lọc vai trò / trạng thái.</p>
-              )}
+      <ManagementPanel
+        headingId="user-account-list"
+        title="Danh sách tài khoản hệ thống"
+        description={`${totalMatched.toLocaleString('vi-VN')} tài khoản khớp bộ lọc hiện tại.`}
+        refreshing={list.isFetching && !list.isLoading}
+        refreshLabel="Đang cập nhật dữ liệu..."
+        busy={list.isFetching}
+      >
+        {list.isLoading ? (
+          <ManagementTableSkeleton
+            rows={5}
+            columns={6}
+            withLeadingAvatar
+            label="Đang tải danh sách tài khoản"
+          />
+        ) : listError ? (
+          <ErrorState
+            sectionLabel="Danh sách tài khoản hệ thống"
+            title="Không thể tải danh sách tài khoản"
+            message={listError}
+            retrying={list.isFetching}
+            onRetry={() => void list.refetch()}
+          />
+        ) : rows.length === 0 ? (
+          <EmptyState
+            title="Không tìm thấy tài khoản phù hợp"
+            description={
+              keyword.trim()
+                ? `Không tìm thấy tài khoản nào khớp với “${keyword.trim()}”. Hãy thử từ khóa khác hoặc bỏ bớt bộ lọc.`
+                : 'Chưa có tài khoản nào khớp với bộ lọc vai trò / trạng thái hiện tại.'
+            }
+            search={keyword}
+            hasFilters={hasActiveFilters}
+            onClearSearch={() => changeKeyword('')}
+            onResetFilters={resetFilters}
+          />
+        ) : (
+          <>
+            <div className="hidden md:block">
+              <ManagementTable
+                columns={columns}
+                rows={rows}
+                rowKey={(account) => account.id}
+                labelledBy="user-account-list"
+                emptyMessage="Không có tài khoản."
+                compact
+              />
             </div>
-          ) : (
-            rows.map((account) => (
-              <article key={account.id} className="space-y-3 p-3.5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <AccountAvatar account={account} />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-slate-900">
-                        {account.username}{' '}
-                        {account.currentUser && (
-                          <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10.5px] font-extrabold text-sky-700">
-                            Bạn
-                          </span>
-                        )}
-                      </p>
-                      <p className="truncate text-xs text-slate-500">{account.email}</p>
+
+            <ManagementMobileList
+              rows={rows}
+              rowKey={(account) => account.id}
+              emptyMessage="Không có tài khoản."
+              renderRow={(account) => (
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <AccountAvatar account={account} />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-aqs-ink">
+                          <span className="truncate">{account.username}</span>
+                          {account.currentUser && (
+                            <span className="rounded-chip border border-aqs-accent-border bg-aqs-accent-soft px-1.5 py-0.5 text-[11px] font-bold text-aqs-accent-hover">
+                              Bạn
+                            </span>
+                          )}
+                        </div>
+                        <p className="m-0 truncate text-xs text-aqs-ink-muted">{account.email}</p>
+                      </div>
+                    </div>
+                    <StatusBadge tone={statusTone(account.status)}>{statusLabel(account.status)}</StatusBadge>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 rounded-control bg-aqs-surface-subtle px-3 py-2.5 text-xs">
+                    <div>
+                      <span className="block text-[11px] text-aqs-ink-faint">Điện thoại</span>
+                      <strong className="mt-0.5 block font-semibold tabular-nums text-aqs-ink">
+                        {formatPhone(account.phone)}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="block text-[11px] text-aqs-ink-faint">Ngày tạo</span>
+                      <strong className="mt-0.5 block font-semibold tabular-nums text-aqs-ink">
+                        {formatDateTime(account.createdAt)}
+                      </strong>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="block text-[11px] text-aqs-ink-faint">Vai trò</span>
+                      <strong className="mt-0.5 block font-semibold text-aqs-ink">
+                        {account.roles.map((role) => roleLabel(role.code)).join(', ')}
+                      </strong>
                     </div>
                   </div>
-                  <StatusBadge status={account.status} />
-                </div>
 
-                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-                  <dt className="font-semibold uppercase tracking-wider text-slate-500">Điện thoại</dt>
-                  <dd className="text-right text-slate-700">{formatPhone(account.phone)}</dd>
-                  <dt className="font-semibold uppercase tracking-wider text-slate-500">Vai trò</dt>
-                  <dd className="text-right text-slate-700">
-                    {account.roles.map((role) => roleLabel(role.code)).join(', ')}
-                  </dd>
-                  <dt className="font-semibold uppercase tracking-wider text-slate-500">Ngày tạo</dt>
-                  <dd className="text-right text-slate-700">{formatDateTime(account.createdAt)}</dd>
-                </dl>
-
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <button
-                    type="button"
-                    aria-label={`Xem chi tiết ${account.username}`}
-                    onClick={() => openDialog({ type: 'detail', accountId: account.id })}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-sky-700 hover:text-sky-700"
-                  >
-                    <Eye className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    className={rowGhostButton}
-                    onClick={() => openDialog({ type: 'edit', account })}
-                  >
-                    Sửa
-                  </button>
-                  {account.status === 'ACTIVE' ? (
-                    <>
-                      <button
-                        type="button"
-                        className={rowGhostButton}
-                        disabled={account.currentUser}
-                        onClick={() => openDialog({ type: 'status', account, targetStatus: 'INACTIVE' })}
-                      >
-                        Vô hiệu hóa
-                      </button>
-                      <button
-                        type="button"
-                        className={rowDangerGhostButton}
-                        disabled={account.currentUser}
-                        onClick={() => openDialog({ type: 'status', account, targetStatus: 'LOCKED' })}
-                      >
-                        Khóa
-                      </button>
-                    </>
-                  ) : (
-                    <button
+                  <div className="flex flex-wrap items-center gap-2">
+                    <IconButton
+                      size="sm"
+                      label={`Xem chi tiết ${account.username}`}
+                      icon={<Eye />}
+                      onClick={() => openDialog({ type: 'detail', accountId: account.id })}
+                    />
+                    <Button
                       type="button"
-                      className={rowPrimaryButton}
-                      onClick={() => openDialog({ type: 'status', account, targetStatus: 'ACTIVE' })}
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => openDialog({ type: 'edit', account })}
                     >
-                      Kích hoạt
-                    </button>
-                  )}
+                      Sửa
+                    </Button>
+                    {account.status === 'ACTIVE' ? (
+                      <>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          disabled={account.currentUser}
+                          onClick={() => openDialog({ type: 'status', account, targetStatus: 'INACTIVE' })}
+                        >
+                          Vô hiệu hóa
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="danger-outline"
+                          disabled={account.currentUser}
+                          onClick={() => openDialog({ type: 'status', account, targetStatus: 'LOCKED' })}
+                        >
+                          Khóa
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        onClick={() => openDialog({ type: 'status', account, targetStatus: 'ACTIVE' })}
+                      >
+                        Kích hoạt
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </article>
-            ))
-          )}
-        </div>
+              )}
+            />
 
-        <Pagination
-          page={list.data?.page ?? page}
-          totalPages={list.data?.totalPages ?? 0}
-          totalElements={list.data?.totalElements ?? 0}
-          disabled={list.isFetching}
-          onChange={setPage}
-        />
-      </section>
+            <ManagementPagination
+              page={list.data?.page ?? page}
+              totalPages={totalPages}
+              totalElements={totalMatched}
+              shownCount={rows.length}
+              noun="tài khoản"
+              disabled={list.isFetching}
+              onPageChange={setPage}
+            />
+          </>
+        )}
+      </ManagementPanel>
 
       <ActivityLogPanel
         entityType="USER_ACCOUNT"
         description="Các lần tạo, cập nhật và đổi trạng thái tài khoản nội bộ."
+        operational
       />
 
       {dialog?.type === 'create' && (
-        <ManagementDialog title="Tạo tài khoản mới" onClose={() => setDialog(null)} closeDisabled={savingForm}>
+        <ManagementDialog
+          title="Tạo tài khoản mới"
+          onClose={() => setDialog(null)}
+          closeDisabled={savingForm}
+        >
           <UserAccountForm
             roles={roles.data ?? []}
             rolesLoading={roles.isLoading}
@@ -626,7 +708,11 @@ function UsersContent() {
         </ManagementDialog>
       )}
       {dialog?.type === 'edit' && (
-        <ManagementDialog title="Sửa thông tin tài khoản" onClose={() => setDialog(null)} closeDisabled={savingForm}>
+        <ManagementDialog
+          title="Sửa thông tin tài khoản"
+          onClose={() => setDialog(null)}
+          closeDisabled={savingForm}
+        >
           <UserAccountForm
             key={dialog.account.id}
             account={dialog.account}
@@ -658,89 +744,6 @@ function UsersContent() {
           onConfirm={confirmStatusChange}
         />
       )}
-    </div>
-  )
-}
-
-function StatisticCard({
-  label,
-  value,
-  icon,
-  tone,
-  active,
-  onClick,
-}: {
-  label: string
-  value?: number
-  icon: ReactNode
-  tone: 'accent' | 'ok' | 'warn' | 'danger'
-  active: boolean
-  onClick: () => void
-}) {
-  const iconTone =
-    tone === 'ok'
-      ? 'bg-green-50 text-green-700'
-      : tone === 'warn'
-        ? 'bg-amber-50 text-amber-700'
-        : tone === 'danger'
-          ? 'bg-red-50 text-red-700'
-          : 'bg-sky-50 text-sky-700'
-
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-lg border bg-white px-3.5 py-3 text-left shadow-2xs transition-colors focus-visible:outline-2 focus-visible:outline-sky-700 ${
-        active ? 'border-sky-700 ring-1 ring-inset ring-sky-700' : 'border-slate-200 hover:border-sky-700'
-      }`}
-    >
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconTone}`}>{icon}</span>
-      <span>
-        <strong className="block text-xl font-bold leading-tight text-slate-900">{value ?? '—'}</strong>
-        <span className="block text-xs font-medium text-slate-600">{label}</span>
-      </span>
-    </button>
-  )
-}
-
-function Pagination({
-  page,
-  totalPages,
-  totalElements,
-  disabled,
-  onChange,
-}: {
-  page: number
-  totalPages: number
-  totalElements: number
-  disabled: boolean
-  onChange: (page: number) => void
-}) {
-  if (totalPages <= 1 && totalElements === 0) return null
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2.5 border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-[12.5px] text-slate-600">
-      <span>
-        Hiển thị trang {totalPages === 0 ? 0 : page + 1}/{totalPages} · {totalElements} tài khoản
-      </span>
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          disabled={disabled || page <= 0}
-          onClick={() => onChange(page - 1)}
-          className="h-8 min-w-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[13px] font-bold text-slate-700 hover:border-sky-700 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          Trước
-        </button>
-        <button
-          type="button"
-          disabled={disabled || totalPages === 0 || page >= totalPages - 1}
-          onClick={() => onChange(page + 1)}
-          className="h-8 min-w-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[13px] font-bold text-slate-700 hover:border-sky-700 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          Sau
-        </button>
-      </div>
-    </div>
+    </ManagementPageShell>
   )
 }
