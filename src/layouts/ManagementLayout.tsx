@@ -95,7 +95,7 @@ const NAV_ITEMS: { group: string; pinned?: boolean; items: NavItem[] }[] = [
         name: 'Xác minh thanh toán',
         to: '/app/payment-verifications',
         icon: BadgeCheck,
-        roles: ['ACCOUNTANT', 'SHOP_OWNER'],
+        roles: ['ACCOUNTANT'],
       },
       {
         name: 'Phân bổ tiền thu',
