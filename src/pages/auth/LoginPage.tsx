@@ -1,4 +1,5 @@
 import { useDispatch } from 'react-redux'
+import { Link } from 'react-router-dom'
 import { LoginForm } from '../../features/iam/components/LoginForm.tsx'
 import { useAuth } from '../../features/iam/hooks/useAuth.ts'
 import { clearBootstrapError } from '../../features/iam/model/authSlice.ts'
@@ -12,7 +13,7 @@ export function LoginPage() {
       <div className="mb-6 text-center">
         <h2 className="text-xl font-bold text-gray-900">Đăng nhập tài khoản</h2>
         <p className="mt-1 text-xs text-gray-500">
-          Nhập thông tin xác thực do quản trị viên cấp để truy cập hệ thống
+          Dùng chung cho khách hàng và nhân viên — nhập email và mật khẩu của bạn
         </p>
       </div>
 
@@ -39,6 +40,16 @@ export function LoginPage() {
       )}
 
       <LoginForm />
+
+      <p className="mt-6 border-t border-gray-100 pt-6 text-center text-sm text-gray-600">
+        Khách hàng chưa có tài khoản?{' '}
+        <Link
+          to="/register-customer"
+          className="font-medium text-blue-600 hover:text-blue-700 underline underline-offset-4"
+        >
+          Đăng ký ngay
+        </Link>
+      </p>
     </div>
   )
 }

@@ -90,7 +90,7 @@ export function CartPage() {
             <span>Khám phá sản phẩm</span>
           </Link>
           <Link
-            to="/login-customer"
+            to="/login"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 text-slate-700 text-xs font-semibold transition"
           >
             <LogIn className="w-4 h-4 text-sky-600" />
@@ -105,7 +105,7 @@ export function CartPage() {
     if (totalItems === 0 || hasInvalidItems) return
     if (isGuestCart) {
       toast.info('Vui lòng đăng nhập để đồng bộ giỏ hàng và tiến hành thanh toán')
-      navigate('/login-customer')
+      navigate('/login')
       return
     }
     toast.info('Đang chuyển sang bước Đặt hàng trực tuyến (UC-18)')
@@ -160,7 +160,7 @@ export function CartPage() {
             </span>
           </div>
           <Link
-            to="/login-customer"
+            to="/login"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 text-white font-bold hover:bg-sky-700 transition shrink-0"
           >
             <LogIn className="w-3.5 h-3.5" />

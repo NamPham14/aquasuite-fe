@@ -94,7 +94,7 @@ export function CheckoutResultPage() {
           Đăng nhập tài khoản khách hàng để xem trạng thái đơn hàng và xác nhận thanh toán PayOS.
         </p>
         <Link
-          to="/login-customer"
+          to="/login"
           className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-sky-700"
         >
           Đăng nhập ngay

@@ -1,7 +1,6 @@
 import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router-dom'
 import { AuthLayout, ManagementLayout, SalesLayout } from '../layouts'
 import { LoginPage } from '../pages/auth/LoginPage'
-import { CustomerLoginPage } from '../pages/auth/CustomerLoginPage'
 import { CustomerRegisterPage } from '../pages/auth/CustomerRegisterPage'
 import { CustomerProfilePage } from '../pages/customer/CustomerProfilePage'
 import { CustomerHomePage } from '../pages/sales/CustomerHomePage'
@@ -89,7 +88,7 @@ export const routeConfig: RouteObject[] = [
       {
         element: <AuthLayout />,
         children: [
-          { path: '/login-customer', element: <CustomerLoginPage /> },
+          { path: '/login-customer', element: <Navigate to="/login" replace /> },
           { path: '/register-customer', element: <CustomerRegisterPage /> },
           {
             path: '/login',

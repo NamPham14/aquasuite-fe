@@ -104,7 +104,7 @@ export function CheckoutPage() {
           Vui lòng đăng nhập tài khoản khách hàng để sử dụng sổ địa chỉ và cổng thanh toán PayOS.
         </p>
         <Link
-          to="/login-customer"
+          to="/login"
           className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-sky-700"
         >
           <LogIn className="h-4 w-4" />

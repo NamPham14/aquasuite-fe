@@ -8,6 +8,6 @@ export function CustomerRegisterPage() {
       <p className="mt-1 text-xs text-gray-500">Điền thông tin và xác minh email để tạo tài khoản AquaSuite</p>
     </div>
     <CustomerRegisterForm />
-    <p className="mt-6 border-t border-gray-100 pt-6 text-center text-sm text-gray-600">Đã có tài khoản? <Link to="/login-customer" className="font-medium text-blue-600 hover:text-blue-700 underline underline-offset-4">Đăng nhập</Link></p>
+    <p className="mt-6 border-t border-gray-100 pt-6 text-center text-sm text-gray-600">Đã có tài khoản? <Link to="/login" className="font-medium text-blue-600 hover:text-blue-700 underline underline-offset-4">Đăng nhập</Link></p>
   </div>
 }

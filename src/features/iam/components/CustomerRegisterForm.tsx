@@ -118,7 +118,7 @@ export function CustomerRegisterForm() {
           })
         }}>{wait > 0 ? `Gửi lại mã sau ${wait}s` : 'Gửi lại mã OTP'}</button>
       </>}
-      {activated ? <Link to="/login-customer" className="block text-blue-600 underline">Đăng nhập tài khoản</Link> : <button type="button" disabled={busy} className="min-h-11 w-full text-sm text-gray-600 underline" onClick={() => { setEmail(''); setOtp(''); setMessage(''); setNotice(''); setExpired(false) }}>Đăng ký lại / đổi email</button>}
+      {activated ? <Link to="/login" className="block text-blue-600 underline">Đăng nhập tài khoản</Link> : <button type="button" disabled={busy} className="min-h-11 w-full text-sm text-gray-600 underline" onClick={() => { setEmail(''); setOtp(''); setMessage(''); setNotice(''); setExpired(false) }}>Đăng ký lại / đổi email</button>}
     </form> : <form noValidate aria-label="Đăng ký khách hàng" aria-busy={busy} className="space-y-4" onSubmit={event => { void handleSubmit(submit)(event) }}>
       <fieldset disabled={busy} className="space-y-4">
         {([

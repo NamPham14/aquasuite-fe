@@ -108,7 +108,7 @@ export function StorefrontQuickAccessStrip({
 
         {/* Card 3: Bảo hành điện tử */}
         <Link
-          to={isAuthenticated ? '/profile/warranties' : '/login-customer'}
+          to={isAuthenticated ? '/profile/warranties' : '/login'}
           className="aqua-shine-btn group relative overflow-hidden rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-white via-white to-indigo-50/80 p-4 shadow-sm hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/15 hover:border-indigo-400 transition-all duration-300 flex items-start justify-between gap-3 focus-visible:outline-2 focus-visible:outline-indigo-600"
         >
           <ShieldCheck
@@ -139,7 +139,7 @@ export function StorefrontQuickAccessStrip({
 
         {/* Card 4: Hỗ trợ kỹ thuật / Tài khoản */}
         <Link
-          to={isAuthenticated ? '/profile/warranty-tickets' : '/login-customer'}
+          to={isAuthenticated ? '/profile/warranty-tickets' : '/login'}
           className="aqua-shine-btn group relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-white via-white to-emerald-50/80 p-4 shadow-sm hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/15 hover:border-emerald-400 transition-all duration-300 flex items-start justify-between gap-3 focus-visible:outline-2 focus-visible:outline-emerald-600"
         >
           {isAuthenticated ? (

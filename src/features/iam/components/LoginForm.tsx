@@ -8,7 +8,7 @@ import { useAuth } from '../hooks/useAuth'
 import { isCustomerRole } from '../types/auth.types'
 
 /** Form đăng nhập: validate bằng loginSchema, gọi useAuth.login và hiển thị lỗi phù hợp. */
-export function LoginForm({ successPath = '/app/dashboard' }: { successPath?: string }) {
+export function LoginForm() {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -26,7 +26,7 @@ export function LoginForm({ successPath = '/app/dashboard' }: { successPath?: st
     },
   })
 
-  // Sau validation, chờ login hoàn tất rồi chuyển dashboard; không điều hướng khi kết quả đã cũ.
+  // Sau validation, chờ login hoàn tất rồi điều hướng theo vai trò; không điều hướng khi kết quả đã cũ.
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true)
     setErrorMessage(null)
@@ -38,10 +38,8 @@ export function LoginForm({ successPath = '/app/dashboard' }: { successPath?: st
       })
 
       if (result) {
-        const isCustomer = isCustomerRole(result.user?.roles)
-        const targetPath = isCustomer
-          ? (successPath === '/app/dashboard' ? '/storefront' : successPath)
-          : successPath
+        // Khách hàng về trang cửa hàng, nhân viên về dashboard quản trị.
+        const targetPath = isCustomerRole(result.user?.roles) ? '/storefront' : '/app/dashboard'
         navigate(targetPath, { replace: true })
       }
     } catch (err: unknown) {

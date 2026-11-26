@@ -13,6 +13,7 @@ import {
   User as UserIcon,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth.ts'
+import { isCustomerRole } from '../features/iam/types/auth.types.ts'
 import { useCustomerCart } from '../features/sales/hooks/useCustomerCart.ts'
 
 /**
@@ -23,6 +24,8 @@ export function SalesLayout() {
   const { user, isAuthenticated, logout } = useAuth()
   const { totalItems } = useCustomerCart(isAuthenticated)
   const location = useLocation()
+  // Nhân viên vẫn xem được trang cửa hàng; lối tắt tài khoản đưa họ về dashboard thay vì hồ sơ khách hàng.
+  const isStaff = isAuthenticated && !!user && !isCustomerRole(user.roles)
 
   const onStorefront = location.pathname === '/storefront' || location.pathname === '/home'
   const isCatalogHash = onStorefront && location.hash === '#catalog'
@@ -110,8 +113,8 @@ export function SalesLayout() {
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2 pl-2 border-l border-white/15">
                 <Link
-                  to="/profile"
-                  title="Tài khoản, Bảo hành & Yêu cầu hỗ trợ"
+                  to={isStaff ? '/app/dashboard' : '/profile'}
+                  title={isStaff ? 'Về trang quản trị' : 'Tài khoản, Bảo hành & Yêu cầu hỗ trợ'}
                   className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 hover:border-cyan-300/40 px-2.5 py-1 text-xs text-white transition focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 >
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-sky-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
@@ -133,7 +136,7 @@ export function SalesLayout() {
               </div>
             ) : (
               <Link
-                to="/login-customer"
+                to="/login"
                 className="aqua-shine-btn inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 text-xs font-extrabold transition shadow-md shadow-cyan-400/30"
               >
                 <LogIn className="w-3.5 h-3.5" />

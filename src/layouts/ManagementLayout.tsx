@@ -30,6 +30,7 @@ import {
   ClipboardList,
   ScrollText,
   UserCog,
+  Store,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 import { useProfileSync } from '../features/iam/hooks/useProfileSync'
@@ -552,6 +553,17 @@ export function ManagementLayout() {
 
             {/* Right: User Status, System Info link & Single Logout Button */}
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Nhân viên có thể mở trang cửa hàng (homepage) mà không cần đăng xuất. */}
+              <Link
+                to="/storefront"
+                aria-label="Xem trang cửa hàng"
+                title="Xem trang cửa hàng"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[40px] min-w-[40px] border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors"
+              >
+                <Store className="w-4 h-4 sm:w-3.5 sm:h-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">Cửa hàng</span>
+              </Link>
+
               {user && (
                 <Link
                   to="/app/system-info"

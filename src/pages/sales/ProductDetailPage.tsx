@@ -148,7 +148,7 @@ export function ProductDetailPage() {
     if (!ok) return
     if (!isAuthenticated) {
       toast.info('Sản phẩm đã được lưu vào giỏ hàng tạm. Vui lòng đăng nhập để thanh toán.')
-      navigate('/login-customer')
+      navigate('/login')
       return
     }
     navigate('/checkout')
