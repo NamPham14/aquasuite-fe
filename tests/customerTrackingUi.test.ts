@@ -42,10 +42,14 @@ test('customerTrackingApi trỏ đúng endpoint self-service ROLE_CUSTOMER phía
     new URL('../src/features/customer/api/customerTrackingApi.ts', import.meta.url),
     'utf8',
   )
-  assert.match(apiSrc, /\/finance\/customer-debts\/me/)
   assert.match(apiSrc, /\/fulfillment\/customer\/deliveries/)
   assert.match(apiSrc, /\/sales\/orders\/me/)
   assert.match(apiSrc, /\/sales\/quotations\/me/)
+  const debtApiSrc = readFileSync(
+    new URL('../src/features/finance/api/customerDebtApi.ts', import.meta.url),
+    'utf8',
+  )
+  assert.match(debtApiSrc, /\/customer\/debts/)
 })
 
 test('StorefrontQuickAccessStrip hiển thị đầy đủ lối tắt theo dõi đơn, giao hàng, công nợ và báo giá cho khách đã đăng nhập', () => {

@@ -2,7 +2,9 @@ import { baseApi } from '../../../shared/api/baseApi.ts'
 import type { PageResponse } from '../../../shared/api/types.ts'
 import type {
   ApproveOrderModificationRequest,
+  CreateMyOrderModificationRequestPayload,
   CreateOrderModificationRequestPayload,
+  CustomerOrderModificationRequestReceipt,
   OrderModificationRequestResponse,
   RecordOrderModificationTaxResultRequest,
   ReviewOrderModificationRequest,
@@ -97,6 +99,17 @@ export const orderModificationRequestApi = baseApi.injectEndpoints({
       transformResponse: (response) => dataOf<OrderModificationRequestResponse>(response),
       invalidatesTags: [{ type: 'SalesOrder', id: 'MODIFICATION_REQUEST_LIST' }],
     }),
+    createMyOrderModificationRequest: builder.mutation<
+      CustomerOrderModificationRequestReceipt,
+      { orderId: string; body: CreateMyOrderModificationRequestPayload }
+    >({
+      query: ({ orderId, body }) => ({
+        url: `/sales/orders/me/${orderId}/modification-requests`,
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (response) => dataOf<CustomerOrderModificationRequestReceipt>(response),
+    }),
   }),
 })
 
@@ -108,4 +121,5 @@ export const {
   useRecordOrderModificationTaxResultMutation,
   useSendOrderModificationResultEmailMutation,
   useCreateOrderModificationRequestMutation,
+  useCreateMyOrderModificationRequestMutation,
 } = orderModificationRequestApi

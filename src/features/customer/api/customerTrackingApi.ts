@@ -1,6 +1,5 @@
 import { baseApi } from '../../../shared/api/baseApi.ts'
 import type { ApiResponse } from '../../../shared/api/types.ts'
-import type { CustomerDebtDetail } from '../../finance/types/customerDebt.types.ts'
 import type {
   QuotationListItemResponse,
   QuotationResponse,
@@ -20,12 +19,6 @@ function requireApiData<T>(res: ApiResponse<T>, label: string): T {
 
 export const customerTrackingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getMyDebtDetail: builder.query<CustomerDebtDetail, void>({
-      query: () => '/finance/customer-debts/me',
-      transformResponse: (res: ApiResponse<CustomerDebtDetail>) =>
-        requireApiData(res, 'công nợ'),
-      providesTags: [{ type: 'CustomerDebt', id: 'ME' }],
-    }),
     getMyCustomerDeliveries: builder.query<CustomerDeliveryTracking[], void>({
       query: () => '/fulfillment/customer/deliveries',
       transformResponse: (res: ApiResponse<CustomerDeliveryTracking[]>) => res.data ?? [],
@@ -65,7 +58,6 @@ export const customerTrackingApi = baseApi.injectEndpoints({
 })
 
 export const {
-  useGetMyDebtDetailQuery,
   useGetMyCustomerDeliveriesQuery,
   useGetMyCustomerDeliveryPhotoQuery,
   useGetMyAllOrdersQuery,

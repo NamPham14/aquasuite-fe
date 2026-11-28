@@ -67,3 +67,14 @@ export interface CreateOrderModificationRequestPayload {
   requestedDeliveryAddress?: string
   items?: CreateOrderModificationItemPayload[]
 }
+
+export type CreateMyOrderModificationRequestPayload = Omit<CreateOrderModificationRequestPayload, 'orderId'>
+
+export interface CustomerOrderModificationRequestReceipt {
+  id: string
+  orderId: string
+  requestType: OrderModificationRequestType
+  requestStatus: OrderModificationRequestStatus
+  customerReason: string
+  createdAt: string
+}

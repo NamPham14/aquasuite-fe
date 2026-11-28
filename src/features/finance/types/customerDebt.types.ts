@@ -2,6 +2,38 @@ export type DebtStatus = 'NO_CREDIT' | 'WITHIN_TERM' | 'OVERDUE' | 'CREDIT_BLOCK
 export type ReminderType = 'UPCOMING' | 'OVERDUE' | 'FINAL'
 export type DebtCallResult = 'PROMISED_TO_PAY' | 'NEEDS_REVIEW' | 'NO_ANSWER' | 'NUMBER_UNREACHABLE'
 
+export interface CustomerSelfServiceDebtInvoice {
+  invoiceId: string
+  invoiceCode: string
+  orderId: string
+  orderCode: string
+  issueDate: string | null
+  dueDate: string | null
+  status: string
+  totalAmount: number
+  verifiedPaidAmount: number
+  outstandingAmount: number
+}
+
+export interface CustomerSelfServiceDebtOrder {
+  orderId: string
+  orderCode: string
+  orderStatus: string
+  totalAmount: number
+  verifiedPaidAmount: number
+  outstandingAmount: number
+}
+
+export interface CustomerSelfServiceDebt {
+  outstandingBalance: number
+  overdueBalance: number
+  issuedInvoiceReceivable: number
+  unallocatedAdvanceAmount: number
+  nearestDueDate: string | null
+  invoices: CustomerSelfServiceDebtInvoice[]
+  orders: CustomerSelfServiceDebtOrder[]
+}
+
 export interface CustomerDebtSummary {
   customerId: string; customerCode: string; customerName: string; phone?: string; companyName?: string; customerType?: string
   creditLimit: number; unbilledCommitment: number; issuedInvoiceReceivable: number; unallocatedAdvanceAmount: number

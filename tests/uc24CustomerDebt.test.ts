@@ -47,6 +47,30 @@ function mockFetch(body: unknown, status = 200) {
 
 // ─── RTK Query endpoint contract tests ───────────────────────────────────────
 
+test('getMyCustomerDebt calls the minimized customer self-service endpoint', async () => {
+  let capturedUrl = ''
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    capturedUrl = input instanceof Request ? input.url : String(input)
+    return new Response(JSON.stringify({
+      data: {
+        outstandingBalance: 120000,
+        overdueBalance: 0,
+        issuedInvoiceReceivable: 120000,
+        unallocatedAdvanceAmount: 0,
+        nearestDueDate: '2026-12-01',
+        invoices: [],
+        orders: [],
+      },
+    }), { headers: { 'Content-Type': 'application/json' } })
+  }
+  const store = storeForRoles(['CUSTOMER'])
+  const result = await store.dispatch(customerDebtApi.endpoints.getMyCustomerDebt.initiate()).unwrap()
+  assert.ok(capturedUrl.endsWith('/customer/debts'), 'URL should use the customer self-service route')
+  assert.equal(result.outstandingBalance, 120000)
+  assert.deepEqual(result.invoices, [])
+  store.dispatch(baseApi.util.resetApiState())
+})
+
 test('getCustomerDebts builds query with sortBy and direction params', async () => {
   let capturedUrl = ''
   globalThis.fetch = async (input: RequestInfo | URL) => {

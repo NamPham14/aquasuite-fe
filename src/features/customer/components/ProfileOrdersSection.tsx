@@ -17,6 +17,7 @@ import { useGetMyOnlineOrdersQuery } from '../../sales/api/onlineCheckoutApi.ts'
 import type { OnlineOrderCheckoutResponse } from '../../sales/types/onlineCheckout.types.ts'
 import type { SalesOrderSummaryResponse } from '../../sales/types/salesOrder.types.ts'
 import { CustomerEditorialModal } from '../../servicedesk/components/CustomerEditorialModal.tsx'
+import { CustomerOrderModificationRequestDialog } from './CustomerOrderModificationRequestDialog.tsx'
 import {
   useGetMyAllOrdersQuery,
   useGetMyOrderDetailQuery,
@@ -102,10 +103,16 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('ALL')
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
 
-  const { data: orderDetail, isFetching: isLoadingDetail } = useGetMyOrderDetailQuery(
+  const {
+    currentData: orderDetail,
+    isFetching: isLoadingDetail,
+    isError: isDetailError,
+    refetch: refetchOrderDetail,
+  } = useGetMyOrderDetailQuery(
     selectedOrderId ?? '',
     { skip: !selectedOrderId },
   )
+  const [orderDialogMode, setOrderDialogMode] = useState<'details' | 'request'>('details')
 
   const onlineMap = useMemo(() => {
     const map = new Map<string, OnlineOrderCheckoutResponse>()
@@ -403,6 +410,20 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
                       </button>
                     )}
 
+                    {order.orderStatus === 'PROCESSING' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOrderDialogMode('request')
+                          setSelectedOrderId(order.orderId)
+                        }}
+                        className="inline-flex items-center gap-1.5 border border-[#D6D1C7] bg-[#FAF9F6] px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#171614] transition-colors hover:border-[#171614]"
+                      >
+                        <ArrowUpRight className="h-3.5 w-3.5 text-[#8C6D46]" aria-hidden="true" />
+                        <span>Yêu cầu đổi / hủy</span>
+                      </button>
+                    )}
+
                     {needsPayos ? (
                       <Link
                         to={`/checkout/result?orderId=${encodeURIComponent(order.orderId)}`}
@@ -422,7 +443,10 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setSelectedOrderId(order.orderId)}
+                        onClick={() => {
+                          setOrderDialogMode('details')
+                          setSelectedOrderId(order.orderId)
+                        }}
                         className="inline-flex items-center gap-1.5 border border-[#D6D1C7] bg-white px-4 py-2 text-[11px] uppercase tracking-[0.14em] font-semibold text-[#171614] hover:border-[#171614] transition-colors cursor-pointer"
                       >
                         <span>Chi tiết đơn</span>
@@ -437,7 +461,7 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
       )}
 
       {/* Modal chi tiết đơn tại quầy / dự án */}
-      {selectedOrderId && (
+      {selectedOrderId && orderDialogMode === 'details' && (
         <CustomerEditorialModal
           eyebrow="Hồ sơ đơn hàng AquaSuite"
           title={orderDetail ? `Đơn hàng ${orderDetail.orderCode}` : 'Đang tải chi tiết đơn...'}
@@ -445,7 +469,18 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
           maxWidthClass="w-[min(95vw,840px)]"
         >
           <div className="p-6 space-y-5">
-            {isLoadingDetail || !orderDetail ? (
+            {isDetailError ? (
+              <div className="space-y-3 py-10 text-center" role="alert">
+                <p className="text-xs text-[#991B1B]">Không thể tải chi tiết đơn hàng.</p>
+                <button
+                  type="button"
+                  onClick={() => void refetchOrderDetail()}
+                  className="border border-[#171614] px-4 py-2 text-xs font-semibold"
+                >
+                  Thử tải lại
+                </button>
+              </div>
+            ) : isLoadingDetail || !orderDetail ? (
               <div className="py-10 text-center text-xs text-[#78736A]">
                 Đang tải dữ liệu chi tiết đơn hàng...
               </div>
@@ -601,6 +636,15 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
             )}
           </div>
         </CustomerEditorialModal>
+      )}
+      {selectedOrderId && orderDialogMode === 'request' && (
+        <CustomerOrderModificationRequestDialog
+          order={orderDetail}
+          isLoading={isLoadingDetail}
+          isError={isDetailError}
+          onRetry={() => void refetchOrderDetail()}
+          onClose={() => setSelectedOrderId(null)}
+        />
       )}
     </div>
   )

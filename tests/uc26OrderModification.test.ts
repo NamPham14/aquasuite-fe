@@ -41,6 +41,45 @@ function render(store: ReturnType<typeof storeForRoles>, path = '/app/order-modi
 
 // ─── RTK Query endpoint contract tests ───────────────────────────────────────
 
+test('createMyOrderModificationRequest uses the owned-order route without caller IDs in the body', async () => {
+  let capturedRequest: { url: string; method: string; body: Record<string, unknown> } | null = null
+  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const request = input instanceof Request ? input : new Request(String(input), init)
+    capturedRequest = {
+      url: request.url,
+      method: request.method,
+      body: await request.json() as Record<string, unknown>,
+    }
+    return new Response(JSON.stringify({
+      data: {
+        id: 'receipt-1',
+        orderId: 'ord-customer-1',
+        requestType: 'ADDRESS_CHANGE',
+        requestStatus: 'PENDING_REVIEW',
+        customerReason: 'Cần đổi địa chỉ',
+        createdAt: '2026-11-28T15:00:00Z',
+      },
+    }), { headers: { 'Content-Type': 'application/json' } })
+  }
+  const store = storeForRoles(['CUSTOMER'])
+  await store.dispatch(orderModificationRequestApi.endpoints.createMyOrderModificationRequest.initiate({
+    orderId: 'ord-customer-1',
+    body: {
+      requestType: 'ADDRESS_CHANGE',
+      customerReason: 'Cần đổi địa chỉ',
+      requestedDeliveryAddress: 'Địa chỉ mới',
+    },
+  })).unwrap()
+  assert.ok(capturedRequest)
+  assert.ok(capturedRequest.url.endsWith('/sales/orders/me/ord-customer-1/modification-requests'))
+  assert.equal(capturedRequest.method, 'POST')
+  assert.equal(capturedRequest.body.requestType, 'ADDRESS_CHANGE')
+  assert.ok(!('orderId' in capturedRequest.body))
+  assert.ok(!('customerId' in capturedRequest.body))
+  assert.ok(!('requestedBy' in capturedRequest.body))
+  store.dispatch(baseApi.util.resetApiState())
+})
+
 test('createOrderModificationRequest calls POST /sales/order-modification-requests', async () => {
   let capturedRequest: { url: string; method: string } | null = null
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
