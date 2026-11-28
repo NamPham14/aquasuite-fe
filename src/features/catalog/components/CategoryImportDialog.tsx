@@ -1,5 +1,6 @@
 import { useDispatch } from 'react-redux'
 import type { AppDispatch } from '../../../app/store.ts'
+import { baseApi } from '../../../shared/api/baseApi.ts'
 import {
   categoryApi,
   useDownloadCategoryImportReportMutation,
@@ -44,6 +45,18 @@ export function CategoryImportDialog({ onSuccess, onClose }: CategoryImportDialo
     return await downloadReport(jobId).unwrap()
   }
 
+  function handleImportSuccess() {
+    dispatch(
+      baseApi.util.invalidateTags([
+        { type: 'Category', id: 'LIST' },
+        { type: 'Category', id: 'OPTIONS' },
+        { type: 'WarrantyPolicy', id: 'REFERENCE_DATA' },
+        { type: 'SalesCatalog', id: 'LIST' },
+      ]),
+    )
+    onSuccess?.()
+  }
+
   return (
     <CatalogImportDialog
       title="Nhập danh mục từ Excel"
@@ -62,7 +75,7 @@ export function CategoryImportDialog({ onSuccess, onClose }: CategoryImportDialo
       onSubmitFile={handleSubmitFile}
       onFetchProgress={handleFetchProgress}
       onDownloadReport={handleDownloadReport}
-      onSuccess={onSuccess}
+      onSuccess={handleImportSuccess}
       onClose={onClose}
     />
   )

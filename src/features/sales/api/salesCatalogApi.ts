@@ -7,7 +7,10 @@ export const salesCatalogApi = baseApi.injectEndpoints({
     getSalesCatalogItems: builder.query<CatalogItemOption[], void>({
       query: () => '/sales/catalog-items',
       transformResponse: normalizeSalesCatalog,
-      providesTags: [{ type: 'Quotation', id: 'SALES_CATALOG_ITEMS' }],
+      providesTags: [
+        { type: 'SalesCatalog', id: 'LIST' },
+        { type: 'Quotation', id: 'SALES_CATALOG_ITEMS' },
+      ],
     }),
   }),
 })

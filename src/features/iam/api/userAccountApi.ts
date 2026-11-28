@@ -40,6 +40,7 @@ export const userAccountApi = baseApi.injectEndpoints({
     getAssignableRoles: builder.query<AssignableRole[], void>({
       query: () => ({ url: '/iam/roles', params: { assignable: true } }),
       transformResponse: responseData<AssignableRole[]>,
+      providesTags: [{ type: 'UserAccount', id: 'ASSIGNABLE_ROLES' }],
     }),
     createUserAccount: builder.mutation<UserAccount, CreateUserAccountRequest>({
       query: (body) => ({ url: '/iam/users', method: 'POST', body }),

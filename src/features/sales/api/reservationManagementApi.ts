@@ -11,12 +11,20 @@ export const reservationManagementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     reservationHistory: builder.query<ReservationHistory, string>({
       query: (id) => `${path(id)}/history`, transformResponse: unwrap<ReservationHistory>,
-      providesTags: (_result, _error, id) => [{ type: 'SalesOrder', id }],
+      providesTags: (_result, _error, id) => [{ type: 'StockReservation', id }, { type: 'SalesOrder', id }],
     }),
     executeReservationRelease: builder.mutation<ReservationRelease, { orderId: string; decisionId: string }>({
       query: ({ orderId, decisionId }) => ({ url: `${path(orderId)}/releases/${encodeURIComponent(decisionId)}`, method: 'POST' }),
       transformResponse: unwrap<ReservationRelease>,
-      invalidatesTags: (_result, _error, { orderId }) => [{ type: 'SalesOrder', id: orderId }],
+      invalidatesTags: (_result, _error, { orderId }) => [
+        { type: 'StockReservation', id: orderId },
+        { type: 'StockReservation', id: 'ORDER_LIST' },
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+        'Inventory',
+        { type: 'SalesCatalog', id: 'LIST' },
+        'Delivery',
+      ],
     }),
   }),
 })

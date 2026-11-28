@@ -13,7 +13,10 @@ export function OrdersPage() {
   const canCreatePOS = user?.roles.some((r) => ['SALES_STAFF', 'SHOP_OWNER'].includes(r))
 
   const filters = useSalesOrderFilters()
-  const { data: pageData, isLoading, isFetching } = useGetSalesOrdersQuery(filters.filterParams)
+  const { data: pageData, isLoading, isFetching } = useGetSalesOrdersQuery(filters.filterParams, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  })
 
   const orders = pageData?.items || []
   const total = pageData?.totalElements || 0

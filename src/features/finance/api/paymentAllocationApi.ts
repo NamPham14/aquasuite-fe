@@ -33,15 +33,25 @@ export const paymentAllocationApi = baseApi.injectEndpoints({
     createPaymentAllocation: builder.mutation<PaymentAllocationBatch, { receiptId: string; body: CreatePaymentAllocationRequest }>({
       query: ({ receiptId, body }) => ({ url: `/finance/receipts/${receiptId}/allocations`, method: 'POST', body }),
       transformResponse: (response: unknown) => dataOf<PaymentAllocationBatch>(response as ApiResponse<PaymentAllocationBatch>),
-      invalidatesTags: (_result, _error, { receiptId, body }) => [
+      invalidatesTags: (result, _error, { receiptId, body }) => [
         { type: 'PaymentAllocation', id: 'QUEUE' },
         { type: 'PaymentAllocation', id: `TARGETS-${receiptId}` },
         { type: 'PaymentAllocation', id: `HISTORY-${receiptId}` },
-        { type: 'OrderPayment', id: 'LIST' },
-        { type: 'CustomerDebt', id: 'LIST' },
-        { type: 'CustomerDebt', id: 'STATS' },
+        'OrderPayment',
+        'SalesInvoice',
+        ...(result?.orderId
+          ? [
+              { type: 'SalesOrder' as const, id: result.orderId },
+              { type: 'SalesInvoice' as const, id: `ORDER-${result.orderId}` },
+              { type: 'OrderPayment' as const, id: result.orderId },
+            ]
+          : []),
+        { type: 'SalesOrder', id: 'LIST' },
+        'CustomerDebt',
         { type: 'AuditLog', id: `PAYMENT_RECEIPT:${receiptId}` },
+        { type: 'AuditLog', id: 'PAYMENT_RECEIPT:ALL' },
         { type: 'AuditLog', id: `PAYMENT_ALLOCATION:${body.allocationRequestId}` },
+        { type: 'AuditLog', id: 'PAYMENT_ALLOCATION:ALL' },
       ],
     }),
     reversePaymentAllocation: builder.mutation<PaymentAllocationLine, { receiptId: string; allocationId: string; reason: string }>({
@@ -49,13 +59,23 @@ export const paymentAllocationApi = baseApi.injectEndpoints({
         url: `/finance/receipts/${receiptId}/allocations/${allocationId}/reverse`, method: 'POST', body: { reason },
       }),
       transformResponse: (response: unknown) => dataOf<PaymentAllocationLine>(response as ApiResponse<PaymentAllocationLine>),
-      invalidatesTags: (_result, _error, { receiptId }) => [
+      invalidatesTags: (result, _error, { receiptId }) => [
         { type: 'PaymentAllocation', id: 'QUEUE' },
         { type: 'PaymentAllocation', id: `TARGETS-${receiptId}` },
         { type: 'PaymentAllocation', id: `HISTORY-${receiptId}` },
-        { type: 'CustomerDebt', id: 'LIST' },
-        { type: 'CustomerDebt', id: 'STATS' },
+        'OrderPayment',
+        'SalesInvoice',
+        ...(result?.orderId
+          ? [
+              { type: 'SalesOrder' as const, id: result.orderId },
+              { type: 'SalesInvoice' as const, id: `ORDER-${result.orderId}` },
+              { type: 'OrderPayment' as const, id: result.orderId },
+            ]
+          : []),
+        { type: 'SalesOrder', id: 'LIST' },
+        'CustomerDebt',
         { type: 'AuditLog', id: `PAYMENT_RECEIPT:${receiptId}` },
+        { type: 'AuditLog', id: 'PAYMENT_RECEIPT:ALL' },
       ],
     }),
   }),

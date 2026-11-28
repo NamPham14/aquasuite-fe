@@ -64,7 +64,10 @@ export const productApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: responseData<ProductDetail>,
-      invalidatesTags: [{ type: 'Product', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'Product', id: 'LIST' },
+        { type: 'SalesCatalog', id: 'LIST' },
+      ],
     }),
     updateProduct: builder.mutation<ProductDetail, { id: string; data: UpdateProductRequest }>({
       query: ({ id, data }) => ({
@@ -76,6 +79,8 @@ export const productApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Product', id },
         { type: 'Product', id: 'LIST' },
+        { type: 'SalesCatalog', id: 'LIST' },
+        'Bundle',
       ],
     }),
     updateProductStatus: builder.mutation<ProductDetail, { id: string; data: UpdateProductStatusRequest }>({
@@ -88,6 +93,11 @@ export const productApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Product', id },
         { type: 'Product', id: 'LIST' },
+        { type: 'Variant', id: `LIST-${id}` },
+        { type: 'Variant', id: `STATS-${id}` },
+        { type: 'SalesCatalog', id: 'LIST' },
+        'Inventory',
+        'Bundle',
       ],
     }),
     deleteProduct: builder.mutation<void, string>({
@@ -99,6 +109,8 @@ export const productApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, id) => [
         { type: 'Product', id },
         { type: 'Product', id: 'LIST' },
+        { type: 'SalesCatalog', id: 'LIST' },
+        'Inventory',
       ],
     }),
     submitProductImportJob: builder.mutation<CatalogImportSubmitResponse, FormData>({
@@ -116,7 +128,6 @@ export const productApi = baseApi.injectEndpoints({
           status: 'QUEUED',
         }
       },
-      invalidatesTags: [{ type: 'Product', id: 'LIST' }],
     }),
     getProductImportProgress: builder.query<CatalogImportJob, string>({
       query: (jobId) => `/catalog/import/${jobId}/progress`,

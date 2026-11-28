@@ -1,4 +1,5 @@
 import { createApi, type BaseQueryFn, type FetchArgs, type FetchBaseQueryError } from '@reduxjs/toolkit/query/react'
+import { baseApi } from '../../../shared/api/baseApi.ts'
 import { reauthBaseQuery } from '../../../shared/api/reauthBaseQuery.ts'
 import type { ApiResponse, PageResponse } from '../../../shared/api/types.ts'
 import { denyIamAccess, markIamAllowed, type IamAccessState } from '../model/iamAccessSlice.ts'
@@ -43,7 +44,18 @@ export const iamAccessApi = createApi({
     createPermission: builder.mutation<ApiResponse<IamPermission>, { code: string; description: string | null }>({ query: (body) => ({ url: '/iam/permissions', method: 'POST', body }), invalidatesTags: ['Permission'] }),
     updatePermission: builder.mutation<ApiResponse<IamPermission>, { id: string; description: string | null }>({ query: ({ id, description }) => ({ url: `/iam/permissions/${id}`, method: 'PATCH', body: { description } }), invalidatesTags: ['Permission', 'Role'] }),
     deletePermission: builder.mutation<ApiResponse<null>, string>({ query: (id) => ({ url: `/iam/permissions/${id}`, method: 'DELETE' }), invalidatesTags: ['Permission', 'Role'] }),
-    changeAssignment: builder.mutation<ApiResponse<IamRole>, { roleId: string; permissionId: string; assign: boolean }>({ query: ({ roleId, permissionId, assign }) => ({ url: `/iam/roles/${roleId}/permissions/${permissionId}`, method: assign ? 'PUT' : 'DELETE' }), invalidatesTags: ['Role', 'Permission'] }),
+    changeAssignment: builder.mutation<ApiResponse<IamRole>, { roleId: string; permissionId: string; assign: boolean }>({
+      query: ({ roleId, permissionId, assign }) => ({ url: `/iam/roles/${roleId}/permissions/${permissionId}`, method: assign ? 'PUT' : 'DELETE' }),
+      invalidatesTags: ['Role', 'Permission'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          dispatch(baseApi.util.invalidateTags([{ type: 'UserAccount', id: 'ASSIGNABLE_ROLES' }]))
+        } catch {
+          /* Không invalidate cross-store nếu mutation thất bại */
+        }
+      },
+    }),
     probe: builder.query<ApiResponse<IamRole[]>, void>({ query: () => ({ url: '/iam/roles', probe: true }), keepUnusedDataFor: 0 }),
   }),
 })

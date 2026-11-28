@@ -17,7 +17,10 @@ import type {
  * Hook điều phối quy trình Đặt hàng & Thanh toán PayOS trực tuyến (UC-18).
  */
 export function useOnlineCheckout(enabled = true) {
-  const previewQuery = useGetCheckoutPreviewQuery(undefined, { skip: !enabled })
+  const previewQuery = useGetCheckoutPreviewQuery(undefined, {
+    skip: !enabled,
+    refetchOnMountOrArgChange: true,
+  })
   const [placeOnlineOrderMutation, { isLoading: isPlacingOrder }] = usePlaceOnlineOrderMutation()
   const [verifyPayosMutation, { isLoading: isVerifyingPayos }] = useVerifyPayosPaymentMutation()
   const [refreshLinkMutation, { isLoading: isRefreshingLink }] = useCreateOrRefreshPayosPaymentLinkMutation()

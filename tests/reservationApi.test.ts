@@ -21,16 +21,16 @@ test('UC29 uses real order pagination, payment summary and reservation commands 
   }) as typeof fetch
   const store = configureStore({ reducer: { [baseApi.reducerPath]: baseApi.reducer }, middleware: (defaults) => defaults().concat(baseApi.middleware) })
   try {
-    const page = await store.dispatch(reservationApi.endpoints.reservationOrders.initiate({ page: 1, keyword: 'DH01' })).unwrap()
+    const page = await store.dispatch(reservationApi.endpoints.reservationOrders.initiate({ page: 1, keyword: 'DH01' }, { subscribe: false })).unwrap()
     assert.equal(page.totalPages, 3)
     assert.equal(page.content[0].orderId, 'order-1')
     assert.deepEqual(page.content[0].payment, payment)
     assert.equal(page.content[0].depositStatus, 'AWAITING_DEPOSIT')
     assert.equal(page.totalElements, 41)
-    await store.dispatch(reservationApi.endpoints.reservationOrder.initiate('order-1')).unwrap()
-    const result = await store.dispatch(reservationApi.endpoints.reservation.initiate('order-1')).unwrap()
+    await store.dispatch(reservationApi.endpoints.reservationOrder.initiate('order-1', { subscribe: false })).unwrap()
+    const result = await store.dispatch(reservationApi.endpoints.reservation.initiate('order-1', { subscribe: false })).unwrap()
     assert.deepEqual(result.payment, payment)
-    await store.dispatch(reservationApi.endpoints.reservationReceipts.initiate('order-1')).unwrap()
+    await store.dispatch(reservationApi.endpoints.reservationReceipts.initiate('order-1', { subscribe: false })).unwrap()
     const body = { requestId: 'request-1', warehouseCode: 'WH_MAIN', lines: [{ orderItemId: 'item-1', quantity: 10 }] }
     await store.dispatch(reservationApi.endpoints.submitReservation.initiate({ orderId: 'order-1', action: 'requests', body })).unwrap()
     await store.dispatch(reservationApi.endpoints.submitReservation.initiate({ orderId: 'order-1', action: 'synchronize', body: { ...body, requestId: 'request-2' } })).unwrap()

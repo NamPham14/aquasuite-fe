@@ -74,6 +74,10 @@ export const warrantyApi = baseApi.injectEndpoints({
     getVariantWarrantyInfo: builder.query<VariantWarrantyInfo, string>({
       query: (variantId) => `/warranty-records/variants/${variantId}/policy`,
       transformResponse: (res: any) => res?.data ?? res,
+      providesTags: (_res, _err, variantId) => [
+        { type: 'WarrantyPolicy', id: 'LIST' },
+        { type: 'Variant', id: variantId },
+      ],
     }),
 
     createWarrantyFromOrder: builder.mutation<WarrantyRecordDetail, CreateWarrantyFromOrderRequest>({
@@ -83,7 +87,10 @@ export const warrantyApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: [{ type: 'WarrantyRecord', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'WarrantyRecord', id: 'LIST' },
+        { type: 'WarrantyRecord', id: 'MY_LIST' },
+      ],
     }),
 
     createAdHocWarranty: builder.mutation<WarrantyRecordDetail, CreateAdHocWarrantyRequest>({
@@ -93,7 +100,10 @@ export const warrantyApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: [{ type: 'WarrantyRecord', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'WarrantyRecord', id: 'LIST' },
+        { type: 'WarrantyRecord', id: 'MY_LIST' },
+      ],
     }),
 
     voidWarrantyRecord: builder.mutation<WarrantyRecordDetail, { id: string; body: VoidWarrantyRequest }>({
@@ -105,6 +115,7 @@ export const warrantyApi = baseApi.injectEndpoints({
       transformResponse: (res: any) => res?.data ?? res,
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'WarrantyRecord', id: 'LIST' },
+        { type: 'WarrantyRecord', id: 'MY_LIST' },
         { type: 'WarrantyRecord', id },
       ],
     }),

@@ -43,6 +43,7 @@ export const categoryApi = baseApi.injectEndpoints({
       invalidatesTags: [
         { type: 'Category', id: 'LIST' },
         { type: 'Category', id: 'OPTIONS' },
+        { type: 'WarrantyPolicy', id: 'REFERENCE_DATA' },
       ],
     }),
     updateCategory: builder.mutation<Category, { id: string; data: UpdateCategoryRequest }>({
@@ -52,6 +53,9 @@ export const categoryApi = baseApi.injectEndpoints({
         { type: 'Category', id },
         { type: 'Category', id: 'LIST' },
         { type: 'Category', id: 'OPTIONS' },
+        { type: 'Product', id: 'LIST' },
+        { type: 'SalesCatalog', id: 'LIST' },
+        { type: 'WarrantyPolicy', id: 'REFERENCE_DATA' },
       ],
     }),
     deleteCategory: builder.mutation<void, string>({
@@ -61,6 +65,7 @@ export const categoryApi = baseApi.injectEndpoints({
         { type: 'Category', id },
         { type: 'Category', id: 'LIST' },
         { type: 'Category', id: 'OPTIONS' },
+        { type: 'WarrantyPolicy', id: 'REFERENCE_DATA' },
       ],
     }),
     downloadCategoryImportTemplate: builder.mutation<Blob, void>({

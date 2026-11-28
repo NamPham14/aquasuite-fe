@@ -75,7 +75,7 @@ export function ReservationWorkspace({ orderId, embedded = false, initialOrder, 
     lock.current = true; setError(''); setNotice(''); setPendingReservation(request); onBlockedChange?.(true)
     try {
       await submit({ orderId, ...request }).unwrap()
-      setPendingReservation(null); onBlockedChange?.(false); setNotice('Đã cập nhật yêu cầu giữ hàng.'); refresh()
+      setPendingReservation(null); onBlockedChange?.(false); setNotice('Đã cập nhật yêu cầu giữ hàng.')
     } catch (failure) {
       if (!uncertain(failure)) { setPendingReservation(null); onBlockedChange?.(false) }
       setError(normalizeApiError(failure).message)
@@ -84,7 +84,7 @@ export function ReservationWorkspace({ orderId, embedded = false, initialOrder, 
   async function retryAllocation() {
     if (lock.current || !view?.allocationId || blocked || !eligible || changedOrder || history.isFetching || history.isError) return
     lock.current = true; setError(''); setNotice(''); onBlockedChange?.(true)
-    try { await retry({ orderId, allocationId: view.allocationId }).unwrap(); setNotice('Đã thử lại phân bổ.'); refresh() }
+    try { await retry({ orderId, allocationId: view.allocationId }).unwrap(); setNotice('Đã thử lại phân bổ.') }
     catch (failure) { setError(normalizeApiError(failure).message) }
     finally { lock.current = false; onBlockedChange?.(false) }
   }

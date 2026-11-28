@@ -1,4 +1,5 @@
 import { configureStore, createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit'
+import { setupListeners } from '@reduxjs/toolkit/query'
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux'
 import { authReducer, startSession, clearAuthLocal, iamAccessApi, iamAccessReducer, resetIamAccess } from '../features/iam'
 import { baseApi } from '../shared/api/baseApi'
@@ -23,6 +24,10 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().prepend(sessionListener.middleware).concat(baseApi.middleware, iamAccessApi.middleware),
 })
+
+if (typeof window !== 'undefined') {
+  setupListeners(store.dispatch)
+}
 
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch

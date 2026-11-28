@@ -31,7 +31,10 @@ export function CodManagement() {
   const [page, setPage] = useState(0)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [claiming, setClaiming] = useState(false)
-  const list = useGetCodCollectionsQuery({ ...filters, status: status || undefined, page, size: 20 }, { skip: !allowed, refetchOnMountOrArgChange: true })
+  const list = useGetCodCollectionsQuery(
+    { ...filters, status: status || undefined, page, size: 20 },
+    { skip: !allowed, refetchOnMountOrArgChange: true, refetchOnFocus: true, refetchOnReconnect: true },
+  )
   const rows = list.currentData?.items ?? []
   const columns: ManagementTableColumn<CodCollection>[] = [
     { key: 'delivery', header: 'Đợt giao', cell: (x) => <CodeChip>{x.deliveryId}</CodeChip> },
