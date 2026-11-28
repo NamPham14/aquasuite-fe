@@ -49,6 +49,10 @@ export function CustomerOrderModificationRequestDialog({
   })
 
   const catalogOptions = (catalogQuery.data ?? []).filter((item) => !item.isCombo)
+  const requestableOrderItems = order
+    ? order.items.filter((item) => item.quantity > 0
+      && (order.orderStatus !== 'PENDING_CONFIRMATION' || !item.comboId))
+    : []
 
   function updateItem(index: number, patch: Partial<RequestItemForm>) {
     setItems((current) => current.map((item, itemIndex) => (
@@ -65,8 +69,13 @@ export function CustomerOrderModificationRequestDialog({
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!order) return
-    if (order.orderStatus !== 'PROCESSING') {
-      setValidationMessage('Chỉ gửi yêu cầu với đơn hàng đang xử lý.')
+    if (order.orderStatus !== 'PROCESSING' && order.orderStatus !== 'PENDING_CONFIRMATION') {
+      setValidationMessage('Chỉ gửi yêu cầu với đơn hàng đang chờ xác nhận hoặc đang xử lý.')
+      return
+    }
+    if (requestType === 'ITEM_CHANGE' && order.orderStatus === 'PENDING_CONFIRMATION'
+      && (order.paymentMethod !== 'CASH' || order.paymentStatus !== 'UNPAID')) {
+      setValidationMessage('Chỉ có thể yêu cầu đổi sản phẩm trước khi xác nhận với đơn COD chưa thanh toán.')
       return
     }
 
@@ -159,9 +168,9 @@ export function CustomerOrderModificationRequestDialog({
             Thử tải lại
           </button>
         </div>
-      ) : order.orderStatus !== 'PROCESSING' ? (
+      ) : order.orderStatus !== 'PROCESSING' && order.orderStatus !== 'PENDING_CONFIRMATION' ? (
         <div className="p-8 text-center text-sm text-[#854D0E]">
-          Đơn hàng không còn ở trạng thái đang xử lý nên không thể gửi yêu cầu.
+          Đơn hàng không còn ở trạng thái chờ xác nhận hoặc đang xử lý nên không thể gửi yêu cầu.
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-5 p-5 sm:p-6">
@@ -173,8 +182,17 @@ export function CustomerOrderModificationRequestDialog({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="border border-[#E6E2DA] bg-[#FAF9F6] p-3">
               <p className="text-[10px] uppercase tracking-[0.12em] text-[#78736A]">Trạng thái</p>
-              <p className="mt-1 text-xs font-semibold text-[#171614]">Đang xử lý</p>
+              <p className="mt-1 text-xs font-semibold text-[#171614]">
+                {order.orderStatus === 'PENDING_CONFIRMATION' ? 'Chờ xác nhận' : 'Đang xử lý'}
+              </p>
             </div>
+            {order.orderStatus === 'PENDING_CONFIRMATION'
+              && (order.paymentMethod !== 'CASH' || order.paymentStatus !== 'UNPAID') && (
+                <p className="border border-[#E6D3B3] bg-[#FAF5EB] p-3 text-xs leading-relaxed text-[#854D0E]">
+                  Đơn thanh toán chuyển khoản hoặc đã thanh toán không thể đổi sản phẩm khi đang chờ xác nhận.
+                  Bạn vẫn có thể yêu cầu đổi địa chỉ hoặc hủy đơn để nhân viên xem xét.
+                </p>
+              )}
             <div className="border border-[#E6E2DA] bg-[#FAF9F6] p-3">
               <p className="text-[10px] uppercase tracking-[0.12em] text-[#78736A]">Giá trị đơn</p>
               <p className="mt-1 text-xs font-semibold tabular-nums text-[#171614]">{formatVnd(order.totalAmount)}</p>
@@ -193,7 +211,13 @@ export function CustomerOrderModificationRequestDialog({
               className={editorialFieldClass}
             >
               <option value="ADDRESS_CHANGE">{REQUEST_TYPE_LABEL.ADDRESS_CHANGE}</option>
-              <option value="ITEM_CHANGE">{REQUEST_TYPE_LABEL.ITEM_CHANGE}</option>
+              <option
+                value="ITEM_CHANGE"
+                disabled={order.orderStatus === 'PENDING_CONFIRMATION'
+                  && (order.paymentMethod !== 'CASH' || order.paymentStatus !== 'UNPAID')}
+              >
+                {REQUEST_TYPE_LABEL.ITEM_CHANGE}
+              </option>
               <option value="FULL_CANCELLATION">{REQUEST_TYPE_LABEL.FULL_CANCELLATION}</option>
             </select>
           </label>
@@ -221,7 +245,12 @@ export function CustomerOrderModificationRequestDialog({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 id="change-items-heading" className="text-xs font-semibold text-[#171614]">Mặt hàng cần thay đổi</h3>
-                  <p className="mt-1 text-[11px] text-[#78736A]">Chọn giảm số lượng, bỏ mặt hàng hoặc đề xuất sản phẩm thay thế.</p>
+                  <p className="mt-1 text-[11px] text-[#78736A]">
+                    Chọn giảm số lượng, bỏ mặt hàng hoặc đề xuất sản phẩm thay thế.
+                    {order.orderStatus === 'PENDING_CONFIRMATION'
+                      ? ' Đơn chờ xác nhận chỉ hỗ trợ đổi hàng khi thanh toán COD và chưa thanh toán.'
+                      : ''}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -233,9 +262,9 @@ export function CustomerOrderModificationRequestDialog({
                 </button>
               </div>
 
-              {order.items.length === 0 && (
+              {requestableOrderItems.length === 0 && (
                 <p className="border border-[#E5B8B8] bg-[#FEF2F2] p-3 text-xs text-[#991B1B]">
-                  Đơn hàng không có dòng mặt hàng có thể chọn để yêu cầu thay đổi.
+                  Đơn hàng không có mặt hàng có thể yêu cầu thay đổi.
                 </p>
               )}
               {items.map((item, index) => {
@@ -254,7 +283,7 @@ export function CustomerOrderModificationRequestDialog({
                         required
                       >
                         <option value="">Chọn mặt hàng trong đơn</option>
-                        {order.items.filter((orderItem) => (
+                        {requestableOrderItems.filter((orderItem) => (
                           !alreadySelected.has(orderItem.orderItemId)
                         )).map((orderItem: SalesOrderItemResponse) => (
                           <option key={orderItem.orderItemId} value={orderItem.orderItemId}>

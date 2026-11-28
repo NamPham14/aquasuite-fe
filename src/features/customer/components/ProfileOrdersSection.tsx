@@ -410,7 +410,7 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
                       </button>
                     )}
 
-                    {order.orderStatus === 'PROCESSING' && (
+                    {(order.orderStatus === 'PROCESSING' || order.orderStatus === 'PENDING_CONFIRMATION') && (
                       <button
                         type="button"
                         onClick={() => {

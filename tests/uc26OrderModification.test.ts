@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
 import { register } from 'node:module'
+import { readFileSync } from 'node:fs'
 import { configureStore } from '@reduxjs/toolkit'
 import { baseApi } from '../src/shared/api/baseApi.ts'
 import { authReducer, setCredentials } from '../src/features/iam/model/authSlice.ts'
@@ -275,4 +276,20 @@ test('CreateOrderModificationItemPayload supports REDUCE REMOVE SWAP changeActio
     const item = { orderItemId: 'item-1', changeAction: action }
     assert.equal(item.changeAction, action)
   }
+})
+
+test('My Orders offers staff-reviewed requests before confirmation with payment-safe item options', () => {
+  const ordersSection = readFileSync(new URL(
+    '../src/features/customer/components/ProfileOrdersSection.tsx',
+    import.meta.url,
+  ), 'utf8')
+  const requestDialog = readFileSync(new URL(
+    '../src/features/customer/components/CustomerOrderModificationRequestDialog.tsx',
+    import.meta.url,
+  ), 'utf8')
+
+  assert.ok(ordersSection.includes("order.orderStatus === 'PENDING_CONFIRMATION'"))
+  assert.ok(requestDialog.includes("order.orderStatus !== 'PENDING_CONFIRMATION'"))
+  assert.ok(requestDialog.includes("order.paymentMethod !== 'CASH' || order.paymentStatus !== 'UNPAID'"))
+  assert.ok(requestDialog.includes('Chờ xác nhận'))
 })
