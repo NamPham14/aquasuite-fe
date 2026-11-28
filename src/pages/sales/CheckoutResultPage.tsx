@@ -223,7 +223,14 @@ export function CheckoutResultPage() {
             {order.items.map((item) => (
               <div key={item.orderItemId} className="py-3.5 flex items-start justify-between gap-4 text-xs">
                 <div className="space-y-0.5">
-                  <p className="font-medium text-[#171614]">{item.productName}</p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="font-medium text-[#171614]">{item.productName}</p>
+                    {item.comboId && (
+                      <span className="border border-[#D6D1C7] bg-[#FAF9F6] px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] font-semibold text-[#8C6D46]">
+                        Combo
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-[#78736A]">
                     {item.variantName} &middot; <span className="font-mono">SKU: {item.sku}</span> &middot; SL: {item.quantity} &times; {formatVnd(item.unitPrice)}
                   </p>

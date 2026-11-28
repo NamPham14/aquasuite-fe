@@ -180,6 +180,16 @@ export function SalesLayout() {
                   Tra cứu bảo hành Serial
                 </Link>
               </li>
+              <li>
+                <Link to={isAuthenticated ? '/profile?tab=deliveries' : '/login'} className="hover:text-white transition-colors">
+                  Theo dõi giao hàng
+                </Link>
+              </li>
+              <li>
+                <Link to={isAuthenticated ? '/profile?tab=debt' : '/login'} className="hover:text-white transition-colors">
+                  Công nợ &amp; Báo giá dự án
+                </Link>
+              </li>
             </ul>
           </div>
 

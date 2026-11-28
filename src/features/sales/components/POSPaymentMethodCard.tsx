@@ -113,41 +113,41 @@ export function POSPaymentMethodCard({
         <button
           type="button"
           onClick={() => onChangePaymentMethod('CREDIT')}
-          className={`p-3 rounded-lg border text-left transition flex flex-col items-start gap-1.5 ${
+          className={`flex flex-col items-start gap-1.5 rounded-control border p-3 text-left transition ${
             paymentMethod === 'CREDIT'
-              ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500 text-indigo-900'
-              : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
+              ? 'border-aqs-accent bg-aqs-accent-soft/60 text-aqs-accent-ink ring-1 ring-aqs-accent-border'
+              : 'border-aqs-border bg-aqs-surface text-aqs-ink-muted hover:border-aqs-border-strong'
           }`}
         >
-          <div className="p-1 rounded bg-indigo-50 text-indigo-600">
+          <div className="rounded bg-aqs-accent-soft p-1 text-aqs-accent">
             <FileText className="w-4 h-4" />
           </div>
           <div>
             <div className="text-xs font-semibold">Mua nợ (Credit)</div>
-            <div className="text-[10px] text-slate-500 mt-0.5">Đối tác / Thầu thợ</div>
+            <div className="text-[10px] text-aqs-ink-faint mt-0.5">Đối tác / Thầu thợ</div>
           </div>
         </button>
       </div>
 
-      {/* LỰA CHỌN CREDIT & NÚT KIỂM TRA HẠN MỨC (TÍCH HỢP HÀO) */}
+      {/* LỰA CHỌN CREDIT & NÚT KIỂM TRA HẠN MỨC */}
       {paymentMethod === 'CREDIT' && (
-        <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-lg space-y-2 text-xs">
+        <div className="space-y-2 rounded-control border border-aqs-accent-border bg-aqs-accent-soft/50 p-3 text-xs">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="font-medium text-indigo-950">
+              <p className="font-medium text-aqs-ink">
                 Thanh toán bằng Công nợ (Credit Control)
               </p>
-              <p className="text-[11px] text-indigo-700/80 mt-0.5">
-                Khi tạo đơn, Backend sẽ tự động thẩm định hạn mức nợ qua hệ thống của Hào. Nếu vượt hạn mức hoặc có nợ xấu, đơn sẽ bị từ chối.
+              <p className="mt-0.5 text-[11px] text-aqs-ink-muted">
+                Khi tạo đơn, hệ thống sẽ tự động thẩm định hạn mức nợ qua Kiểm soát Tín dụng. Nếu vượt hạn mức hoặc có nợ xấu, đơn sẽ không được duyệt.
               </p>
             </div>
 
-            {/* NÚT 2: KIỂM TRA HẠN MỨC TÍN DỤNG (TÍCH HỢP HÀO - CREDIT CONTROL) */}
+            {/* NÚT 2: KIỂM TRA HẠN MỨC TÍN DỤNG */}
             <button
               type="button"
               disabled={isCheckingCredit}
               onClick={handlePreCheckCredit}
-              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition shadow-2xs"
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-control bg-aqs-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-aqs-accent-hover disabled:opacity-50"
             >
               {isCheckingCredit ? (
                 <>

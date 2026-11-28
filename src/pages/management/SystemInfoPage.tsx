@@ -147,7 +147,7 @@ export function SystemInfoPage() {
           Đổi mật khẩu
         </summary>
         <p className="border-t border-aqs-divider px-5 py-4 text-sm text-aqs-ink-muted sm:px-6">
-          Chức năng đổi mật khẩu chưa sẵn sàng.
+          Để cập nhật hoặc cấp lại mật khẩu tài khoản nội bộ, vui lòng liên hệ Chủ cửa hàng để được hỗ trợ đặt lại mật khẩu an toàn từ màn Quản lý tài khoản.
         </p>
       </details>
     </ManagementPageShell>

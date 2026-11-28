@@ -72,7 +72,39 @@ export function StorefrontQuickAccessStrip({
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-6 text-xs text-[#57534E]">
+        <div className="flex flex-wrap items-center gap-5 sm:gap-6 text-xs text-[#57534E]">
+          {isAuthenticated && (
+            <>
+              <Link
+                to="/profile?tab=orders"
+                className="inline-flex items-center gap-1.5 border-b border-[#D6D2C9] pb-0.5 hover:text-[#171614] hover:border-[#171614] transition-colors"
+              >
+                <span>Đơn hàng của tôi</span>
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
+              </Link>
+              <Link
+                to="/profile?tab=deliveries"
+                className="inline-flex items-center gap-1.5 border-b border-[#D6D2C9] pb-0.5 hover:text-[#171614] hover:border-[#171614] transition-colors"
+              >
+                <span>Theo dõi giao hàng</span>
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
+              </Link>
+              <Link
+                to="/profile?tab=debt"
+                className="inline-flex items-center gap-1.5 border-b border-[#D6D2C9] pb-0.5 hover:text-[#171614] hover:border-[#171614] transition-colors"
+              >
+                <span>Công nợ &amp; Hóa đơn</span>
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
+              </Link>
+              <Link
+                to="/profile?tab=quotations"
+                className="inline-flex items-center gap-1.5 border-b border-[#D6D2C9] pb-0.5 hover:text-[#171614] hover:border-[#171614] transition-colors"
+              >
+                <span>Báo giá dự án</span>
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
+              </Link>
+            </>
+          )}
           <Link
             to={isAuthenticated ? '/profile/warranties' : '/login'}
             className="inline-flex items-center gap-1.5 border-b border-[#D6D2C9] pb-0.5 hover:text-[#171614] hover:border-[#171614] transition-colors"

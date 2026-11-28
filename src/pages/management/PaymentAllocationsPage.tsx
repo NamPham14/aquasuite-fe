@@ -520,26 +520,28 @@ export function PaymentAllocationsPage() {
     null
 
   return (
-    <div className="mx-auto w-full max-w-[1360px] space-y-4 pb-12 text-[13.5px] text-slate-900">
+    <div className="mx-auto w-full max-w-[1600px] space-y-5 pb-12 font-aqs-sans text-[13.5px] text-aqs-ink">
       {/* Header trang */}
-      <header className="rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-xs">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <header className="border-b border-aqs-border pb-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="flex flex-wrap items-center gap-1.5 text-[11.5px] font-medium text-slate-500">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-aqs-ink-faint">
+              <Link to="/app/dashboard" className="hover:text-aqs-accent-hover">Tổng quan</Link>
+              <span>/</span>
               <span>Tài chính &amp; Công nợ</span>
               <span>/</span>
-              <b className="font-semibold text-sky-700">Phân bổ tiền thu</b>
+              <b className="font-medium text-aqs-ink-muted">Phân bổ tiền thu</b>
             </div>
-            <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+            <h1 className="mt-2 text-[clamp(22px,2vw,28px)] font-bold tracking-[-0.025em] text-aqs-ink">
               Phiếu thu &amp; Phân bổ tiền thu
             </h1>
-            <p className="mt-0.5 max-w-3xl text-[12.5px] text-slate-500">
+            <p className="mt-1.5 max-w-3xl text-sm text-aqs-ink-muted">
               Phân bổ tiền thu đã xác minh vào các hóa đơn điện tử đã phát hành của cùng đơn hàng.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs">
-            <span className="font-semibold text-slate-600">Vai trò</span>
-            <span className="rounded border border-slate-300 bg-white px-2.5 py-1 font-medium text-slate-900">
+          <div className="flex items-center gap-2 rounded-control border border-aqs-border bg-aqs-surface px-3 py-1.5 text-xs">
+            <span className="font-semibold text-aqs-ink-muted">Vai trò</span>
+            <span className="rounded-chip border border-aqs-accent-border bg-aqs-accent-soft px-2.5 py-0.5 font-semibold text-aqs-accent-hover">
               Kế toán — {user?.username ?? 'ACCOUNTANT'}
             </span>
           </div>
@@ -548,21 +550,21 @@ export function PaymentAllocationsPage() {
 
       {/* KPI Strip 3 ô chỉ số */}
       <section aria-label="Tổng quan" className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-slate-200 border-t-[3px] border-t-sky-700 bg-white px-4 py-3 shadow-xs">
-          <div className="text-[11px] font-semibold text-slate-600">Tiền đã xác minh · chưa phân bổ</div>
-          <div className="mt-0.5 text-xl font-bold tabular-nums text-slate-900">
+        <div className="rounded-card border border-aqs-border border-t-[3px] border-t-aqs-accent bg-aqs-surface px-4 py-3.5">
+          <div className="text-xs font-semibold text-aqs-ink-muted">Tiền đã xác minh · chưa phân bổ</div>
+          <div className="mt-1 text-xl font-bold tabular-nums text-aqs-ink">
             {openQueueKpiQuery.isLoading && !legacyDefaultCache ? '—' : formatVnd(kpiUnallocatedMoney)}
           </div>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-xs">
-          <div className="text-[11px] font-semibold text-slate-600">Phiếu thu đang chờ phân bổ</div>
-          <div className="mt-0.5 text-xl font-bold tabular-nums text-slate-900">
+        <div className="rounded-card border border-aqs-border bg-aqs-surface px-4 py-3.5">
+          <div className="text-xs font-semibold text-aqs-ink-muted">Phiếu thu đang chờ phân bổ</div>
+          <div className="mt-1 text-xl font-bold tabular-nums text-aqs-ink">
             {openQueueKpiQuery.isLoading && !legacyDefaultCache ? '—' : `${kpiQueueCount} phiếu`}
           </div>
         </div>
-        <div className="rounded-lg border border-slate-200 border-t-[3px] border-t-amber-500 bg-white px-4 py-3 shadow-xs">
-          <div className="text-[11px] font-semibold text-slate-600">Hóa đơn điện tử còn nợ</div>
-          <div className="mt-0.5 text-xl font-bold tabular-nums text-slate-900">
+        <div className="rounded-card border border-aqs-border border-t-[3px] border-t-aqs-warning bg-aqs-surface px-4 py-3.5">
+          <div className="text-xs font-semibold text-aqs-ink-muted">Hóa đơn điện tử còn nợ</div>
+          <div className="mt-1 text-xl font-bold tabular-nums text-aqs-ink">
             {kpiElectronicInvoiceDebt === null ? '—' : formatVnd(kpiElectronicInvoiceDebt)}
           </div>
         </div>
@@ -573,11 +575,11 @@ export function PaymentAllocationsPage() {
         {/* LEFT PANEL: Hàng đợi phiếu thu */}
         <section
           aria-label="Hàng đợi phiếu thu"
-          className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-100px)]"
+          className="overflow-hidden rounded-card border border-aqs-border bg-aqs-surface lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-100px)]"
         >
           <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 pt-3 pb-2">
-            <h2 className="text-sm font-semibold text-slate-900">Hàng đợi phiếu thu</h2>
-            <span className="text-xs text-slate-500">
+            <h2 className="text-sm font-bold text-aqs-ink">Hàng đợi phiếu thu</h2>
+            <span className="text-xs text-aqs-ink-faint">
               {isOpenTab
                 ? `${filteredReceipts.length} phiếu đang chờ`
                 : `${filteredReceipts.length} phiếu · trang ${safePage}/${totalPages}`}
@@ -602,10 +604,10 @@ export function PaymentAllocationsPage() {
                     aria-selected={active}
                     type="button"
                     onClick={() => setReceiptView(tab.value)}
-                    className={`min-h-8 rounded border px-3 py-1 text-xs transition ${
+                    className={`min-h-8 cursor-pointer rounded-control border px-3 py-1 text-xs transition ${
                       active
-                        ? 'border-sky-700 bg-sky-700 font-semibold text-white'
-                        : 'border-slate-300 bg-white font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                        ? 'border-aqs-accent bg-aqs-accent font-semibold text-white'
+                        : 'border-aqs-border-strong bg-aqs-surface font-medium text-aqs-ink-muted hover:bg-aqs-surface-subtle hover:text-aqs-ink'
                     }`}
                   >
                     {tab.label}

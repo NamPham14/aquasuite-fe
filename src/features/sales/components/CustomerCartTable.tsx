@@ -99,7 +99,7 @@ function QuantityControl({
 
 function CartItemThumbnail({ item }: { item: CartItemResponse }) {
   const [imgError, setImgError] = useState(false)
-  const detailPath = `/products/${encodeURIComponent(item.variantId)}`
+  const detailPath = `/products/${encodeURIComponent(item.comboId || item.variantId)}`
 
   return (
     <Link
@@ -238,7 +238,7 @@ export function CustomerCartTable({
               const isPending = Boolean(pendingItemIds[item.cartItemId])
               const isInactive = item.variantStatus.toUpperCase() !== 'ACTIVE'
               const isOutOfStock = !item.inStock || item.availableQty < item.quantity
-              const detailPath = `/products/${encodeURIComponent(item.variantId)}`
+              const detailPath = `/products/${encodeURIComponent(item.comboId || item.variantId)}`
 
               return (
                 <tr
@@ -253,12 +253,19 @@ export function CustomerCartTable({
                     <div className="flex items-start gap-4">
                       <CartItemThumbnail item={item} />
                       <div className="min-w-0">
-                        <Link
-                          to={detailPath}
-                          className="font-editorial text-base font-normal text-[#171614] hover:underline underline-offset-4 decoration-[#8C6D46] leading-snug block"
-                        >
-                          {item.productName}
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            to={detailPath}
+                            className="font-editorial text-base font-normal text-[#171614] hover:underline underline-offset-4 decoration-[#8C6D46] leading-snug"
+                          >
+                            {item.productName}
+                          </Link>
+                          {item.isCombo && (
+                            <span className="border border-[#D6D1C7] bg-[#FAF9F6] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] font-semibold text-[#8C6D46]">
+                              Combo trọn bộ
+                            </span>
+                          )}
+                        </div>
                         <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-[#78736A]">
                           <span className="font-mono text-[#57534E]">
                             SKU: {item.sku}
@@ -275,6 +282,19 @@ export function CustomerCartTable({
                             </span>
                           )}
                         </div>
+
+                        {item.isCombo && item.components && item.components.length > 0 && (
+                          <details className="mt-2 text-[11px] text-[#57534E]">
+                            <summary className="cursor-pointer font-medium text-[#8C6D46] hover:text-[#171614] transition-colors">
+                              Cấu hình gồm {item.components.length} thiết bị
+                            </summary>
+                            <ul className="mt-1.5 space-y-0.5 pl-3 border-l border-[#E6E2DA] text-[#6B6760]">
+                              {item.components.map((comp) => (
+                                <li key={comp}>{comp}</li>
+                              ))}
+                            </ul>
+                          </details>
+                        )}
 
                         {isInactive && (
                           <div className="mt-2 inline-flex items-center gap-1.5 border border-[#E5B8B8] bg-[#FEF2F2] px-2.5 py-1 text-[11px] font-medium text-[#991B1B]">

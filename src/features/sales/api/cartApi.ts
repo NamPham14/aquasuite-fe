@@ -8,9 +8,14 @@ import type {
 } from '../types/cart.types.ts'
 
 export function normalizeCartItem(raw: Record<string, unknown>): CartItemResponse {
+  const comboId = raw.comboId ? String(raw.comboId) : null
+  const variantId = raw.variantId ? String(raw.variantId) : comboId ?? ''
+  const isCombo = Boolean(raw.isCombo ?? raw.combo ?? comboId)
+
   return {
     cartItemId: String(raw.cartItemId ?? ''),
-    variantId: String(raw.variantId ?? ''),
+    variantId,
+    comboId,
     productId: raw.productId ? String(raw.productId) : null,
     sku: String(raw.sku ?? ''),
     productName: String(raw.productName ?? ''),
@@ -25,6 +30,8 @@ export function normalizeCartItem(raw: Record<string, unknown>): CartItemRespons
     variantStatus: String(raw.variantStatus ?? 'ACTIVE'),
     inStock: Boolean(raw.inStock ?? true),
     priceChanged: Boolean(raw.priceChanged ?? false),
+    isCombo,
+    components: Array.isArray(raw.components) ? raw.components.map(String) : undefined,
     updatedAt: String(raw.updatedAt ?? ''),
   }
 }

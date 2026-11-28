@@ -45,6 +45,29 @@ test('addCartItemSchema and updateCartItemQuantitySchema validate positive integ
   assert.equal(validAdd.variantId, 'e1111111-1111-1111-1111-111111111111')
   assert.equal(validAdd.quantity, 3)
 
+  const validComboAdd = addCartItemSchema.parse({
+    comboId: 'b503093e-edb8-48e3-b34a-057f05e23a3a',
+    quantity: 2,
+  })
+  assert.equal(validComboAdd.comboId, 'b503093e-edb8-48e3-b34a-057f05e23a3a')
+  assert.equal(validComboAdd.quantity, 2)
+
+  assert.equal(
+    addCartItemSchema.safeParse({
+      quantity: 1,
+    }).success,
+    false,
+  )
+
+  assert.equal(
+    addCartItemSchema.safeParse({
+      variantId: 'var-1',
+      comboId: 'combo-1',
+      quantity: 1,
+    }).success,
+    false,
+  )
+
   assert.equal(
     addCartItemSchema.safeParse({
       variantId: '',
@@ -225,5 +248,35 @@ test('guestCartStorage persists guest items in localStorage, enforces stock limi
   upsertGuestCartItem('var-test-1', 1, sampleCatalog)
   clearGuestCart()
   assert.equal(readGuestCart().length, 0)
+
+  // Combo entries persist comboId, respect package stock limit and map isCombo=true
+  const comboCatalog: CatalogItemOption[] = [
+    {
+      variantId: 'combo-uuid-1',
+      sku: 'CB-HOTEL-4STAR',
+      name: 'Combo Khách sạn 4 Sao',
+      brand: 'TOTO',
+      category: 'Combo Dự Án',
+      sellingPrice: 18500000,
+      availableStock: 2,
+      unit: 'Gói',
+      isCombo: true,
+      components: ['Chậu rửa TOTO (TOTO-LT4706-W) x1'],
+    },
+  ]
+  const comboAddOk = upsertGuestCartItem('combo-uuid-1', 2, comboCatalog, { isCombo: true })
+  assert.equal(comboAddOk.error, undefined)
+  assert.equal(readGuestCart()[0].comboId, 'combo-uuid-1')
+  assert.equal(readGuestCart()[0].isCombo, true)
+
+  const comboOver = upsertGuestCartItem('combo-uuid-1', 1, comboCatalog, { isCombo: true })
+  assert.ok(comboOver.error)
+
+  const comboSummary = buildGuestCartResponse(readGuestCart(), comboCatalog)
+  assert.equal(comboSummary.subtotal, 37000000)
+  assert.equal(comboSummary.items[0].isCombo, true)
+  assert.equal(comboSummary.items[0].comboId, 'combo-uuid-1')
+  assert.equal(comboSummary.items[0].unit, 'Gói')
+  clearGuestCart()
 })
 

@@ -98,7 +98,7 @@ export function POSOrderCreatePage() {
 
       if (errorCode === 'SALES_002' || errorCode === 'CREDIT_LIMIT_EXCEEDED') {
         setSubmitError(
-          'TỪ CHỐI MUA NỢ: Khách hàng không đủ hạn mức tín dụng hoặc đang có nợ quá hạn từ Credit Control của Hào.',
+          'TỪ CHỐI MUA NỢ: Khách hàng không đủ hạn mức tín dụng hoặc đang có nợ quá hạn trên hệ thống Kiểm soát Tín dụng.',
         )
       } else if (errorCode === 'INSUFFICIENT_STOCK') {
         setSubmitError(`LỖI TỒN KHO: ${errorMessage}`)
@@ -163,8 +163,8 @@ export function POSOrderCreatePage() {
 
       {/* Thông báo lỗi nếu có */}
       {submitError && (
-        <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5 animate-in fade-in">
-          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2.5 rounded-card border border-aqs-danger-border bg-aqs-danger-soft p-3.5 text-xs text-aqs-danger-ink">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-aqs-danger" />
           <div>
             <div className="font-semibold">Không thể tạo đơn hàng</div>
             <div className="mt-0.5">{submitError}</div>
@@ -187,23 +187,24 @@ export function POSOrderCreatePage() {
           />
 
           {/* Ghi chú đơn hàng */}
-          <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-2xs">
-            <label className="text-xs font-semibold text-slate-800 block mb-1">
+          <div className="rounded-card border border-aqs-border bg-aqs-surface p-3.5">
+            <label htmlFor="pos-order-note" className="mb-1 block text-xs font-semibold text-aqs-ink">
               Ghi chú đơn hàng:
             </label>
             <textarea
+              id="pos-order-note"
               rows={2}
               placeholder="Nhập ghi chú xuất hàng, dặn dò giao hàng (nếu có)..."
               value={cart.note}
               onChange={(e) => cart.setNote(e.target.value)}
-              className="w-full text-xs p-2 rounded border border-slate-200 focus:outline-none focus:border-sky-500"
+              className="w-full rounded-control border border-aqs-border-strong p-2 text-xs text-aqs-ink focus:border-aqs-focus focus:outline-none"
             />
           </div>
         </div>
 
         {/* CỘT PHẢI (5 CỘT): KHÁCH HÀNG & THANH TOÁN */}
         <div className="lg:col-span-5 space-y-4">
-          {/* Khối Khách hàng (TÍCH HỢP HÀO - NÚT 1: TRA CỨU CÔNG NỢ) */}
+          {/* Khối Khách hàng (NÚT 1: TRA CỨU CÔNG NỢ) */}
           <POSCustomerSection
             selectedCustomer={cart.selectedCustomer}
             onSelectCustomer={cart.setSelectedCustomer}
@@ -218,16 +219,16 @@ export function POSOrderCreatePage() {
           />
 
           {/* Phương thức nhận hàng */}
-          <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-2xs space-y-2">
-            <label className="text-xs font-semibold text-slate-800 block">
+          <div className="space-y-2 rounded-card border border-aqs-border bg-aqs-surface p-3.5">
+            <label className="block text-xs font-semibold text-aqs-ink">
               Phương thức nhận hàng:
             </label>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <label
-                className={`p-2.5 rounded-lg border flex items-center gap-2 cursor-pointer transition ${
+                className={`flex cursor-pointer items-center gap-2 rounded-control border p-2.5 transition ${
                   cart.fulfillmentMethod === 'IN_STORE_PICKUP'
-                    ? 'border-sky-500 bg-sky-50/50 text-sky-900 font-semibold'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                    ? 'border-aqs-accent bg-aqs-accent-soft/60 font-semibold text-aqs-accent-ink'
+                    : 'border-aqs-border text-aqs-ink-muted hover:border-aqs-border-strong'
                 }`}
               >
                 <input
@@ -237,15 +238,15 @@ export function POSOrderCreatePage() {
                   onChange={() => cart.setFulfillmentMethod('IN_STORE_PICKUP')}
                   className="sr-only"
                 />
-                <Store className="w-4 h-4 text-sky-600" />
+                <Store className="h-4 w-4 text-aqs-accent" />
                 <span>Nhận tại quầy</span>
               </label>
 
               <label
-                className={`p-2.5 rounded-lg border flex items-center gap-2 cursor-pointer transition ${
+                className={`flex cursor-pointer items-center gap-2 rounded-control border p-2.5 transition ${
                   cart.fulfillmentMethod === 'SCHEDULED_DELIVERY'
-                    ? 'border-sky-500 bg-sky-50/50 text-sky-900 font-semibold'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                    ? 'border-aqs-accent bg-aqs-accent-soft/60 font-semibold text-aqs-accent-ink'
+                    : 'border-aqs-border text-aqs-ink-muted hover:border-aqs-border-strong'
                 }`}
               >
                 <input
@@ -255,13 +256,13 @@ export function POSOrderCreatePage() {
                   onChange={() => cart.setFulfillmentMethod('SCHEDULED_DELIVERY')}
                   className="sr-only"
                 />
-                <Truck className="w-4 h-4 text-sky-600" />
+                <Truck className="h-4 w-4 text-aqs-accent" />
                 <span>Giao hàng tận nơi</span>
               </label>
             </div>
           </div>
 
-          {/* Khối Thanh toán (TÍCH HỢP HÀO - NÚT 2: KIỂM TRA HẠN MỨC) */}
+          {/* Khối Thanh toán (NÚT 2: KIỂM TRA HẠN MỨC) */}
           <POSPaymentMethodCard
             paymentMethod={cart.paymentMethod}
             onChangePaymentMethod={cart.setPaymentMethod}
@@ -270,34 +271,35 @@ export function POSOrderCreatePage() {
           />
 
           {/* Tóm tắt tài chính & Chiết khấu */}
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs space-y-2.5 text-xs">
-            <div className="flex justify-between items-center text-slate-600">
+          <div className="space-y-2.5 rounded-card border border-aqs-border bg-aqs-surface p-4 text-xs">
+            <div className="flex items-center justify-between text-aqs-ink-muted">
               <span>Tạm tính tiền hàng:</span>
-              <span className="font-semibold text-slate-800">{formatMoney(cart.subtotal)}</span>
+              <span className="font-semibold tabular-nums text-aqs-ink">{formatMoney(cart.subtotal)}</span>
             </div>
 
-            <div className="flex justify-between items-center text-slate-600 pt-1">
-              <span className="flex items-center gap-1">
-                <Tag className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center justify-between pt-1 text-aqs-ink-muted">
+              <label htmlFor="pos-order-discount" className="flex items-center gap-1">
+                <Tag className="h-3.5 w-3.5 text-aqs-ink-faint" />
                 <span>Chiết khấu đơn:</span>
-              </span>
+              </label>
               <div className="flex items-center gap-1">
                 <input
+                  id="pos-order-discount"
                   type="number"
                   min="0"
                   step="any"
                   value={cart.orderDiscount || ''}
                   placeholder="0"
                   onChange={(e) => cart.setOrderDiscount(Math.max(0, Number(e.target.value) || 0))}
-                  className="w-24 text-right px-2 py-0.5 border border-slate-200 rounded text-xs font-semibold focus:outline-none focus:border-sky-500"
+                  className="w-24 rounded-control border border-aqs-border-strong px-2 py-0.5 text-right text-xs font-semibold tabular-nums text-aqs-ink focus:border-aqs-focus focus:outline-none"
                 />
-                <span className="text-[11px] text-slate-500">đ</span>
+                <span className="text-[11px] text-aqs-ink-faint">đ</span>
               </div>
             </div>
 
-            <div className="flex justify-between items-center pt-2.5 border-t border-slate-200">
-              <span className="text-sm font-bold text-slate-900">Tổng thanh toán:</span>
-              <span className="text-base font-bold text-emerald-700">
+            <div className="flex items-center justify-between border-t border-aqs-border pt-2.5">
+              <span className="text-sm font-bold text-aqs-ink">Tổng thanh toán:</span>
+              <span className="text-base font-bold tabular-nums text-aqs-positive">
                 {formatMoney(cart.finalTotal)}
               </span>
             </div>

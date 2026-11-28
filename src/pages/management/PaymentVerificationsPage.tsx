@@ -83,13 +83,13 @@ export function PaymentVerificationsPage() {
 
   if (!isAccountant) {
     return (
-      <div className="mx-auto mt-8 max-w-md rounded-lg border border-slate-200 bg-white p-8 text-center">
-        <ShieldCheck className="mx-auto mb-2 h-8 w-8 text-slate-400" />
-        <h3 className="text-sm font-semibold text-slate-900">Chỉ dành cho Kế toán</h3>
-        <p className="mt-1 text-xs text-slate-500">
-          Xác minh chuyển khoản (UC-70) chỉ dành cho vai trò Kế toán (ACCOUNTANT).
+      <div className="mx-auto mt-8 max-w-md rounded-card border border-aqs-border bg-aqs-surface p-8 text-center">
+        <ShieldCheck className="mx-auto mb-2 h-8 w-8 text-aqs-ink-faint" />
+        <h3 className="text-sm font-semibold text-aqs-ink">Chỉ dành cho Kế toán</h3>
+        <p className="mt-1 text-xs text-aqs-ink-muted">
+          Xác minh chuyển khoản chỉ dành cho vai trò Kế toán (ACCOUNTANT).
         </p>
-        <Link to="/app/dashboard" className="mt-3 inline-block text-xs font-semibold text-sky-600 hover:text-sky-700">
+        <Link to="/app/dashboard" className="mt-3 inline-block text-xs font-semibold text-aqs-accent hover:text-aqs-accent-hover">
           Về bảng điều khiển
         </Link>
       </div>

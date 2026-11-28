@@ -7,7 +7,11 @@ import type { CatalogItemOption } from '../types/salesCatalog.types.ts'
 interface CartProductPickerDrawerProps {
   isOpen: boolean
   onClose: () => void
-  onAddVariant: (variantId: string, quantity: number) => Promise<boolean>
+  onAddVariant: (
+    variantId: string,
+    quantity: number,
+    options?: { isCombo?: boolean },
+  ) => Promise<boolean>
   existingQuantitiesByVariant: Record<string, number>
   isAdding: boolean
 }
@@ -21,6 +25,7 @@ export function CartProductPickerDrawer({
 }: CartProductPickerDrawerProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedBrand, setSelectedBrand] = useState('ALL')
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'SINGLE' | 'COMBO'>('ALL')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
 
   const {
@@ -32,9 +37,7 @@ export function CartProductPickerDrawer({
     skip: !isOpen,
   })
 
-  const catalogItems: CatalogItemOption[] = useMemo(() => {
-    return apiCatalogItems.filter((item) => !item.isCombo)
-  }, [apiCatalogItems])
+  const catalogItems: CatalogItemOption[] = apiCatalogItems
 
   const brands = useMemo(() => {
     const set = new Set<string>()
@@ -47,6 +50,8 @@ export function CartProductPickerDrawer({
   const filteredItems = useMemo(() => {
     const q = searchTerm.trim().toLowerCase()
     return catalogItems.filter((item) => {
+      if (typeFilter === 'SINGLE' && item.isCombo) return false
+      if (typeFilter === 'COMBO' && !item.isCombo) return false
       if (selectedBrand !== 'ALL' && item.brand !== selectedBrand) return false
       if (!q) return true
       return (
@@ -55,7 +60,7 @@ export function CartProductPickerDrawer({
         item.category.toLowerCase().includes(q)
       )
     })
-  }, [catalogItems, searchTerm, selectedBrand])
+  }, [catalogItems, searchTerm, selectedBrand, typeFilter])
 
   if (!isOpen) return null
 
@@ -107,6 +112,29 @@ export function CartProductPickerDrawer({
               placeholder="Tìm tên sản phẩm, mã SKU (VD: TOTO, INAX, sen cây...)"
               className="w-full pl-10 pr-4 h-10 text-xs bg-[#FAF9F6] border border-[#D6D1C7] text-[#171614] placeholder:text-[#8C867C] focus:outline-none focus:border-[#171614]"
             />
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {(
+              [
+                { id: 'ALL', label: 'Tất cả' },
+                { id: 'SINGLE', label: 'Sản phẩm lẻ' },
+                { id: 'COMBO', label: 'Combo trọn bộ' },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setTypeFilter(tab.id)}
+                className={`px-3 py-1 text-[11px] uppercase tracking-[0.12em] font-semibold whitespace-nowrap border transition-colors cursor-pointer ${
+                  typeFilter === tab.id
+                    ? 'border-[#8C6D46] bg-[#8C6D46] text-white'
+                    : 'border-[#E6E2DA] bg-white text-[#57534E] hover:border-[#171614]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -171,6 +199,11 @@ export function CartProductPickerDrawer({
                       <span className="font-semibold text-[#8C6D46]">
                         {item.brand}
                       </span>
+                      {item.isCombo && (
+                        <span className="border border-[#D6D1C7] bg-[#FAF9F6] px-1.5 py-0.5 text-[10px] font-semibold text-[#171614]">
+                          Combo
+                        </span>
+                      )}
                       {inCartQty > 0 && (
                         <span className="inline-flex items-center gap-1 bg-[#EEF5F1] border border-[#C6DDD0] px-2 py-0.5 text-[10px] font-medium text-[#245C42] normal-case tracking-normal">
                           <Check className="w-3 h-3" />
@@ -212,7 +245,9 @@ export function CartProductPickerDrawer({
                     <button
                       type="button"
                       disabled={outOfStock || isAdding}
-                      onClick={() => void onAddVariant(item.variantId, qty)}
+                      onClick={() =>
+                        void onAddVariant(item.variantId, qty, { isCombo: item.isCombo })
+                      }
                       className="h-9 inline-flex items-center gap-1.5 px-3.5 border border-[#171614] bg-[#171614] hover:bg-[#2A2825] disabled:border-[#E6E2DA] disabled:bg-[#ECE8E0] disabled:text-[#8C867C] text-[#FAF9F6] text-[11px] uppercase tracking-[0.14em] font-semibold transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />

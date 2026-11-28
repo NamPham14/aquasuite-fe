@@ -525,8 +525,8 @@ export function POSCustomerSection({
               </div>
 
               {isDebtLoading ? (
-                <div className="py-6 text-center text-slate-500 text-xs">
-                  Đang truy vấn dữ liệu từ phân hệ Credit Control của Hào...
+                <div className="py-6 text-center text-xs text-aqs-ink-faint">
+                  Đang truy vấn dữ liệu từ hệ thống Kiểm soát Tín dụng...
                 </div>
               ) : debtData ? (
                 <div className="space-y-2.5 bg-slate-50 rounded-lg p-3 border border-slate-100">

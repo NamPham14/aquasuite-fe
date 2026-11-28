@@ -197,8 +197,9 @@ export function CustomerHomePage() {
   const handleAddVariantToCart = async (
     variantId: string,
     quantity: number,
+    options?: { isCombo?: boolean },
   ): Promise<boolean> => {
-    return handleAddItem(variantId, quantity)
+    return handleAddItem(variantId, quantity, options)
   }
 
   return (
@@ -460,11 +461,15 @@ export function CustomerHomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {comboPackages.map((combo) => (
+              {comboPackages.map((combo) => {
+                const comboInStock = combo.availableStock > 0
+                const comboQtyInCart = quantitiesByVariant[combo.variantId] ?? 0
+                const isComboAdding = Boolean(pendingVariantIds[combo.variantId])
+                return (
                 <article key={combo.variantId} className="group flex flex-col">
                   <Link
                     to={`/products/${encodeURIComponent(combo.variantId)}`}
-                    className="block aspect-[16/10] w-full bg-[#24221F] overflow-hidden"
+                    className="block relative aspect-[16/10] w-full bg-[#24221F] overflow-hidden"
                   >
                     {combo.imageUrl && !failedComboImages[combo.variantId] ? (
                       <img
@@ -483,6 +488,11 @@ export function CustomerHomePage() {
                       <div className="h-full w-full flex items-center justify-center text-[#A8A39A] font-editorial text-xl">
                         {combo.sku}
                       </div>
+                    )}
+                    {comboQtyInCart > 0 && (
+                      <span className="pointer-events-none absolute top-3 right-3 bg-[#FAF9F6]/95 border border-[#E2DDD4] px-2.5 py-1 text-[10px] font-semibold text-[#171614] tabular-nums">
+                        Trong giỏ: {comboQtyInCart}
+                      </span>
                     )}
                   </Link>
 
@@ -507,26 +517,39 @@ export function CustomerHomePage() {
                       )}
                     </div>
 
-                    <div className="pt-4 border-t border-white/12 flex items-center justify-between gap-3">
+                    <div className="pt-4 border-t border-white/12 flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <span className="block text-[10px] uppercase tracking-[0.14em] text-[#8A857C]">
-                          Trọn gói
+                          Trọn gói &middot; {comboInStock ? `Sẵn ${combo.availableStock} ${combo.unit}` : 'Tạm hết hàng'}
                         </span>
                         <span className="text-lg font-semibold text-[#E5D3B3] tabular-nums">
                           {formatVnd(combo.sellingPrice)}
                         </span>
                       </div>
-                      <Link
-                        to={`/products/${encodeURIComponent(combo.variantId)}`}
-                        className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] font-semibold text-white border-b border-white/40 pb-0.5 hover:border-white transition-colors"
-                      >
-                        <span>Xem cấu hình</span>
-                        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          disabled={!comboInStock || isComboAdding}
+                          onClick={() =>
+                            void handleAddVariantToCart(combo.variantId, 1, { isCombo: true })
+                          }
+                          className="border border-white/35 px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] font-semibold text-white hover:bg-white hover:text-[#171614] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-white cursor-pointer disabled:cursor-not-allowed transition-colors"
+                        >
+                          {comboInStock ? '+ Thêm combo' : 'Hết hàng'}
+                        </button>
+                        <Link
+                          to={`/products/${encodeURIComponent(combo.variantId)}`}
+                          className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] font-semibold text-white border-b border-white/40 pb-0.5 hover:border-white transition-colors"
+                        >
+                          <span>Xem cấu hình</span>
+                          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </article>
-              ))}
+                )
+              })}
             </div>
           </div>
         </section>

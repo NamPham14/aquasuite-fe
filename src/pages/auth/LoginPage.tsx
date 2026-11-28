@@ -10,10 +10,15 @@ export function LoginPage() {
 
   return (
     <div>
-      <div className="mb-6 text-center">
-        <h2 className="text-xl font-bold text-gray-900">Đăng nhập tài khoản</h2>
-        <p className="mt-1 text-xs text-gray-500">
-          Dùng chung cho khách hàng và nhân viên — nhập email và mật khẩu của bạn
+      <div className="mb-7">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#78736A]">
+          AquaSuite · Cổng truy cập
+        </p>
+        <h2 className="font-editorial mt-2 text-2xl font-normal tracking-[-0.01em] text-[#171614] sm:text-[28px]">
+          Đăng nhập tài khoản
+        </h2>
+        <p className="mt-1.5 text-xs leading-relaxed text-[#6B6760]">
+          Dùng chung cho khách hàng Showroom và nhân viên vận hành — nhập email và mật khẩu của bạn.
         </p>
       </div>
 
@@ -22,16 +27,16 @@ export function LoginPage() {
           role="alert"
           aria-live="polite"
           data-testid="bootstrap-alert"
-          className="mb-4 p-3 text-sm rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-start justify-between gap-2"
+          className="mb-5 flex items-start justify-between gap-2 border border-[#E6D0A7] bg-[#FFF9ED] p-3.5 text-sm text-[#785111]"
         >
           <div className="flex items-start gap-2">
-            <span className="font-bold text-amber-700 select-none">!</span>
+            <span className="select-none font-bold text-[#9A6818]">!</span>
             <span>{bootstrapError.message}</span>
           </div>
           <button
             type="button"
             onClick={() => dispatch(clearBootstrapError())}
-            className="text-amber-600 hover:text-amber-800 font-bold px-1 rounded-sm cursor-pointer"
+            className="cursor-pointer px-1 font-bold text-[#8A5A14] hover:text-[#5E3B08]"
             aria-label="Đóng thông báo"
           >
             ×
@@ -41,11 +46,11 @@ export function LoginPage() {
 
       <LoginForm />
 
-      <p className="mt-6 border-t border-gray-100 pt-6 text-center text-sm text-gray-600">
+      <p className="mt-7 border-t border-[#E6E2DA] pt-6 text-center text-sm text-[#6B6760]">
         Khách hàng chưa có tài khoản?{' '}
         <Link
           to="/register-customer"
-          className="font-medium text-blue-600 hover:text-blue-700 underline underline-offset-4"
+          className="font-medium text-[#171614] underline decoration-[#C7C1B5] underline-offset-4 transition-colors hover:text-[#087f8c] hover:decoration-[#087f8c]"
         >
           Đăng ký ngay
         </Link>

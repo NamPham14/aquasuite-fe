@@ -31,10 +31,66 @@ import {
   ScrollText,
   UserCog,
   Store,
+  Search,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth'
 import { useProfileSync } from '../features/iam/hooks/useProfileSync'
 import { isCustomerRole } from '../features/iam/types/auth.types'
+import { AdminCommandPalette, type CommandPaletteRouteItem } from '../shared/ui/AdminCommandPalette'
+
+const SIDEBAR_COLLAPSE_STORAGE_KEY = 'aquasuite_admin_sidebar_collapsed'
+
+const ROLE_LABELS: Record<string, string> = {
+  SHOP_OWNER: 'Chủ cửa hàng',
+  SALES_STAFF: 'Bán hàng',
+  ACCOUNTANT: 'Kế toán',
+  SHIPPER: 'Giao nhận',
+}
+
+function getPrimaryRoleLabel(roles?: string[]): string | null {
+  if (!roles?.length) return null
+  for (const r of roles) {
+    const clean = r.replace(/^ROLE_/, '')
+    if (ROLE_LABELS[clean]) return ROLE_LABELS[clean]
+  }
+  return roles[0]
+}
+
+const QUICK_EXTRA_ROUTES: readonly CommandPaletteRouteItem[] = [
+  {
+    label: 'Tạo đơn tại quầy (POS)',
+    group: 'Bán hàng & Đơn hàng',
+    to: '/app/orders/pos',
+    keywords: 'pos ban hang tao don',
+    roles: ['SALES_STAFF', 'SHOP_OWNER'],
+  },
+  {
+    label: 'Tạo báo giá mới',
+    group: 'Bán hàng & Đơn hàng',
+    to: '/app/quotations/new',
+    keywords: 'bao gia quotation',
+    roles: ['SALES_STAFF', 'SHOP_OWNER'],
+  },
+  {
+    label: 'Tạo đơn mua hàng (PO)',
+    group: 'Kho vận & Cung ứng',
+    to: '/app/purchase-orders/new',
+    keywords: 'mua hang nhap kho po',
+    roles: ['SHOP_OWNER', 'ACCOUNTANT', 'SALES_STAFF'],
+  },
+  {
+    label: 'Hồ sơ cá nhân',
+    group: 'Hệ thống',
+    to: '/app/system-info',
+    keywords: 'tai khoan profile system info',
+  },
+  {
+    label: 'Mở Showroom khách hàng',
+    group: 'Cửa hàng trực tuyến',
+    to: '/storefront',
+    keywords: 'storefront shop trang chu ban le',
+  },
+]
 
 interface NavItem {
   name: string
@@ -206,10 +262,30 @@ function NavList({ navId, onItemClick }: { navId: string; onItemClick?: () => vo
   const location = useLocation()
   const roles = user?.roles ?? []
   const canSee = (item: NavItem) => !item.roles || item.roles.some((r) => roles.includes(r))
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved =
+        typeof window !== 'undefined' && window.localStorage
+          ? window.localStorage.getItem(SIDEBAR_COLLAPSE_STORAGE_KEY)
+          : null
+      return saved ? (JSON.parse(saved) as Record<string, boolean>) : {}
+    } catch {
+      return {}
+    }
+  })
 
   const toggleGroup = (groupName: string) => {
-    setCollapsedGroups((prev) => ({ ...prev, [groupName]: !prev[groupName] }))
+    setCollapsedGroups((prev) => {
+      const next = { ...prev, [groupName]: !prev[groupName] }
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(SIDEBAR_COLLAPSE_STORAGE_KEY, JSON.stringify(next))
+        }
+      } catch {
+        // Ignore storage unavailable errors in restricted environments
+      }
+      return next
+    })
   }
 
   const visibleSections = NAV_ITEMS.map((section) => ({ section, visible: section.items.filter(canSee) }))
@@ -297,6 +373,33 @@ export function ManagementLayout() {
   // Đồng bộ vai trò khi tab được focus lại để sidebar cập nhật động theo phân quyền mới.
   useProfileSync()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+  const roles = user?.roles ?? []
+  const primaryRoleLabel = getPrimaryRoleLabel(roles)
+
+  const commandItems: CommandPaletteRouteItem[] = [
+    ...NAV_ITEMS.flatMap((section) =>
+      section.items.map((item) => ({
+        label: item.name,
+        group: section.group,
+        to: item.to,
+        roles: item.roles,
+      })),
+    ),
+    ...QUICK_EXTRA_ROUTES,
+  ].filter((item) => !item.roles || item.roles.some((r) => roles.includes(r)))
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onShortcut = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsPaletteOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', onShortcut)
+    return () => window.removeEventListener('keydown', onShortcut)
+  }, [])
 
   const openButtonRef = useRef<HTMLButtonElement | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
@@ -401,6 +504,13 @@ export function ManagementLayout() {
 
   return (
     <div className="flex min-h-screen bg-aqs-page">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-aqs-accent focus:px-3.5 focus:py-2 focus:text-xs focus:font-semibold focus:text-white focus:shadow-md"
+      >
+        Chuyển tới nội dung chính
+      </a>
+
       {/* Desktop Sidebar (fixed width, hidden on mobile) */}
       <aside
         className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-aqs-border bg-aqs-surface md:flex"
@@ -441,9 +551,11 @@ export function ManagementLayout() {
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-aqs-accent-soft text-xs font-semibold text-aqs-accent-hover">
               {user.username ? user.username.slice(0, 2).toUpperCase() : <UserIcon className="h-4 w-4" aria-hidden="true" />}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-aqs-ink">{user.username}</p>
-              <p className="truncate text-xs text-aqs-ink-faint">{user.email}</p>
+              <p className="truncate text-xs text-aqs-ink-faint">
+                {primaryRoleLabel ?? user.email}
+              </p>
             </div>
           </Link>
         )}
@@ -465,23 +577,28 @@ export function ManagementLayout() {
             role="dialog"
             aria-modal="true"
             aria-label="Menu điều hướng di động"
-            className="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl flex flex-col"
+            className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-aqs-border bg-aqs-surface shadow-aqs-float"
           >
-            <div className="h-16 flex items-center justify-between px-6 bg-slate-900 shrink-0">
+            <div className="flex h-16 shrink-0 items-center justify-between border-b border-aqs-border bg-aqs-surface px-5">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center shrink-0">
-                  <Droplets className="w-3.5 h-3.5" aria-hidden="true" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-control bg-aqs-accent-soft text-aqs-accent">
+                  <Droplets className="h-4 w-4" aria-hidden="true" />
                 </div>
-                <span className="text-base font-bold text-white tracking-tight">
-                  AquaSuite
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-base font-bold leading-none tracking-tight text-aqs-ink">
+                    AquaSuite
+                  </span>
+                  <span className="mt-0.5 text-[10px] font-medium text-aqs-ink-faint">
+                    HỆ THỐNG QUẢN LÝ
+                  </span>
+                </div>
               </div>
               <button
                 ref={closeButtonRef}
                 type="button"
                 onClick={closeMobileDrawer}
                 aria-label="Đóng menu điều hướng"
-                className="p-2 text-slate-200 hover:text-white hover:bg-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
+                className="cursor-pointer rounded-control p-2 text-aqs-ink-muted hover:bg-aqs-surface-subtle hover:text-aqs-ink focus:outline-none focus:ring-2 focus:ring-aqs-focus"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
@@ -494,14 +611,14 @@ export function ManagementLayout() {
 
             {/* Mobile Drawer Footer User Info & System Info Link (NO Logout here) */}
             {user && (
-              <div className="p-4 border-t border-slate-200/80 bg-slate-50/70 shrink-0">
+              <div className="shrink-0 border-t border-aqs-border bg-aqs-surface-subtle p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 text-xs font-semibold">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-aqs-accent-soft text-xs font-semibold text-aqs-accent-hover">
                     {user.username ? user.username.slice(0, 2).toUpperCase() : <UserIcon className="w-4 h-4" aria-hidden="true" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-semibold text-aqs-ink">{user.username}</p>
-                    <p className="truncate text-[11px] text-aqs-ink-faint">{user.email}</p>
+                    <p className="truncate text-[11px] text-aqs-ink-faint">{primaryRoleLabel ?? user.email}</p>
                   </div>
                 </div>
 
@@ -511,10 +628,10 @@ export function ManagementLayout() {
                   className="mt-3 flex w-full items-center justify-between rounded-control border border-aqs-border bg-aqs-surface px-2.5 py-1.5 text-[11px] font-medium text-aqs-ink-muted transition-colors hover:border-aqs-accent-border hover:bg-aqs-surface-subtle hover:text-aqs-accent-hover focus:outline-none focus:ring-2 focus:ring-aqs-focus"
                 >
                   <span className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-sky-600" aria-hidden="true" />
+                    <ShieldCheck className="h-3.5 w-3.5 text-aqs-accent" aria-hidden="true" />
                     <span>Hồ sơ cá nhân</span>
                   </span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+                  <ChevronRight className="h-3.5 w-3.5 text-aqs-ink-faint" aria-hidden="true" />
                 </Link>
               </div>
             )}
@@ -527,7 +644,7 @@ export function ManagementLayout() {
         {/* Top Header Bar */}
         <header className="sticky top-0 z-30 border-b border-aqs-border bg-aqs-surface">
           <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-            {/* Left: Mobile Toggle & Mobile Logo */}
+            {/* Left: Mobile Toggle, Mobile Logo & Quick Jump */}
             <div className="flex items-center gap-3">
               <button
                 ref={openButtonRef}
@@ -536,31 +653,55 @@ export function ManagementLayout() {
                 aria-label="Mở menu điều hướng"
                 aria-expanded={isMobileOpen}
                 aria-controls="mobile-sidebar-navigation"
-                className="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
+                className="md:hidden cursor-pointer rounded-control p-2 text-aqs-ink-muted hover:bg-aqs-surface-subtle hover:text-aqs-ink focus:outline-none focus:ring-2 focus:ring-aqs-focus"
               >
                 <Menu className="w-5 h-5" aria-hidden="true" />
               </button>
 
-              <div className="hidden items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-sky-600 text-white flex items-center justify-center">
-                  <Droplets className="w-3.5 h-3.5" aria-hidden="true" />
+              <Link to="/app/dashboard" className="flex items-center gap-2 md:hidden">
+                <div className="flex h-7 w-7 items-center justify-center rounded-control bg-aqs-accent-soft text-aqs-accent">
+                  <Droplets className="h-4 w-4" aria-hidden="true" />
                 </div>
-                <span className="text-base font-bold text-white tracking-tight">
+                <span className="text-base font-bold tracking-tight text-aqs-ink">
                   AquaSuite
                 </span>
-              </div>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setIsPaletteOpen(true)}
+                aria-label="Tìm nhanh chức năng quản trị"
+                className="hidden sm:inline-flex min-h-[38px] min-w-[240px] cursor-pointer items-center justify-between gap-3 rounded-control border border-aqs-border bg-aqs-surface-subtle px-3 text-xs text-aqs-ink-muted transition-colors hover:border-aqs-border-strong hover:bg-aqs-surface focus:outline-none focus:ring-2 focus:ring-aqs-focus"
+              >
+                <span className="flex items-center gap-2">
+                  <Search className="h-3.5 w-3.5 text-aqs-ink-faint" aria-hidden="true" />
+                  <span>Tìm nhanh chức năng...</span>
+                </span>
+                <kbd className="rounded border border-aqs-border bg-aqs-surface px-1.5 py-0.5 font-mono text-[10px] font-semibold text-aqs-ink-faint">
+                  Ctrl+K
+                </kbd>
+              </button>
             </div>
 
             {/* Right: User Status, System Info link & Single Logout Button */}
             <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPaletteOpen(true)}
+                aria-label="Tìm nhanh chức năng"
+                className="inline-flex sm:hidden min-h-[40px] min-w-[40px] cursor-pointer items-center justify-center rounded-control border border-aqs-border bg-aqs-surface text-aqs-ink-muted hover:bg-aqs-surface-subtle focus:outline-none focus:ring-2 focus:ring-aqs-focus"
+              >
+                <Search className="h-4 w-4" aria-hidden="true" />
+              </button>
+
               {/* Nhân viên có thể mở trang cửa hàng (homepage) mà không cần đăng xuất. */}
               <Link
                 to="/storefront"
                 aria-label="Xem trang cửa hàng"
                 title="Xem trang cửa hàng"
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[40px] min-w-[40px] border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors"
+                className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-1.5 rounded-control border border-aqs-border bg-aqs-surface px-3 py-1.5 text-xs font-medium text-aqs-ink transition-colors hover:bg-aqs-surface-subtle focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aqs-focus"
               >
-                <Store className="w-4 h-4 sm:w-3.5 sm:h-3.5" aria-hidden="true" />
+                <Store className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-aqs-ink-muted" aria-hidden="true" />
                 <span className="hidden sm:inline">Cửa hàng</span>
               </Link>
 
@@ -568,12 +709,21 @@ export function ManagementLayout() {
                 <Link
                   to="/app/system-info"
                   aria-label="Hồ sơ cá nhân"
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors group"
+                  className="group flex items-center gap-2 rounded-control px-2.5 py-1.5 text-aqs-ink transition-colors hover:bg-aqs-surface-subtle focus:outline-none focus:ring-2 focus:ring-aqs-focus"
                 >
-                  <div className="w-7 h-7 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-bold uppercase shrink-0">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-aqs-accent-soft text-xs font-bold uppercase text-aqs-accent-hover">
                     {user.username ? user.username.slice(0, 2).toUpperCase() : 'US'}
                   </div>
-                  <span className="hidden sm:block text-xs text-slate-700 order-first">Xin chào, <strong>{user.username}</strong>!</span>
+                  <div className="order-first hidden text-right sm:block">
+                    <span className="block text-xs text-aqs-ink">
+                      Xin chào, <strong>{user.username}</strong>!
+                    </span>
+                    {primaryRoleLabel && (
+                      <span className="block text-[10px] font-medium text-aqs-ink-faint">
+                        {primaryRoleLabel}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               )}
 
@@ -582,9 +732,9 @@ export function ManagementLayout() {
                 onClick={() => void logout()}
                 type="button"
                 aria-label="Đăng xuất"
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 min-h-[40px] min-w-[40px] border border-slate-200 hover:border-red-200 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 cursor-pointer transition-colors"
+                className="inline-flex min-h-[40px] min-w-[40px] cursor-pointer items-center justify-center gap-1.5 rounded-control border border-aqs-border bg-aqs-surface px-3 py-1.5 text-xs font-medium text-aqs-ink transition-colors hover:border-aqs-danger-border hover:bg-aqs-danger-soft hover:text-aqs-danger focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aqs-focus"
               >
-                <LogOut className="w-4 h-4 sm:w-3.5 sm:h-3.5" aria-hidden="true" />
+                <LogOut className="h-4 w-4 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline">Đăng xuất</span>
               </button>
             </div>
@@ -592,7 +742,7 @@ export function ManagementLayout() {
         </header>
 
         {/* Content area */}
-        <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 lg:px-8">
+        <main id="main-content" className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-5 sm:px-6 lg:px-8">
           <Outlet />
         </main>
 
@@ -601,6 +751,12 @@ export function ManagementLayout() {
           AquaSuite — Hệ thống quản lý đại lý thiết bị vệ sinh
         </footer>
       </div>
+
+      <AdminCommandPalette
+        open={isPaletteOpen}
+        onClose={() => setIsPaletteOpen(false)}
+        items={commandItems}
+      />
     </div>
   )
 }

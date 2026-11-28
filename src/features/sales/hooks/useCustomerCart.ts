@@ -75,7 +75,8 @@ export function useCustomerCart(enabled = true) {
     mergingRef.current = true
     void mergeCartItemsMutation({
       items: pendingGuestItems.map((entry) => ({
-        variantId: entry.variantId,
+        variantId: entry.comboId || entry.isCombo ? undefined : entry.variantId,
+        comboId: entry.comboId || (entry.isCombo ? entry.variantId : undefined),
         quantity: entry.quantity,
       })),
     })
@@ -118,34 +119,49 @@ export function useCustomerCart(enabled = true) {
   }, [])
 
   const handleAddItem = useCallback(
-    async (variantId: string, quantity = 1) => {
-      const parsed = addCartItemSchema.safeParse({ variantId, quantity })
+    async (targetId: string, quantity = 1, options?: { isCombo?: boolean }) => {
+      const isCombo = Boolean(options?.isCombo)
+      const parsed = addCartItemSchema.safeParse({
+        variantId: isCombo ? undefined : targetId,
+        comboId: isCombo ? targetId : undefined,
+        quantity,
+      })
       if (!parsed.success) {
         toast.error(parsed.error.issues[0]?.message ?? 'Dữ liệu thêm giỏ hàng không hợp lệ')
         return false
       }
 
       if (!enabled) {
-        const res = upsertGuestCartItem(parsed.data.variantId, parsed.data.quantity, guestCatalogItems)
+        const res = upsertGuestCartItem(targetId, parsed.data.quantity, guestCatalogItems, {
+          isCombo,
+        })
         if (res.error) {
           toast.error(res.error)
           return false
         }
         setGuestEntries(res.entries)
-        toast.success('Đã thêm sản phẩm vào giỏ hàng tạm')
+        toast.success(
+          isCombo
+            ? 'Đã thêm gói Combo vào giỏ hàng tạm'
+            : 'Đã thêm sản phẩm vào giỏ hàng tạm',
+        )
         return true
       }
 
-      markVariantPending(parsed.data.variantId, true)
+      markVariantPending(targetId, true)
       try {
         await addCartItemMutation(parsed.data).unwrap()
-        toast.success('Đã thêm sản phẩm vào giỏ hàng')
+        toast.success(
+          isCombo
+            ? 'Đã thêm gói Combo vào giỏ hàng'
+            : 'Đã thêm sản phẩm vào giỏ hàng',
+        )
         return true
       } catch (err) {
         toast.error(normalizeApiError(err).message)
         return false
       } finally {
-        markVariantPending(parsed.data.variantId, false)
+        markVariantPending(targetId, false)
       }
     },
     [addCartItemMutation, enabled, guestCatalogItems, markVariantPending],

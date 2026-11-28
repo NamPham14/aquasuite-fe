@@ -1,11 +1,14 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   ClipboardList,
+  FileCheck2,
   KeyRound,
   MapPin,
   ShieldCheck,
   ShoppingBag,
+  Truck,
   UserRound,
+  Wallet,
 } from 'lucide-react'
 import { useAuth } from '../../features/iam/hooks/useAuth.ts'
 import { useGetMyProfileQuery } from '../../features/customer/api/profileApi.ts'
@@ -13,9 +16,20 @@ import { ProfileInfoSection } from '../../features/customer/components/ProfileIn
 import { ProfilePasswordSection } from '../../features/customer/components/ProfilePasswordSection.tsx'
 import { ProfileAddressesSection } from '../../features/customer/components/ProfileAddressesSection.tsx'
 import { ProfileOrdersSection } from '../../features/customer/components/ProfileOrdersSection.tsx'
+import { ProfileDeliveriesSection } from '../../features/customer/components/ProfileDeliveriesSection.tsx'
+import { ProfileDebtSection } from '../../features/customer/components/ProfileDebtSection.tsx'
+import { ProfileQuotationsSection } from '../../features/customer/components/ProfileQuotationsSection.tsx'
 import { ProfileWarrantySection } from '../../features/customer/components/ProfileWarrantySection.tsx'
 
-type ProfileTabKey = 'info' | 'password' | 'addresses' | 'orders' | 'warranty'
+type ProfileTabKey =
+  | 'info'
+  | 'orders'
+  | 'deliveries'
+  | 'debt'
+  | 'quotations'
+  | 'warranty'
+  | 'addresses'
+  | 'password'
 
 const PROFILE_TABS: Array<{
   key: ProfileTabKey
@@ -30,10 +44,34 @@ const PROFILE_TABS: Array<{
     icon: UserRound,
   },
   {
-    key: 'password',
-    label: 'Đổi mật khẩu',
-    desc: 'Bảo mật tài khoản đăng nhập',
-    icon: KeyRound,
+    key: 'orders',
+    label: 'Đơn hàng của tôi',
+    desc: 'Đơn Online, Tại quầy & Dự án công trình',
+    icon: ShoppingBag,
+  },
+  {
+    key: 'deliveries',
+    label: 'Quá trình giao hàng',
+    desc: 'Tiến độ vận chuyển & ảnh xác nhận bàn giao',
+    icon: Truck,
+  },
+  {
+    key: 'debt',
+    label: 'Công nợ & Hóa đơn',
+    desc: 'Hạn mức, dư nợ & biên lai thanh toán',
+    icon: Wallet,
+  },
+  {
+    key: 'quotations',
+    label: 'Báo giá dự án',
+    desc: 'Hồ sơ chào giá & tiến độ chuyển đổi đơn',
+    icon: FileCheck2,
+  },
+  {
+    key: 'warranty',
+    label: 'Bảo hành & Hỗ trợ',
+    desc: 'Bảo hành điện tử & yêu cầu kỹ thuật',
+    icon: ShieldCheck,
   },
   {
     key: 'addresses',
@@ -42,16 +80,10 @@ const PROFILE_TABS: Array<{
     icon: MapPin,
   },
   {
-    key: 'orders',
-    label: 'Lịch sử đơn hàng',
-    desc: 'Theo dõi đơn & thanh toán PayOS',
-    icon: ShoppingBag,
-  },
-  {
-    key: 'warranty',
-    label: 'Bảo hành & Hỗ trợ',
-    desc: 'Bảo hành điện tử & yêu cầu kỹ thuật',
-    icon: ShieldCheck,
+    key: 'password',
+    label: 'Đổi mật khẩu',
+    desc: 'Bảo mật tài khoản đăng nhập',
+    icon: KeyRound,
   },
 ]
 
@@ -61,6 +93,7 @@ export function CustomerProfilePage() {
   const isCustomer = user?.roles?.includes('CUSTOMER') ?? false
 
   const rawTab = searchParams.get('tab') as ProfileTabKey | null
+  const orderCodeParam = searchParams.get('order') ?? ''
   const activeTab: ProfileTabKey =
     rawTab && PROFILE_TABS.some((t) => t.key === rawTab) ? rawTab : 'info'
 
@@ -199,10 +232,27 @@ export function CustomerProfilePage() {
               </>
             )}
 
-            {activeTab === 'password' && <ProfilePasswordSection />}
-            {activeTab === 'addresses' && <ProfileAddressesSection />}
-            {activeTab === 'orders' && <ProfileOrdersSection />}
+            {activeTab === 'orders' && (
+              <ProfileOrdersSection
+                onTrackDelivery={(orderCode) =>
+                  setSearchParams(
+                    { tab: 'deliveries', ...(orderCode ? { order: orderCode } : {}) },
+                    { replace: true },
+                  )
+                }
+              />
+            )}
+            {activeTab === 'deliveries' && (
+              <ProfileDeliveriesSection
+                key={orderCodeParam || 'all'}
+                initialOrderCode={orderCodeParam}
+              />
+            )}
+            {activeTab === 'debt' && <ProfileDebtSection />}
+            {activeTab === 'quotations' && <ProfileQuotationsSection />}
             {activeTab === 'warranty' && <ProfileWarrantySection />}
+            {activeTab === 'addresses' && <ProfileAddressesSection />}
+            {activeTab === 'password' && <ProfilePasswordSection />}
           </div>
         </div>
       )}

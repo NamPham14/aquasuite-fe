@@ -5,6 +5,7 @@
 export interface CartItemResponse {
   cartItemId: string
   variantId: string
+  comboId?: string | null
   productId?: string | null
   sku: string
   productName: string
@@ -19,6 +20,8 @@ export interface CartItemResponse {
   variantStatus: string
   inStock: boolean
   priceChanged: boolean
+  isCombo?: boolean
+  components?: string[]
   updatedAt: string
 }
 
@@ -32,7 +35,8 @@ export interface CartResponse {
 }
 
 export interface AddCartItemRequest {
-  variantId: string
+  variantId?: string
+  comboId?: string
   quantity: number
 }
 

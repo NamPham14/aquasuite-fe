@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import { normalizeApiError } from '../../../shared/api/apiError'
 import { loginSchema, type LoginFormData } from '../schemas/login.schema'
 import { useAuth } from '../hooks/useAuth'
@@ -13,6 +14,7 @@ export function LoginForm() {
   const { login } = useAuth()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -61,7 +63,7 @@ export function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4"
+      className="space-y-5"
       noValidate
       aria-label="Form đăng nhập"
     >
@@ -69,7 +71,7 @@ export function LoginForm() {
         <div
           role="alert"
           aria-live="assertive"
-          className="p-3 text-sm rounded-lg bg-red-50 text-red-700 border border-red-200"
+          className="border border-[#DFC4C4] bg-[#FDF6F6] p-3.5 text-sm text-[#8F2D2D]"
         >
           {errorMessage}
         </div>
@@ -78,7 +80,7 @@ export function LoginForm() {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em] text-[#3F3D39]"
         >
           Email
         </label>
@@ -90,13 +92,15 @@ export function LoginForm() {
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? 'email-error' : undefined}
           {...register('email')}
-          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
-            errors.email ? 'border-red-500' : 'border-gray-300'
+          className={`w-full border bg-[#F9F8F6] px-3.5 py-2.5 text-sm text-[#171614] transition-colors placeholder:text-[#9E988E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#171614]/15 disabled:opacity-60 ${
+            errors.email
+              ? 'border-[#B72F42] focus:border-[#B72F42]'
+              : 'border-[#E6E2DA] focus:border-[#171614]'
           }`}
-          placeholder="admin@aquasuite.vn"
+          placeholder="ten@aquasuite.vn"
         />
         {errors.email && (
-          <p id="email-error" className="mt-1 text-xs text-red-600">
+          <p id="email-error" className="mt-1.5 text-xs text-[#982438]">
             {errors.email.message}
           </p>
         )}
@@ -105,25 +109,43 @@ export function LoginForm() {
       <div>
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.1em] text-[#3F3D39]"
         >
           Mật khẩu
         </label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          disabled={isSubmitting}
-          aria-invalid={!!errors.password}
-          aria-describedby={errors.password ? 'password-error' : undefined}
-          {...register('password')}
-          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
-            errors.password ? 'border-red-500' : 'border-gray-300'
-          }`}
-          placeholder="••••••••"
-        />
+        <div className="relative">
+          <input
+            id="password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            disabled={isSubmitting}
+            aria-invalid={!!errors.password}
+            aria-describedby={errors.password ? 'password-error' : undefined}
+            {...register('password')}
+            className={`w-full border bg-[#F9F8F6] py-2.5 pl-3.5 pr-11 text-sm text-[#171614] transition-colors placeholder:text-[#9E988E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#171614]/15 disabled:opacity-60 ${
+              errors.password
+                ? 'border-[#B72F42] focus:border-[#B72F42]'
+                : 'border-[#E6E2DA] focus:border-[#171614]'
+            }`}
+            placeholder="••••••••"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            disabled={isSubmitting}
+            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-pressed={showPassword}
+            className="absolute inset-y-0 right-0 flex cursor-pointer items-center px-3 text-[#78736A] transition-colors hover:text-[#171614] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#171614] disabled:opacity-50"
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Eye className="h-4 w-4" aria-hidden="true" />
+            )}
+          </button>
+        </div>
         {errors.password && (
-          <p id="password-error" className="mt-1 text-xs text-red-600">
+          <p id="password-error" className="mt-1.5 text-xs text-[#982438]">
             {errors.password.message}
           </p>
         )}
@@ -132,11 +154,11 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        className="flex min-h-11 w-full cursor-pointer items-center justify-center bg-[#171614] px-4 py-2.5 text-sm font-medium tracking-[0.04em] text-white transition-colors hover:bg-[#2C2A27] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171614] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isSubmitting ? (
           <span className="flex items-center gap-2">
-            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent motion-reduce:animate-none" />
             Đang đăng nhập...
           </span>
         ) : (

@@ -52,6 +52,7 @@ export function OrderDetailPage() {
   const [isInvoicesModalOpen, setIsInvoicesModalOpen] = useState(false)
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false)
   const [confirmAddress, setConfirmAddress] = useState('')
   const [confirmSchedule, setConfirmSchedule] = useState('')
   const [confirmNote, setConfirmNote] = useState('')
@@ -90,21 +91,21 @@ export function OrderDetailPage() {
     }
   }
 
-  const handleCompleteOrder = async () => {
+  const handleCompleteOrder = () => {
     if (!order) return
     if (order.paymentStatus !== 'PAID') {
       toast.error('Đơn hàng chưa thanh toán đủ (PAID). Không thể hoàn tất đơn hàng!')
       return
     }
+    setIsCompleteModalOpen(true)
+  }
 
-    const confirmed = window.confirm(
-      `Xác nhận hoàn tất đơn hàng ${order.orderCode}?\nSau khi hoàn tất, đơn hàng sẽ không thể chỉnh sửa điều phối.`
-    )
-    if (!confirmed) return
-
+  const handleConfirmCompleteOrder = async () => {
+    if (!order) return
     try {
       await completeOrder(order.orderId).unwrap()
       toast.success(`Đơn hàng ${order.orderCode} đã được hoàn tất thành công!`)
+      setIsCompleteModalOpen(false)
     } catch (err: any) {
       const msg = err?.data?.message || err?.message || 'Có lỗi xảy ra khi hoàn tất đơn hàng'
       toast.error(msg)
@@ -892,6 +893,29 @@ export function OrderDetailPage() {
               </Button>
             </div>
           </form>
+        </ManagementDialog>
+      )}
+
+      {isCompleteModalOpen && (
+        <ManagementDialog
+          title={`Hoàn tất đơn hàng (${order.orderCode})`}
+          onClose={() => setIsCompleteModalOpen(false)}
+          closeDisabled={isCompleting}
+        >
+          <div className="space-y-4 p-5 text-xs">
+            <div className="rounded-control border border-aqs-positive-border bg-aqs-positive-soft p-3 text-aqs-positive-ink">
+              Đơn hàng <strong>{order.orderCode}</strong> đã thanh toán đủ (<strong>{formatMoney(order.totalAmount)}</strong>). Sau khi xác nhận hoàn tất, đơn hàng sẽ khóa chỉnh sửa điều phối giao nhận.
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-aqs-divider pt-3">
+              <Button variant="secondary" size="sm" onClick={() => setIsCompleteModalOpen(false)} disabled={isCompleting}>
+                Hủy
+              </Button>
+              <Button type="button" variant="primary" size="sm" loading={isCompleting} onClick={() => void handleConfirmCompleteOrder()}>
+                {!isCompleting && <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />}
+                Xác nhận hoàn tất
+              </Button>
+            </div>
+          </div>
         </ManagementDialog>
       )}
     </ManagementPageShell>

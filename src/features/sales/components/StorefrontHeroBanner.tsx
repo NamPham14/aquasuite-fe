@@ -93,10 +93,10 @@ export function StorefrontHeroBanner({
               Thám Vân Home &middot; Bộ sưu tập 2026 &middot; {totalCatalogCount} mẫu sẵn kho
             </p>
 
-            <h1 className="font-editorial text-4xl sm:text-5xl lg:text-[54px] font-normal text-white leading-[1.08] tracking-[-0.015em] max-w-2xl">
+            <h1 className="font-editorial italic text-4xl sm:text-5xl lg:text-[54px] font-normal text-white leading-[1.08] tracking-[-0.015em] max-w-2xl">
               Nghệ thuật của nước,
               <br />
-              <em className="italic text-[#EDE4D5] font-normal">tĩnh tại trong từng đường nét.</em>
+              <span className="text-[#EDE4D5]">tĩnh tại trong từng đường nét.</span>
             </h1>
 
             <p className="text-xs sm:text-sm text-[#D8D3CA] leading-relaxed max-w-lg font-light">

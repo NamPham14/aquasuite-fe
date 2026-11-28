@@ -10,12 +10,14 @@ export function CustomerEditorialModal({
   onClose,
   children,
   closeDisabled = false,
+  maxWidthClass = 'w-[min(94vw,660px)]',
 }: {
   eyebrow?: string
   title: string
   onClose: () => void
   children: ReactNode
   closeDisabled?: boolean
+  maxWidthClass?: string
 }) {
   const titleId = useId()
   const ref = useRef<HTMLDialogElement>(null)
@@ -23,9 +25,13 @@ export function CustomerEditorialModal({
   useEffect(() => {
     const dialog = ref.current
     const trigger = document.activeElement
-    dialog?.showModal()
+    if (dialog && !dialog.open && typeof dialog.showModal === 'function') {
+      dialog.showModal()
+    }
     return () => {
-      dialog?.close()
+      if (dialog?.open && typeof dialog.close === 'function') {
+        dialog.close()
+      }
       if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus()
     }
   }, [])
@@ -34,12 +40,15 @@ export function CustomerEditorialModal({
     <dialog
       ref={ref}
       aria-labelledby={titleId}
+      onClick={(event) => {
+        if (event.target === ref.current && !closeDisabled) onClose()
+      }}
       onCancel={(event) => {
         event.preventDefault()
         event.stopPropagation()
         if (!closeDisabled) onClose()
       }}
-      className="m-auto max-h-[92vh] w-[min(94vw,660px)] overflow-y-auto border border-[#D6D1C7] bg-white p-0 text-[#171614] shadow-2xl backdrop:bg-[#171614]/55"
+      className={`m-auto max-h-[92vh] ${maxWidthClass} overflow-y-auto border border-[#D6D1C7] bg-white p-0 text-[#171614] shadow-2xl backdrop:bg-[#171614]/55`}
     >
       <div className="flex items-start justify-between gap-4 border-b border-[#E6E2DA] bg-[#FAF9F6] px-6 py-5">
         <div>

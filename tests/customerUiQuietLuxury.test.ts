@@ -46,6 +46,9 @@ const REDESIGNED_UI_SOURCES = [
   '../src/features/customer/components/ProfilePasswordSection.tsx',
   '../src/features/customer/components/ProfileAddressesSection.tsx',
   '../src/features/customer/components/ProfileOrdersSection.tsx',
+  '../src/features/customer/components/ProfileDeliveriesSection.tsx',
+  '../src/features/customer/components/ProfileDebtSection.tsx',
+  '../src/features/customer/components/ProfileQuotationsSection.tsx',
   '../src/features/customer/components/ProfileWarrantySection.tsx',
 ]
 

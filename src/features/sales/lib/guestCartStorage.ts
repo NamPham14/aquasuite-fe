@@ -5,9 +5,15 @@ export const GUEST_CART_STORAGE_KEY = 'aquasuite_guest_cart_v1'
 export const GUEST_CART_UPDATED_EVENT = 'aquasuite:guest-cart-updated'
 
 export interface GuestCartEntry {
-  variantId: string
+  variantId?: string
+  comboId?: string
+  isCombo?: boolean
   quantity: number
   updatedAt: string
+}
+
+export function getGuestEntryTargetId(entry: Pick<GuestCartEntry, 'variantId' | 'comboId'>): string {
+  return (entry.comboId || entry.variantId || '').trim()
 }
 
 function getStorage(): Storage | null {
@@ -41,17 +47,23 @@ export function readGuestCart(): GuestCartEntry[] {
       .filter(
         (entry): entry is GuestCartEntry =>
           Boolean(entry) &&
-          typeof entry.variantId === 'string' &&
-          entry.variantId.trim() !== '' &&
+          (typeof entry.variantId === 'string' || typeof entry.comboId === 'string') &&
+          getGuestEntryTargetId(entry) !== '' &&
           typeof entry.quantity === 'number' &&
           Number.isFinite(entry.quantity) &&
           entry.quantity >= 1,
       )
-      .map((entry) => ({
-        variantId: entry.variantId,
-        quantity: Math.floor(entry.quantity),
-        updatedAt: typeof entry.updatedAt === 'string' ? entry.updatedAt : new Date().toISOString(),
-      }))
+      .map((entry) => {
+        const isCombo = Boolean(entry.isCombo || entry.comboId)
+        const targetId = getGuestEntryTargetId(entry)
+        return {
+          variantId: isCombo ? undefined : targetId,
+          comboId: isCombo ? targetId : undefined,
+          isCombo,
+          quantity: Math.floor(entry.quantity),
+          updatedAt: typeof entry.updatedAt === 'string' ? entry.updatedAt : new Date().toISOString(),
+        }
+      })
   } catch {
     return []
   }
@@ -78,16 +90,19 @@ export function clearGuestCart(): void {
 }
 
 export function upsertGuestCartItem(
-  variantId: string,
+  targetId: string,
   addQuantity: number,
   catalog: CatalogItemOption[] = [],
+  options?: { isCombo?: boolean },
 ): { entries: GuestCartEntry[]; error?: string } {
   const safeQty = Math.max(1, Math.floor(addQuantity))
   const current = readGuestCart()
-  const existing = current.find((item) => item.variantId === variantId)
+  const existing = current.find((item) => getGuestEntryTargetId(item) === targetId)
   const nextQuantity = (existing?.quantity ?? 0) + safeQty
 
-  const product = catalog.find((item) => item.variantId === variantId)
+  const product = catalog.find((item) => item.variantId === targetId)
+  const isCombo = options?.isCombo ?? existing?.isCombo ?? Boolean(product?.isCombo)
+
   if (product && product.availableStock > 0 && nextQuantity > product.availableStock) {
     return {
       entries: current,
@@ -97,29 +112,33 @@ export function upsertGuestCartItem(
   if (product && product.availableStock <= 0) {
     return {
       entries: current,
-      error: `Sản phẩm ${product.sku} hiện tạm hết hàng`,
+      error: `${isCombo ? 'Combo' : 'Sản phẩm'} ${product.sku} hiện tạm hết hàng`,
     }
   }
 
   const now = new Date().toISOString()
+  const nextEntry: GuestCartEntry = isCombo
+    ? { comboId: targetId, isCombo: true, quantity: nextQuantity, updatedAt: now }
+    : { variantId: targetId, isCombo: false, quantity: nextQuantity, updatedAt: now }
+
   const updated = existing
     ? current.map((item) =>
-        item.variantId === variantId ? { ...item, quantity: nextQuantity, updatedAt: now } : item,
+        getGuestEntryTargetId(item) === targetId ? nextEntry : item,
       )
-    : [{ variantId, quantity: nextQuantity, updatedAt: now }, ...current]
+    : [nextEntry, ...current]
 
   writeGuestCart(updated)
   return { entries: updated }
 }
 
 export function updateGuestCartQuantity(
-  variantId: string,
+  targetId: string,
   quantity: number,
   catalog: CatalogItemOption[] = [],
 ): { entries: GuestCartEntry[]; error?: string } {
   const safeQty = Math.max(1, Math.floor(quantity))
   const current = readGuestCart()
-  const product = catalog.find((item) => item.variantId === variantId)
+  const product = catalog.find((item) => item.variantId === targetId)
   if (product && product.availableStock > 0 && safeQty > product.availableStock) {
     return {
       entries: current,
@@ -129,14 +148,14 @@ export function updateGuestCartQuantity(
 
   const now = new Date().toISOString()
   const updated = current.map((item) =>
-    item.variantId === variantId ? { ...item, quantity: safeQty, updatedAt: now } : item,
+    getGuestEntryTargetId(item) === targetId ? { ...item, quantity: safeQty, updatedAt: now } : item,
   )
   writeGuestCart(updated)
   return { entries: updated }
 }
 
-export function removeGuestCartItem(variantId: string): GuestCartEntry[] {
-  const updated = readGuestCart().filter((item) => item.variantId !== variantId)
+export function removeGuestCartItem(targetId: string): GuestCartEntry[] {
+  const updated = readGuestCart().filter((item) => getGuestEntryTargetId(item) !== targetId)
   writeGuestCart(updated)
   return updated
 }
@@ -151,7 +170,9 @@ export function buildGuestCartResponse(
   let hasInvalidItems = false
 
   for (const entry of entries) {
-    const product = catalog.find((c) => c.variantId === entry.variantId)
+    const targetId = getGuestEntryTargetId(entry)
+    const product = catalog.find((c) => c.variantId === targetId)
+    const isCombo = Boolean(entry.isCombo || entry.comboId || product?.isCombo)
     const unitPrice = product?.sellingPrice ?? 0
     const availableQty = product?.availableStock ?? 0
     const lineTotal = unitPrice * entry.quantity
@@ -164,15 +185,21 @@ export function buildGuestCartResponse(
     totalQuantity += entry.quantity
     subtotal += lineTotal
 
+    const comboComponentCount = product?.components?.length ?? 0
     items.push({
-      cartItemId: entry.variantId,
-      variantId: entry.variantId,
-      productId: null,
+      cartItemId: targetId,
+      variantId: targetId,
+      comboId: isCombo ? targetId : null,
+      productId: isCombo ? targetId : null,
       sku: product?.sku ?? 'N/A',
-      productName: product?.name ?? 'Sản phẩm Showroom',
-      variantName: product?.brand ?? '',
+      productName: product?.name ?? (isCombo ? 'Gói Combo Showroom' : 'Sản phẩm Showroom'),
+      variantName: isCombo
+        ? comboComponentCount > 0
+          ? `Combo trọn bộ (${comboComponentCount} thiết bị)`
+          : 'Combo trọn bộ'
+        : product?.brand ?? '',
       imageUrl: product?.imageUrl ?? null,
-      unit: product?.unit ?? 'Cái',
+      unit: product?.unit ?? (isCombo ? 'Gói' : 'Cái'),
       quantity: entry.quantity,
       unitPrice,
       currentSellingPrice: unitPrice,
@@ -181,6 +208,8 @@ export function buildGuestCartResponse(
       variantStatus: product ? 'ACTIVE' : 'INACTIVE',
       inStock,
       priceChanged: false,
+      isCombo,
+      components: product?.components,
       updatedAt: entry.updatedAt,
     })
   }
@@ -194,4 +223,3 @@ export function buildGuestCartResponse(
     hasInvalidItems,
   }
 }
-

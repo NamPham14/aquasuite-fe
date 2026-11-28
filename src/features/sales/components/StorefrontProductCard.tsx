@@ -9,7 +9,11 @@ interface StorefrontProductCardProps {
   quantityInCart: number
   isAdding: boolean
   animationIndex?: number
-  onAddToCart: (variantId: string, quantity: number) => Promise<boolean>
+  onAddToCart: (
+    variantId: string,
+    quantity: number,
+    options?: { isCombo?: boolean },
+  ) => Promise<boolean>
   onOpenDetail?: (item: CatalogItemOption) => void
 }
 
@@ -33,7 +37,7 @@ export function StorefrontProductCard({
 
   const handleQuickAdd = async () => {
     if (!inStock || isAdding) return
-    const ok = await onAddToCart(item.variantId, 1)
+    const ok = await onAddToCart(item.variantId, 1, { isCombo: item.isCombo })
     if (ok) {
       setJustAdded(true)
       window.setTimeout(() => setJustAdded(false), 1600)
@@ -85,32 +89,30 @@ export function StorefrontProductCard({
         )}
 
         {/* Thanh thêm nhanh vào giỏ khi hover trên desktop */}
-        {!item.isCombo && (
-          <div className="hidden sm:block absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 group-focus-within:translate-y-0 transition-transform duration-200 ease-out">
-            <button
-              type="button"
-              disabled={!inStock || isAdding}
-              onClick={() => void handleQuickAdd()}
-              className={`w-full h-10 flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-[0.16em] font-semibold transition-colors cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed ${
-                justAdded
-                  ? 'bg-[#245C42] text-white'
-                  : 'bg-[#171614]/92 text-[#FAF9F6] hover:bg-[#171614]'
-              }`}
-            >
-              {justAdded ? (
-                <>
-                  <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>Đã thêm vào giỏ</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>{inStock ? 'Thêm nhanh vào giỏ' : 'Tạm hết hàng'}</span>
-                </>
-              )}
-            </button>
-          </div>
-        )}
+        <div className="hidden sm:block absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 group-focus-within:translate-y-0 transition-transform duration-200 ease-out">
+          <button
+            type="button"
+            disabled={!inStock || isAdding}
+            onClick={() => void handleQuickAdd()}
+            className={`w-full h-10 flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-[0.16em] font-semibold transition-colors cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed ${
+              justAdded
+                ? 'bg-[#245C42] text-white'
+                : 'bg-[#171614]/92 text-[#FAF9F6] hover:bg-[#171614]'
+            }`}
+          >
+            {justAdded ? (
+              <>
+                <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Đã thêm vào giỏ</span>
+              </>
+            ) : (
+              <>
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>{inStock ? 'Thêm nhanh vào giỏ' : 'Tạm hết hàng'}</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Typography biên tập bên dưới ảnh */}
@@ -142,7 +144,7 @@ export function StorefrontProductCard({
             <span className="text-[11px] text-[#78736A] ml-1">/ {item.unit}</span>
           </div>
 
-          {!item.isCombo ? (
+          {!item.isCombo || inStock ? (
             <button
               type="button"
               disabled={!inStock || isAdding}

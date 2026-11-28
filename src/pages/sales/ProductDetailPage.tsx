@@ -6,6 +6,7 @@ import {
   Award,
   Check,
   ChevronRight,
+  Eye,
   FileText,
   Layers,
   Minus,
@@ -24,41 +25,12 @@ import { useGetSalesCatalogItemsQuery } from '../../features/sales/api/salesCata
 import type { CatalogItemOption } from '../../features/sales/types/salesCatalog.types.ts'
 import { useCustomerCart } from '../../features/sales/hooks/useCustomerCart.ts'
 import { StorefrontProductCard } from '../../features/sales/components/StorefrontProductCard.tsx'
-
-const SPEC_LABELS: Record<string, string> = {
-  flushingType: 'Hệ thống xả',
-  roughInDimension: 'Tâm xả tiêu chuẩn',
-  glazeTechnology: 'Công nghệ men sứ',
-  warrantyTerms: 'Chính sách bảo hành',
-  installationManualPdf: 'Hướng dẫn lắp đặt',
-  cadBlueprints: 'Bản vẽ kỹ thuật CAD',
-  material: 'Chất liệu',
-  standardDiameter: 'Đường kính ren',
-  application: 'Ứng dụng thực tế',
-  maxPressure: 'Áp lực tối đa',
-  dimension: 'Kích thước',
-  capacity: 'Dung tích',
-  type: 'Kiểu lắp đặt',
-  technology: 'Công nghệ tích hợp',
-  showerHeadSize: 'Kích thước bát sen',
-  pressureRange: 'Áp lực nước',
-  height: 'Chiều cao',
-  glassThickness: 'Độ dày kính',
-  protection: 'Chuẩn chống nước',
-  hoseLength: 'Chiều dài dây',
-  standardPipe: 'Đường kính ống thoát',
-  length: 'Chiều dài',
-  connector: 'Đầu nối tiêu chuẩn',
-}
-
-function isSafeHttpUrl(value: string): boolean {
-  try {
-    const parsed = new URL(value)
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:'
-  } catch {
-    return false
-  }
-}
+import { ComboComponentDetailModal } from '../../features/sales/components/ComboConfigurationModals.tsx'
+import {
+  isSafeHttpUrl,
+  parseComboComponents,
+  SPEC_LABELS,
+} from '../../features/sales/lib/comboComponents.ts'
 
 /**
  * Trang Chi tiết Sản phẩm (/products/:variantId) theo phong cách Quiet-Luxury Showroom.
@@ -72,6 +44,15 @@ export function ProductDetailPage() {
   const [selectedQty, setSelectedQty] = useState(1)
   const [justAdded, setJustAdded] = useState(false)
   const [failedImageIds, setFailedImageIds] = useState<Record<string, boolean>>({})
+  const [activeComponentIdx, setActiveComponentIdx] = useState<number | null>(null)
+  const [trackedVariantId, setTrackedVariantId] = useState(variantId)
+
+  if (trackedVariantId !== variantId) {
+    setTrackedVariantId(variantId)
+    setSelectedQty(1)
+    setJustAdded(false)
+    setActiveComponentIdx(null)
+  }
 
   const {
     data: apiCatalogItems = [],
@@ -95,6 +76,11 @@ export function ProductDetailPage() {
       )
     )
   }, [allCatalogItems, variantId])
+
+  const parsedComponents = useMemo(
+    () => parseComboComponents(product?.components, allCatalogItems),
+    [allCatalogItems, product?.components],
+  )
 
   const quantitiesByVariant = useMemo(() => {
     const map: Record<string, number> = {}
@@ -126,13 +112,16 @@ export function ProductDetailPage() {
   const handleAddProductToCart = async (
     targetVariantId: string,
     quantity: number,
+    options?: { isCombo?: boolean },
   ): Promise<boolean> => {
-    return handleAddItem(targetVariantId, quantity)
+    return handleAddItem(targetVariantId, quantity, options)
   }
 
   const handleBuyNow = async () => {
     if (!product) return
-    const ok = await handleAddProductToCart(product.variantId, selectedQty)
+    const ok = await handleAddProductToCart(product.variantId, selectedQty, {
+      isCombo: product.isCombo,
+    })
     if (!ok) return
     if (!isAuthenticated) {
       toast.info(
@@ -385,121 +374,155 @@ export function ProductDetailPage() {
             )}
 
             {/* Danh sách thiết bị trong Combo (nếu là gói Combo) */}
-            {product.components && product.components.length > 0 && (
+            {parsedComponents.length > 0 && (
               <div className="border border-[#E6E2DA] bg-[#FAF9F6] p-5 space-y-3">
-                <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-[#171614] flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-[#8C6D46]" aria-hidden="true" />
-                  <span>Cấu hình trọn bộ ({product.components.length} thiết bị)</span>
-                </h2>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-[#171614] flex items-center gap-2">
+                    <Layers className="h-4 w-4 text-[#8C6D46]" aria-hidden="true" />
+                    <span>Cấu hình trọn bộ ({parsedComponents.length} thiết bị)</span>
+                  </h2>
+                  <span className="text-[11px] text-[#78736A]">
+                    Nhấn vào thiết bị để xem chi tiết
+                  </span>
+                </div>
                 <ul className="divide-y divide-[#E6E2DA]">
-                  {product.components.map((comp, idx) => (
-                    <li
-                      key={comp}
-                      className="flex items-center gap-3 py-2.5 text-xs text-[#171614]"
-                    >
-                      <span className="font-editorial text-sm text-[#8C6D46] w-6 shrink-0">
-                        {String(idx + 1).padStart(2, '0')}
-                      </span>
-                      <span className="truncate font-medium">{comp}</span>
-                    </li>
-                  ))}
+                  {parsedComponents.map((comp) => {
+                    const compItem = comp.catalogItem
+                    const compInStock = Boolean(compItem && compItem.availableStock > 0)
+                    return (
+                      <li key={`${comp.raw}-${comp.index}`}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveComponentIdx(comp.index)}
+                          className="w-full flex items-center justify-between gap-3 py-2.5 px-2 -mx-2 text-left text-xs text-[#171614] hover:bg-white transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="font-editorial text-sm text-[#8C6D46] w-6 shrink-0">
+                              {String(comp.index + 1).padStart(2, '0')}
+                            </span>
+                            <div className="min-w-0 space-y-0.5">
+                              <p className="truncate font-medium group-hover:underline underline-offset-4 decoration-[#8C6D46]">
+                                {comp.displayName}
+                                {comp.sku ? ` (${comp.sku})` : ''} x{comp.quantity}
+                              </p>
+                              {compItem && (
+                                <p className="text-[11px] text-[#78736A] flex flex-wrap items-center gap-2">
+                                  <span className="tabular-nums font-medium text-[#171614]">
+                                    {formatVnd(compItem.sellingPrice)} / {compItem.unit}
+                                  </span>
+                                  <span aria-hidden="true">&middot;</span>
+                                  <span className={compInStock ? 'text-[#245C42]' : 'text-[#78736A]'}>
+                                    {compInStock
+                                      ? `Sẵn kho ${compItem.availableStock}`
+                                      : 'Tạm hết hàng'}
+                                  </span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="inline-flex items-center gap-1 shrink-0 border border-[#D6D1C7] bg-white px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] font-semibold text-[#171614] group-hover:border-[#171614] transition-colors">
+                            <Eye className="h-3 w-3 text-[#8C6D46]" aria-hidden="true" />
+                            <span>Chi tiết</span>
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
             )}
 
-            {/* Bộ chọn số lượng & CTA mua hàng */}
-            {!product.isCombo ? (
-              <div className="pt-2 space-y-5">
-                <div className="flex flex-wrap items-center gap-4">
-                  <span className="text-[11px] uppercase tracking-[0.16em] font-semibold text-[#57534E]">
-                    Số lượng đặt mua
-                  </span>
-                  <div className="inline-flex items-center border border-[#D6D1C7] bg-[#FAF9F6] h-11">
-                    <button
-                      type="button"
-                      disabled={!inStock || selectedQty <= 1 || isCurrentPending}
-                      onClick={() => setSelectedQty((q) => Math.max(1, q - 1))}
-                      aria-label="Giảm số lượng"
-                      className="px-3.5 h-full text-[#57534E] hover:text-[#171614] disabled:opacity-35 cursor-pointer transition-colors"
-                    >
-                      <Minus className="h-3.5 w-3.5" aria-hidden="true" />
-                    </button>
-                    <span className="w-12 text-center text-sm font-semibold text-[#171614] tabular-nums border-x border-[#E6E2DA] h-full flex items-center justify-center bg-white">
-                      {selectedQty}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={!inStock || selectedQty >= maxQty || isCurrentPending}
-                      onClick={() => setSelectedQty((q) => Math.min(maxQty, q + 1))}
-                      aria-label="Tăng số lượng"
-                      className="px-3.5 h-full text-[#57534E] hover:text-[#171614] disabled:opacity-35 cursor-pointer transition-colors"
-                    >
-                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                    </button>
-                  </div>
-                  <span className="text-xs text-[#78736A] tabular-nums">
-                    Còn <strong className="text-[#171614]">{product.availableStock}</strong> {product.unit} sẵn kho
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Bộ chọn số lượng & CTA mua hàng (dùng chung cho cả sản phẩm lẻ và gói Combo) */}
+            <div className="pt-2 space-y-5">
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="text-[11px] uppercase tracking-[0.16em] font-semibold text-[#57534E]">
+                  {product.isCombo ? 'Số gói Combo' : 'Số lượng đặt mua'}
+                </span>
+                <div className="inline-flex items-center border border-[#D6D1C7] bg-[#FAF9F6] h-11">
                   <button
                     type="button"
-                    disabled={!inStock || isCurrentPending}
-                    onClick={() => {
-                      void handleAddProductToCart(product.variantId, selectedQty).then((ok) => {
-                        if (ok) {
-                          setJustAdded(true)
-                          window.setTimeout(() => setJustAdded(false), 1800)
-                        }
-                      })
-                    }}
-                    className={`h-12 inline-flex items-center justify-center gap-2 border px-5 text-[11px] uppercase tracking-[0.16em] font-semibold transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed ${
-                      justAdded
-                        ? 'border-[#245C42] bg-[#245C42] text-white'
-                        : 'border-[#171614] bg-white text-[#171614] hover:bg-[#F2EFE9]'
-                    }`}
+                    disabled={!inStock || selectedQty <= 1 || isCurrentPending}
+                    onClick={() => setSelectedQty((q) => Math.max(1, q - 1))}
+                    aria-label="Giảm số lượng"
+                    className="px-3.5 h-full text-[#57534E] hover:text-[#171614] disabled:opacity-35 cursor-pointer transition-colors"
                   >
-                    {justAdded ? (
-                      <>
-                        <Check className="h-4 w-4" aria-hidden="true" />
-                        <span>Đã thêm vào giỏ</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-4 w-4" aria-hidden="true" />
-                        <span>Thêm vào giỏ hàng</span>
-                      </>
-                    )}
+                    <Minus className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
-
+                  <span className="w-12 text-center text-sm font-semibold text-[#171614] tabular-nums border-x border-[#E6E2DA] h-full flex items-center justify-center bg-white">
+                    {selectedQty}
+                  </span>
                   <button
                     type="button"
-                    disabled={!inStock || isCurrentPending}
-                    onClick={() => void handleBuyNow()}
-                    className="h-12 inline-flex items-center justify-center gap-2 border border-[#171614] bg-[#171614] px-5 text-[11px] uppercase tracking-[0.16em] font-semibold text-[#FAF9F6] hover:bg-[#2A2825] transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+                    disabled={!inStock || selectedQty >= maxQty || isCurrentPending}
+                    onClick={() => setSelectedQty((q) => Math.min(maxQty, q + 1))}
+                    aria-label="Tăng số lượng"
+                    className="px-3.5 h-full text-[#57534E] hover:text-[#171614] disabled:opacity-35 cursor-pointer transition-colors"
                   >
-                    <span>Mua ngay &amp; Thanh toán</span>
-                    <ArrowUpRight className="h-4 w-4 text-[#C5B091]" aria-hidden="true" />
+                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 </div>
+                <span className="text-xs text-[#78736A] tabular-nums">
+                  {inStock ? (
+                    <>
+                      Còn <strong className="text-[#171614]">{product.availableStock}</strong>{' '}
+                      {product.unit} sẵn kho
+                    </>
+                  ) : product.isCombo ? (
+                    'Combo tạm hết hàng theo cấu hình trọn bộ'
+                  ) : (
+                    <>
+                      Còn <strong className="text-[#171614]">0</strong> {product.unit} sẵn kho
+                    </>
+                  )}
+                </span>
               </div>
-            ) : (
-              <div className="pt-2 flex flex-wrap items-center gap-3.5">
-                <Link
-                  to="/storefront#catalog"
-                  className="h-11 inline-flex items-center justify-center gap-2 border border-[#171614] bg-[#171614] px-6 text-[11px] uppercase tracking-[0.16em] font-semibold text-[#FAF9F6] hover:bg-[#2A2825] transition-colors"
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <button
+                  type="button"
+                  disabled={!inStock || isCurrentPending}
+                  onClick={() => {
+                    void handleAddProductToCart(product.variantId, selectedQty, {
+                      isCombo: product.isCombo,
+                    }).then((ok) => {
+                      if (ok) {
+                        setJustAdded(true)
+                        window.setTimeout(() => setJustAdded(false), 1800)
+                      }
+                    })
+                  }}
+                  className={`h-12 inline-flex items-center justify-center gap-2 border px-5 text-[11px] uppercase tracking-[0.16em] font-semibold transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed ${
+                    justAdded
+                      ? 'border-[#245C42] bg-[#245C42] text-white'
+                      : 'border-[#171614] bg-white text-[#171614] hover:bg-[#F2EFE9]'
+                  }`}
                 >
-                  <span>Chọn thiết bị trong cấu hình</span>
-                </Link>
-                <Link
-                  to="/cart"
-                  className="h-11 inline-flex items-center justify-center gap-2 border border-[#D6D1C7] bg-white px-6 text-[11px] uppercase tracking-[0.16em] font-semibold text-[#171614] hover:border-[#171614] transition-colors"
+                  {justAdded ? (
+                    <>
+                      <Check className="h-4 w-4" aria-hidden="true" />
+                      <span>Đã thêm vào giỏ</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" aria-hidden="true" />
+                      <span>
+                        {product.isCombo ? 'Thêm combo vào giỏ' : 'Thêm vào giỏ hàng'}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!inStock || isCurrentPending}
+                  onClick={() => void handleBuyNow()}
+                  className="h-12 inline-flex items-center justify-center gap-2 border border-[#171614] bg-[#171614] px-5 text-[11px] uppercase tracking-[0.16em] font-semibold text-[#FAF9F6] hover:bg-[#2A2825] transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
                 >
-                  <span>Mở giỏ hàng của tôi</span>
-                </Link>
+                  <span>Mua ngay &amp; Thanh toán</span>
+                  <ArrowUpRight className="h-4 w-4 text-[#C5B091]" aria-hidden="true" />
+                </button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </section>
@@ -600,6 +623,19 @@ export function ProductDetailPage() {
             ))}
           </div>
         </section>
+      )}
+      {/* Pop-up Chi tiết từng thiết bị trong cấu hình Combo */}
+      {(product.isCombo || parsedComponents.length > 0) && (
+        <ComboComponentDetailModal
+          key={`detail-${product.variantId}-${activeComponentIdx ?? 'none'}`}
+          comboName={product.name}
+          components={parsedComponents}
+          activeIndex={activeComponentIdx}
+          quantitiesInCart={quantitiesByVariant}
+          pendingVariantIds={pendingVariantIds}
+          onSelectIndex={setActiveComponentIdx}
+          onAddToCart={handleAddProductToCart}
+        />
       )}
     </div>
   )

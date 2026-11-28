@@ -8,6 +8,13 @@ import {
   XCircle,
   Ban,
   UserRound,
+  ArrowRight,
+  Plus,
+  Truck,
+  BadgeCheck,
+  ReceiptText,
+  LifeBuoy,
+  Warehouse,
 } from 'lucide-react'
 import { useAuth } from '../../features/iam/hooks/useAuth.ts'
 import {
@@ -106,8 +113,65 @@ const MOCK_INVENTORY_STATUS = [
   },
 ]
 
+const QUICK_ACTIONS = [
+  {
+    title: 'Tạo đơn tại quầy (POS)',
+    description: 'Lập đơn bán lẻ trực tiếp và kiểm tra hạn mức công nợ.',
+    to: '/app/orders/pos',
+    icon: Plus,
+    roles: ['SALES_STAFF', 'SHOP_OWNER'],
+  },
+  {
+    title: 'Quản lý đơn hàng',
+    description: 'Xác nhận đơn online, theo dõi thanh toán và xuất hóa đơn.',
+    to: '/app/orders',
+    icon: ShoppingCart,
+    roles: ['SALES_STAFF', 'ACCOUNTANT', 'SHOP_OWNER'],
+  },
+  {
+    title: 'Đơn giao của tôi',
+    description: 'Nhận hàng đi giao và cập nhật trạng thái từng đợt giao.',
+    to: '/app/my-deliveries',
+    icon: Truck,
+    roles: ['SHIPPER'],
+  },
+  {
+    title: 'Xác minh thanh toán',
+    description: 'Đối chiếu chứng từ chuyển khoản của khách hàng.',
+    to: '/app/payment-verifications',
+    icon: BadgeCheck,
+    roles: ['ACCOUNTANT'],
+  },
+  {
+    title: 'Phân bổ tiền thu',
+    description: 'Gán phiếu thu đã xác minh vào hóa đơn điện tử.',
+    to: '/app/payment-allocations',
+    icon: ReceiptText,
+    roles: ['ACCOUNTANT'],
+  },
+  {
+    title: 'Tồn kho & Ngưỡng min',
+    description: 'Kiểm tra hàng khả dụng và cảnh báo SKU sắp hết hàng.',
+    to: '/app/inventory',
+    icon: Warehouse,
+    roles: ['SHOP_OWNER', 'ACCOUNTANT'],
+  },
+  {
+    title: 'Yêu cầu bảo hành',
+    description: 'Tiếp nhận và xử lý phiếu bảo hành từ khách hàng.',
+    to: '/app/warranty-tickets',
+    icon: LifeBuoy,
+    roles: ['SHOP_OWNER'],
+  },
+] as const
+
 export function DashboardPage() {
   const { user } = useAuth()
+  const roles = user?.roles ?? []
+  const roleQuickActions = QUICK_ACTIONS.filter((action) =>
+    action.roles.some((r) => roles.includes(r)),
+  )
+  const visibleQuickActions = (roleQuickActions.length > 0 ? roleQuickActions : QUICK_ACTIONS).slice(0, 4)
 
   return (
     <ManagementPageShell>
@@ -122,7 +186,7 @@ export function DashboardPage() {
             </StatusBadge>
             <Link
               to="/app/system-info"
-              className="inline-flex h-10 items-center gap-2 rounded-control border border-aqs-border bg-aqs-surface px-3.5 text-sm font-medium text-aqs-ink transition-colors hover:border-slate-300 hover:bg-aqs-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent"
+              className="inline-flex h-10 items-center gap-2 rounded-control border border-aqs-border bg-aqs-surface px-3.5 text-sm font-medium text-aqs-ink transition-colors hover:border-aqs-border-strong hover:bg-aqs-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent"
             >
               <UserRound className="h-4 w-4 text-aqs-ink-muted" aria-hidden="true" />
               Hồ sơ cá nhân
@@ -130,6 +194,37 @@ export function DashboardPage() {
           </div>
         }
       />
+
+      <section aria-label="Lối tắt nghiệp vụ nhanh" className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {visibleQuickActions.map((action) => {
+          const Icon = action.icon
+          return (
+            <Link
+              key={action.to}
+              to={action.to}
+              className="group flex flex-col justify-between rounded-card border border-aqs-border bg-aqs-surface p-4 transition-colors hover:border-aqs-accent-border-strong hover:bg-aqs-accent-soft/45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqs-accent"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-control border border-aqs-accent-border bg-aqs-accent-soft text-aqs-accent">
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <ArrowRight
+                  className="h-4 w-4 text-aqs-ink-faint transition-transform group-hover:translate-x-0.5 group-hover:text-aqs-accent"
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="mt-3">
+                <p className="text-sm font-bold text-aqs-ink group-hover:text-aqs-accent-hover">
+                  {action.title}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-aqs-ink-muted">
+                  {action.description}
+                </p>
+              </div>
+            </Link>
+          )
+        })}
+      </section>
 
       <section
         aria-label="Chỉ số tổng quan kinh doanh"
