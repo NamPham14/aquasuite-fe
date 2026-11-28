@@ -1,5 +1,6 @@
 import { useDispatch } from 'react-redux'
 import type { AppDispatch } from '../../../app/store.ts'
+import { baseApi } from '../../../shared/api/baseApi.ts'
 import {
   brandApi,
   useDownloadBrandImportReportMutation,
@@ -44,6 +45,18 @@ export function BrandImportDialog({ onSuccess, onClose }: BrandImportDialogProps
     return await downloadReport(jobId).unwrap()
   }
 
+  function handleImportSuccess() {
+    dispatch(
+      baseApi.util.invalidateTags([
+        { type: 'Brand', id: 'LIST' },
+        { type: 'Brand', id: 'OPTIONS' },
+        { type: 'WarrantyPolicy', id: 'REFERENCE_DATA' },
+        { type: 'SalesCatalog', id: 'LIST' },
+      ]),
+    )
+    onSuccess?.()
+  }
+
   return (
     <CatalogImportDialog
       title="Nhập thương hiệu từ Excel"
@@ -55,7 +68,7 @@ export function BrandImportDialog({ onSuccess, onClose }: BrandImportDialogProps
       onSubmitFile={handleSubmitFile}
       onFetchProgress={handleFetchProgress}
       onDownloadReport={handleDownloadReport}
-      onSuccess={onSuccess}
+      onSuccess={handleImportSuccess}
       onClose={onClose}
     />
   )

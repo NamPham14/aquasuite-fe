@@ -39,10 +39,19 @@ export const paymentVerificationApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { orderId }) => [
+      invalidatesTags: (_res, _err, { paymentId, orderId }) => [
         { type: 'PaymentVerification', id: 'LIST' },
+        { type: 'PaymentVerification', id: paymentId },
         { type: 'OrderPayment', id: orderId },
         { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        { type: 'StockReservation', id: orderId },
+        { type: 'StockReservation', id: 'ORDER_LIST' },
+        { type: 'PaymentAllocation', id: 'QUEUE' },
+        'CustomerDebt',
+        { type: 'AuditLog', id: `PAYMENT_RECEIPT:${paymentId}` },
+        { type: 'AuditLog', id: 'PAYMENT_RECEIPT:ALL' },
       ],
     }),
 
@@ -57,9 +66,15 @@ export const paymentVerificationApi = baseApi.injectEndpoints({
         body: { reason },
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { orderId }) => [
+      invalidatesTags: (_res, _err, { paymentId, orderId }) => [
         { type: 'PaymentVerification', id: 'LIST' },
+        { type: 'PaymentVerification', id: paymentId },
         { type: 'OrderPayment', id: orderId },
+        { type: 'SalesOrder', id: orderId },
+        { type: 'StockReservation', id: orderId },
+        { type: 'StockReservation', id: 'ORDER_LIST' },
+        { type: 'AuditLog', id: `PAYMENT_RECEIPT:${paymentId}` },
+        { type: 'AuditLog', id: 'PAYMENT_RECEIPT:ALL' },
       ],
     }),
   }),

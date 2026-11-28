@@ -43,6 +43,7 @@ export const brandApi = baseApi.injectEndpoints({
       invalidatesTags: [
         { type: 'Brand', id: 'LIST' },
         { type: 'Brand', id: 'OPTIONS' },
+        { type: 'WarrantyPolicy', id: 'REFERENCE_DATA' },
       ],
     }),
     updateBrand: builder.mutation<Brand, { id: string; data: UpdateBrandRequest }>({
@@ -52,6 +53,9 @@ export const brandApi = baseApi.injectEndpoints({
         { type: 'Brand', id },
         { type: 'Brand', id: 'LIST' },
         { type: 'Brand', id: 'OPTIONS' },
+        { type: 'Product', id: 'LIST' },
+        { type: 'SalesCatalog', id: 'LIST' },
+        { type: 'WarrantyPolicy', id: 'REFERENCE_DATA' },
       ],
     }),
     deleteBrand: builder.mutation<void, string>({
@@ -61,6 +65,7 @@ export const brandApi = baseApi.injectEndpoints({
         { type: 'Brand', id },
         { type: 'Brand', id: 'LIST' },
         { type: 'Brand', id: 'OPTIONS' },
+        { type: 'WarrantyPolicy', id: 'REFERENCE_DATA' },
       ],
     }),
     downloadBrandImportTemplate: builder.mutation<Blob, void>({

@@ -3,7 +3,14 @@ import type { ApiResponse } from '../../../shared/api/types.ts'
 import type { CodBalance, CodClaim, CodClaimCapacity, CodCollection, CodFilters, CodPage } from '../types/cod.types.ts'
 
 const codApiBase = baseApi.enhanceEndpoints({ addTagTypes: ['Cod'] })
-const changedTags = ['Cod', 'CustomerDebt', 'OrderPayment', 'SalesOrder'] as const
+const changedTags = [
+  'Cod',
+  'CustomerDebt',
+  'OrderPayment',
+  'SalesOrder',
+  { type: 'PaymentAllocation', id: 'QUEUE' },
+  { type: 'StockReservation', id: 'ORDER_LIST' },
+] as const
 export const codApi = codApiBase.injectEndpoints({
   endpoints: (builder) => ({
     getCodClaimCapacity: builder.query<CodClaimCapacity, string>({

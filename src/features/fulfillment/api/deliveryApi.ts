@@ -23,11 +23,33 @@ export const deliveryApi = baseApi.enhanceEndpoints({ addTagTypes: ['Delivery'] 
       transformResponse: (r: ApiResponse<DeliveryDetail>) => r.data!, providesTags: ['Delivery'],
     }),
     assignDeliveries: b.mutation<Delivery[], { shipperId: string; deliveryIds: string[] }>({
-      query: (body) => ({ url: '/fulfillment/delivery-assignments', method: 'PUT', body }), invalidatesTags: ['Delivery'],
+      query: (body) => ({ url: '/fulfillment/delivery-assignments', method: 'PUT', body }),
+      invalidatesTags: ['Delivery', { type: 'OnlineOrder', id: 'DELIVERIES' }],
     }),
     deliveryAction: b.mutation<unknown, { id: string; action: 'start' | 'fail' | 'complete' | 'assignment' | 'reschedule'; body?: { reason: string; scheduledDate?: string | null; customerCancellationConfirmed?: boolean } | FormData }>({
       query: ({ id, action, body }) => ({ url: `/fulfillment/deliveries/${id}/${action}`, method: action === 'assignment' ? 'DELETE' : 'POST', body }),
-      invalidatesTags: ['Delivery'],
+      invalidatesTags: (_r, _e, { action }) => {
+        if (action === 'complete') {
+          return [
+            'Delivery',
+            { type: 'OnlineOrder', id: 'DELIVERIES' },
+            'Cod',
+            'SalesOrder',
+            { type: 'WarrantyRecord', id: 'LIST' },
+            { type: 'WarrantyRecord', id: 'MY_LIST' },
+          ]
+        }
+        if (action === 'fail') {
+          return [
+            'Delivery',
+            { type: 'OnlineOrder', id: 'DELIVERIES' },
+            'SalesOrder',
+            'Inventory',
+            { type: 'SalesCatalog', id: 'LIST' },
+          ]
+        }
+        return ['Delivery', { type: 'OnlineOrder', id: 'DELIVERIES' }, 'SalesOrder']
+      },
     }),
   }),
 })

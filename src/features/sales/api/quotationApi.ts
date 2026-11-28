@@ -67,7 +67,10 @@ export const quotationApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: [{ type: 'Quotation', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
+      ],
     }),
 
     updateQuotation: builder.mutation<QuotationResponse, { id: string; body: QuotationUpsertRequest }>({
@@ -80,6 +83,7 @@ export const quotationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'Quotation', id },
         { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
       ],
     }),
 
@@ -92,6 +96,7 @@ export const quotationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, id) => [
         { type: 'Quotation', id },
         { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
       ],
     }),
 
@@ -105,6 +110,7 @@ export const quotationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'Quotation', id },
         { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
       ],
     }),
 
@@ -118,6 +124,7 @@ export const quotationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'Quotation', id },
         { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
       ],
     }),
 
@@ -131,6 +138,7 @@ export const quotationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'Quotation', id },
         { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
       ],
     }),
 
@@ -140,7 +148,11 @@ export const quotationApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: [{ type: 'Quotation', id: 'LIST' }],
+      invalidatesTags: (_res, _err, id) => [
+        { type: 'Quotation', id },
+        { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
+      ],
     }),
 
     markAccepted: builder.mutation<QuotationResponse, { id: string; body?: MarkAcceptedRequest }>({
@@ -153,6 +165,7 @@ export const quotationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'Quotation', id },
         { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
       ],
     }),
 
@@ -166,6 +179,7 @@ export const quotationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'Quotation', id },
         { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
       ],
     }),
 
@@ -178,12 +192,17 @@ export const quotationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, id) => [
         { type: 'Quotation', id },
         { type: 'Quotation', id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
       ],
     }),
 
     getRevisionHistory: builder.query<QuotationListItemResponse[], string>({
       query: (quotationCode) => `/sales/quotations/code/${quotationCode}/revisions`,
       transformResponse: (res: any) => res?.data ?? res,
+      providesTags: (_res, _err, quotationCode) => [
+        { type: 'Quotation', id: `REVISIONS_${quotationCode}` },
+        { type: 'Quotation', id: 'LIST' },
+      ],
     }),
 
     convertToOrder: builder.mutation<
@@ -208,7 +227,13 @@ export const quotationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'Quotation', id },
         { type: 'Quotation', id: 'LIST' },
-        { type: 'Order' as any, id: 'LIST' },
+        { type: 'Quotation', id: 'ME_LIST' },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        { type: 'StockReservation', id: 'ORDER_LIST' },
+        'Inventory',
+        { type: 'SalesCatalog', id: 'LIST' },
+        'CustomerDebt',
       ],
     }),
   }),

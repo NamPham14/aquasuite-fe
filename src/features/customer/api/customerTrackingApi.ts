@@ -38,6 +38,16 @@ export const customerTrackingApi = baseApi.injectEndpoints({
         responseHandler: async (response) =>
           response.ok ? URL.createObjectURL(await response.blob()) : response.json(),
       }),
+      keepUnusedDataFor: 0,
+      async onCacheEntryAdded(_arg, { cacheDataLoaded, cacheEntryRemoved }) {
+        try {
+          const { data } = await cacheDataLoaded
+          await cacheEntryRemoved
+          URL.revokeObjectURL(data)
+        } catch {
+          /* Không có object URL hợp lệ khi tải ảnh thất bại */
+        }
+      },
     }),
     getMyAllOrders: builder.query<SalesOrderSummaryResponse[], void>({
       query: () => '/sales/orders/me',

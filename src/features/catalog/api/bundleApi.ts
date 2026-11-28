@@ -30,23 +30,23 @@ export const bundleApi = api.injectEndpoints({
     }),
     createBundle: builder.mutation<Bundle, BundleDefinition>({
       query: (body) => ({ url: path, method: 'POST', body }),
-      transformResponse: data<Bundle>, invalidatesTags: ['Bundle'],
+      transformResponse: data<Bundle>, invalidatesTags: ['Bundle', { type: 'SalesCatalog', id: 'LIST' }],
     }),
     updateBundle: builder.mutation<Bundle, { id: string; data: BundleDefinition & { expectedVersion: number } }>({
       query: ({ id, data: body }) => ({ url: `${path}/${id}`, method: 'PUT', body }),
-      transformResponse: data<Bundle>, invalidatesTags: ['Bundle'],
+      transformResponse: data<Bundle>, invalidatesTags: ['Bundle', { type: 'SalesCatalog', id: 'LIST' }, 'Cart'],
     }),
     changeBundlePublication: builder.mutation<Bundle, { id: string; publicationStatus: Exclude<BundlePublication, 'DRAFT'>; expectedVersion: number }>({
       query: ({ id, ...body }) => ({ url: `${path}/${id}/publication-status`, method: 'PATCH', body }),
-      transformResponse: data<Bundle>, invalidatesTags: ['Bundle'],
+      transformResponse: data<Bundle>, invalidatesTags: ['Bundle', { type: 'SalesCatalog', id: 'LIST' }, 'Cart'],
     }),
     changeBundleStatus: builder.mutation<Bundle, { id: string; productStatus: BundleProductStatus; expectedVersion: number }>({
       query: ({ id, ...body }) => ({ url: `${path}/${id}/status`, method: 'PATCH', body }),
-      transformResponse: data<Bundle>, invalidatesTags: ['Bundle'],
+      transformResponse: data<Bundle>, invalidatesTags: ['Bundle', { type: 'SalesCatalog', id: 'LIST' }, 'Cart'],
     }),
     deleteBundle: builder.mutation<void, { id: string; expectedVersion: number }>({
       query: ({ id, expectedVersion }) => ({ url: `${path}/${id}`, method: 'DELETE', params: { expectedVersion } }),
-      transformResponse: () => undefined, invalidatesTags: ['Bundle'],
+      transformResponse: () => undefined, invalidatesTags: ['Bundle', { type: 'SalesCatalog', id: 'LIST' }, 'Cart'],
     }),
   }),
 })

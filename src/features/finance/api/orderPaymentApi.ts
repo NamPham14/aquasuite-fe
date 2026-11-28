@@ -18,14 +18,20 @@ export const orderPaymentApi = baseApi.injectEndpoints({
     getOrderPayments: builder.query<OrderPaymentResponse[], string>({
       query: (orderId) => `/finance/orders/${orderId}/payments`,
       transformResponse: (res: any) => res?.data ?? res ?? [],
-      providesTags: (_res, _err, orderId) => [{ type: 'OrderPayment', id: orderId }],
+      providesTags: (_res, _err, orderId) => [
+        { type: 'OrderPayment', id: orderId },
+        { type: 'OrderPayment', id: 'LIST' },
+      ],
     }),
 
     /** Lấy tiến độ thanh toán theo từng mốc của đơn. */
     getOrderMilestoneProgress: builder.query<OrderMilestoneProgressResponse, string>({
       query: (orderId) => `/finance/orders/${orderId}/payment-milestones`,
       transformResponse: (res: any) => res?.data ?? res,
-      providesTags: (_res, _err, orderId) => [{ type: 'OrderPayment', id: orderId }],
+      providesTags: (_res, _err, orderId) => [
+        { type: 'OrderPayment', id: orderId },
+        { type: 'OrderPayment', id: 'LIST' },
+      ],
     }),
 
     /** Ghi nhận một khoản thanh toán cho đơn (tiền mặt -> VERIFIED, chuyển khoản -> PENDING). */
@@ -42,9 +48,17 @@ export const orderPaymentApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { orderId }) => [
         { type: 'OrderPayment', id: orderId },
         { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        { type: 'StockReservation', id: orderId },
+        { type: 'StockReservation', id: 'ORDER_LIST' },
         // Khoản chuyển khoản vừa ghi nhận ở trạng thái PENDING -> làm mới
         // danh sách chờ xác minh (UC-70) để kế toán thấy ngay không cần F5.
         { type: 'PaymentVerification', id: 'LIST' },
+        // Khoản tiền mặt ở trạng thái VERIFIED -> làm mới hàng đợi phân bổ & công nợ.
+        { type: 'PaymentAllocation', id: 'QUEUE' },
+        'CustomerDebt',
+        'Cod',
       ],
     }),
 

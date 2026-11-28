@@ -61,7 +61,10 @@ export const purchaseOrderApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: [{ type: 'PurchaseOrder', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'PurchaseOrder', id: 'LIST' },
+        { type: 'Inventory', id: 'LOW_STOCK' },
+      ],
     }),
 
     updatePurchaseOrder: builder.mutation<
@@ -77,6 +80,7 @@ export const purchaseOrderApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PurchaseOrder', id },
         { type: 'PurchaseOrder', id: 'LIST' },
+        { type: 'GoodsReceipt', id: `RECEIVABLE-${id}` },
       ],
     }),
 
@@ -89,6 +93,9 @@ export const purchaseOrderApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, id) => [
         { type: 'PurchaseOrder', id },
         { type: 'PurchaseOrder', id: 'LIST' },
+        { type: 'GoodsReceipt', id: `RECEIVABLE-${id}` },
+        { type: 'Inventory', id: 'LIST' },
+        { type: 'Inventory', id: 'LOW_STOCK' },
       ],
     }),
 
@@ -105,6 +112,9 @@ export const purchaseOrderApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PurchaseOrder', id },
         { type: 'PurchaseOrder', id: 'LIST' },
+        { type: 'GoodsReceipt', id: `RECEIVABLE-${id}` },
+        { type: 'Inventory', id: 'LIST' },
+        { type: 'Inventory', id: 'LOW_STOCK' },
       ],
     }),
 
@@ -121,12 +131,20 @@ export const purchaseOrderApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         { type: 'PurchaseOrder', id },
         { type: 'PurchaseOrder', id: 'LIST' },
+        { type: 'GoodsReceipt', id: `RECEIVABLE-${id}` },
+        { type: 'Inventory', id: 'LIST' },
+        { type: 'Inventory', id: 'LOW_STOCK' },
       ],
     }),
 
     getLowStockSuggestions: builder.query<LowStockSuggestionResponse[], string>({
       query: (supplierId) => `/purchasing/purchase-orders/low-stock-suggestions?supplierId=${encodeURIComponent(supplierId)}`,
       transformResponse: (res: any) => res?.data ?? res,
+      providesTags: [
+        { type: 'Inventory', id: 'LOW_STOCK' },
+        { type: 'Inventory', id: 'LIST' },
+        { type: 'PurchaseOrder', id: 'LIST' },
+      ],
     }),
 
     getSupplierItems: builder.query<

@@ -148,12 +148,15 @@ export const onlineCheckoutApi = baseApi.injectEndpoints({
         if (!Array.isArray(raw)) return []
         return raw.map((item) => normalizeOnlineOrderCheckoutResponse({ data: item }))
       },
-      providesTags: ['OnlineOrder'],
+      providesTags: (result) => [
+        { type: 'OnlineOrder', id: 'LIST' },
+        ...(result?.map((o) => ({ type: 'OnlineOrder' as const, id: o.orderId })) ?? []),
+      ],
     }),
     getCheckoutPreview: build.query<OnlineCheckoutPreviewResponse, void>({
       query: () => '/sales/online-orders/checkout-preview',
       transformResponse: normalizeCheckoutPreviewResponse,
-      providesTags: ['OnlineOrder', 'Cart'],
+      providesTags: ['OnlineOrder', 'Cart', 'DeliveryAddress', { type: 'SalesCatalog', id: 'LIST' }],
     }),
     placeOnlineOrder: build.mutation<OnlineOrderCheckoutResponse, PlaceOnlineOrderRequest>({
       query: (body) => ({
@@ -162,12 +165,23 @@ export const onlineCheckoutApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: normalizeOnlineOrderCheckoutResponse,
-      invalidatesTags: ['Cart', 'OnlineOrder'],
+      invalidatesTags: (res) => [
+        'Cart',
+        'OnlineOrder',
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        { type: 'SalesOrder', id: 'LIST' },
+        ...(res?.orderId ? [{ type: 'SalesOrder' as const, id: res.orderId }] : []),
+        { type: 'CustomerDebt', id: 'ME' },
+        { type: 'SalesCatalog', id: 'LIST' },
+      ],
     }),
     getOnlineOrderDetail: build.query<OnlineOrderCheckoutResponse, string>({
       query: (orderId) => `/sales/online-orders/${orderId}`,
       transformResponse: normalizeOnlineOrderCheckoutResponse,
-      providesTags: ['OnlineOrder'],
+      providesTags: (_res, _err, orderId) => [
+        { type: 'OnlineOrder', id: orderId },
+        { type: 'OnlineOrder', id: 'LIST' },
+      ],
     }),
     verifyPayosPayment: build.mutation<OnlineOrderCheckoutResponse, string>({
       query: (orderId) => ({
@@ -175,7 +189,15 @@ export const onlineCheckoutApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
       transformResponse: normalizeOnlineOrderCheckoutResponse,
-      invalidatesTags: ['OnlineOrder'],
+      invalidatesTags: (_res, _err, orderId) => [
+        { type: 'OnlineOrder', id: orderId },
+        { type: 'OnlineOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: orderId },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        { type: 'SalesOrder', id: 'LIST' },
+        { type: 'OrderPayment', id: orderId },
+        { type: 'CustomerDebt', id: 'ME' },
+      ],
     }),
     createOrRefreshPayosPaymentLink: build.mutation<OnlineOrderCheckoutResponse, string>({
       query: (orderId) => ({
@@ -183,7 +205,11 @@ export const onlineCheckoutApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
       transformResponse: normalizeOnlineOrderCheckoutResponse,
-      invalidatesTags: ['OnlineOrder'],
+      invalidatesTags: (_res, _err, orderId) => [
+        { type: 'OnlineOrder', id: orderId },
+        { type: 'OnlineOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: orderId },
+      ],
     }),
   }),
 })

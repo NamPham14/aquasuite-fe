@@ -23,7 +23,7 @@ export function CreditProfileApprovalsPage() {
   const isOwner = user?.roles.some((role) => ['SHOP_OWNER', 'ROLE_SHOP_OWNER'].includes(role.toUpperCase())) ?? false
   const [status, setStatus] = useState<CreditProfileRequestStatus>('PENDING')
   const [selected, setSelected] = useState<CreditProfileRequestDetail | null>(null)
-  const list = useGetCreditProfileRequestsQuery({ status, page: 0, size: 50 }, { skip: !isOwner })
+  const list = useGetCreditProfileRequestsQuery({ status, page: 0, size: 50 }, { skip: !isOwner, refetchOnFocus: true, refetchOnReconnect: true })
   const [loadDetail, detailState] = useLazyGetCreditProfileRequestDetailQuery()
   const [approve, approveState] = useApproveCreditProfileRequestMutation()
   const [reject, rejectState] = useRejectCreditProfileRequestMutation()

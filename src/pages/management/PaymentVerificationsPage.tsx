@@ -45,7 +45,7 @@ export function PaymentVerificationsPage() {
 
   const { data, isLoading, isFetching, error, refetch } = useGetPaymentVerificationsQuery(
     { status: tab, page, size: 20 },
-    { skip: !isAccountant },
+    { skip: !isAccountant, refetchOnFocus: true, refetchOnReconnect: true },
   )
   const [verify, { isLoading: verifying }] = useVerifyPaymentMutation()
   const [fetchProof, { isFetching: viewingProof }] = useLazyGetOrderPaymentProofQuery()

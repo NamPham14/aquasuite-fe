@@ -62,9 +62,12 @@ export const warrantyTicketApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: [
+      invalidatesTags: (_res, _err, body) => [
         { type: 'WarrantyTicket', id: 'LIST' },
+        { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
         { type: 'WarrantyRecord', id: 'LIST' },
+        { type: 'WarrantyRecord', id: 'MY_LIST' },
+        { type: 'WarrantyRecord', id: body.warrantyRecordId },
       ],
     }),
 
@@ -96,10 +99,13 @@ export const warrantyTicketApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { id }) => [
+      invalidatesTags: (res, _err, { id }) => [
         { type: 'WarrantyTicket', id: 'LIST' },
+        { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
         { type: 'WarrantyTicket', id },
         { type: 'WarrantyRecord', id: 'LIST' },
+        { type: 'WarrantyRecord', id: 'MY_LIST' },
+        ...(res?.warrantyRecordId ? [{ type: 'WarrantyRecord' as const, id: res.warrantyRecordId }] : []),
       ],
     }),
 
@@ -129,9 +135,11 @@ export const warrantyTicketApi = baseApi.injectEndpoints({
     startManagedWarrantyTicket: builder.mutation<WarrantyTicketDetail, string>({
       query: (id) => ({ url: `/warranty-tickets/${id}/start`, method: 'POST' }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, id) => [
+      invalidatesTags: (res, _err, id) => [
         { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
+        { type: 'WarrantyTicket', id: 'LIST' },
         { type: 'WarrantyTicket', id },
+        ...(res?.warrantyRecordId ? [{ type: 'WarrantyRecord' as const, id: res.warrantyRecordId }] : []),
       ],
     }),
 
@@ -139,10 +147,13 @@ export const warrantyTicketApi = baseApi.injectEndpoints({
     completeManagedWarrantyTicket: builder.mutation<WarrantyTicketDetail, { id: string; body: CompleteWarrantyTicketPayload }>({
       query: ({ id, body }) => ({ url: `/warranty-tickets/${id}/complete`, method: 'POST', body }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { id }) => [
+      invalidatesTags: (res, _err, { id }) => [
         { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
+        { type: 'WarrantyTicket', id: 'LIST' },
         { type: 'WarrantyTicket', id },
         { type: 'WarrantyRecord', id: 'LIST' },
+        { type: 'WarrantyRecord', id: 'MY_LIST' },
+        ...(res?.warrantyRecordId ? [{ type: 'WarrantyRecord' as const, id: res.warrantyRecordId }] : []),
       ],
     }),
 
@@ -150,9 +161,13 @@ export const warrantyTicketApi = baseApi.injectEndpoints({
     rejectManagedWarrantyTicket: builder.mutation<WarrantyTicketDetail, { id: string; body: RejectWarrantyTicketPayload }>({
       query: ({ id, body }) => ({ url: `/warranty-tickets/${id}/reject`, method: 'POST', body }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: (_res, _err, { id }) => [
+      invalidatesTags: (res, _err, { id }) => [
         { type: 'WarrantyTicket', id: 'MANAGE_LIST' },
+        { type: 'WarrantyTicket', id: 'LIST' },
         { type: 'WarrantyTicket', id },
+        { type: 'WarrantyRecord', id: 'LIST' },
+        { type: 'WarrantyRecord', id: 'MY_LIST' },
+        ...(res?.warrantyRecordId ? [{ type: 'WarrantyRecord' as const, id: res.warrantyRecordId }] : []),
       ],
     }),
   }),

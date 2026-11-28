@@ -55,33 +55,55 @@ export const orderModificationRequestApi = baseApi.injectEndpoints({
     approveOrderModificationRequest: builder.mutation<OrderModificationRequestResponse, { requestId: string; body: ApproveOrderModificationRequest }>({
       query: ({ requestId, body }) => ({ url: `/sales/order-modification-requests/${requestId}/approve`, method: 'POST', body }),
       transformResponse: (response) => dataOf<OrderModificationRequestResponse>(response),
-      invalidatesTags: (_result, _error, { requestId }) => [
+      invalidatesTags: (result, _error, { requestId }) => [
         { type: 'SalesOrder', id: 'MODIFICATION_REQUEST_LIST' },
         { type: 'SalesOrder', id: `MODIFICATION_REQUEST-${requestId}` },
         { type: 'SalesOrder', id: 'LIST' },
-        { type: 'SalesInvoice', id: 'LIST' },
-        { type: 'OrderPayment', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        ...(result?.orderId
+          ? [
+              { type: 'SalesOrder' as const, id: result.orderId },
+              { type: 'StockReservation' as const, id: result.orderId },
+              { type: 'SalesInvoice' as const, id: `ORDER-${result.orderId}` },
+              { type: 'OrderPayment' as const, id: result.orderId },
+            ]
+          : []),
+        'SalesInvoice',
+        'OrderPayment',
+        { type: 'StockReservation', id: 'ORDER_LIST' },
+        'Delivery',
+        'CustomerDebt',
         { type: 'AuditLog', id: `ORDER_MODIFICATION_REQUEST:${requestId}` },
       ],
     }),
     rejectOrderModificationRequest: builder.mutation<OrderModificationRequestResponse, { requestId: string; body: ReviewOrderModificationRequest }>({
       query: ({ requestId, body }) => ({ url: `/sales/order-modification-requests/${requestId}/reject`, method: 'POST', body }),
       transformResponse: (response) => dataOf<OrderModificationRequestResponse>(response),
-      invalidatesTags: (_result, _error, { requestId }) => [
+      invalidatesTags: (result, _error, { requestId }) => [
         { type: 'SalesOrder', id: 'MODIFICATION_REQUEST_LIST' },
         { type: 'SalesOrder', id: `MODIFICATION_REQUEST-${requestId}` },
+        ...(result?.orderId ? [{ type: 'SalesOrder' as const, id: result.orderId }] : []),
         { type: 'AuditLog', id: `ORDER_MODIFICATION_REQUEST:${requestId}` },
       ],
     }),
     recordOrderModificationTaxResult: builder.mutation<OrderModificationRequestResponse, { requestId: string; body: RecordOrderModificationTaxResultRequest }>({
       query: ({ requestId, body }) => ({ url: `/sales/order-modification-requests/${requestId}/tax-result`, method: 'POST', body }),
       transformResponse: (response) => dataOf<OrderModificationRequestResponse>(response),
-      invalidatesTags: (_result, _error, { requestId }) => [
+      invalidatesTags: (result, _error, { requestId }) => [
         { type: 'SalesOrder', id: 'MODIFICATION_REQUEST_LIST' },
         { type: 'SalesOrder', id: `MODIFICATION_REQUEST-${requestId}` },
         { type: 'SalesOrder', id: 'LIST' },
-        { type: 'SalesInvoice', id: 'LIST' },
-        { type: 'OrderPayment', id: 'LIST' },
+        ...(result?.orderId
+          ? [
+              { type: 'SalesOrder' as const, id: result.orderId },
+              { type: 'SalesInvoice' as const, id: `ORDER-${result.orderId}` },
+              { type: 'OrderPayment' as const, id: result.orderId },
+            ]
+          : []),
+        'SalesInvoice',
+        'OrderPayment',
+        { type: 'PaymentAllocation', id: 'QUEUE' },
+        'CustomerDebt',
         { type: 'AuditLog', id: `ORDER_MODIFICATION_REQUEST:${requestId}` },
       ],
     }),
@@ -95,7 +117,11 @@ export const orderModificationRequestApi = baseApi.injectEndpoints({
     createOrderModificationRequest: builder.mutation<OrderModificationRequestResponse, CreateOrderModificationRequestPayload>({
       query: (body) => ({ url: '/sales/order-modification-requests', method: 'POST', body }),
       transformResponse: (response) => dataOf<OrderModificationRequestResponse>(response),
-      invalidatesTags: [{ type: 'SalesOrder', id: 'MODIFICATION_REQUEST_LIST' }],
+      invalidatesTags: (_result, _error, body) => [
+        { type: 'SalesOrder', id: 'MODIFICATION_REQUEST_LIST' },
+        { type: 'SalesOrder', id: body.orderId },
+        { type: 'StockReservation', id: body.orderId },
+      ],
     }),
   }),
 })

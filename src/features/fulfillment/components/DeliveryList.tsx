@@ -28,7 +28,7 @@ export function DeliveryList({ mine = false, orderId, issueNotes = false }: { mi
   const invalidDates = !!(filters.scheduledFrom && filters.scheduledTo && filters.scheduledFrom > filters.scheduledTo)
   const { currentData: data, isFetching, error, refetch } = useGetDeliveriesQuery({ mine, orderId, page, size: 20,
     ...Object.fromEntries(Object.entries(applied).filter(([, v]) => v)),
-  }, { skip: !allowed })
+  }, { skip: !allowed, refetchOnFocus: true, refetchOnReconnect: true })
   const { data: shippersPage } = useGetDeliveryShippersQuery(
     { keyword: '', page: 0, size: 100 },
     { skip: mine || !allowed },

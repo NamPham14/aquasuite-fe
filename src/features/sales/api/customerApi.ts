@@ -66,6 +66,8 @@ export const customerApi = baseApi.injectEndpoints({
       invalidatesTags: [
         { type: 'Quotation', id: 'CUSTOMER_OPTIONS' },
         { type: 'Quotation', id: 'CUSTOMERS' },
+        { type: 'CustomerDebt', id: 'LIST' },
+        { type: 'CustomerDebt', id: 'STATS' },
       ],
     }),
   }),

@@ -77,9 +77,16 @@ export const salesOrderApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: any) => res?.data ?? res,
-      invalidatesTags: [
+      invalidatesTags: (res) => [
         { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
         { type: 'Quotation', id: 'CUSTOMER_OPTIONS' },
+        { type: 'SalesCatalog', id: 'LIST' },
+        'Inventory',
+        { type: 'CustomerDebt', id: 'LIST' },
+        { type: 'CustomerDebt', id: 'STATS' },
+        { type: 'CustomerDebt', id: 'ME' },
+        ...(res?.customerId ? [{ type: 'CustomerDebt' as const, id: res.customerId }] : []),
       ],
     }),
 
@@ -87,6 +94,11 @@ export const salesOrderApi = baseApi.injectEndpoints({
     getCustomerCreditSummary: builder.query<CustomerCreditSummaryResponse, string>({
       query: (customerId) => `/finance/credit-control/customers/${customerId}/summary`,
       transformResponse: (res: any) => res?.data ?? res,
+      providesTags: (_res, _err, customerId) => [
+        { type: 'CustomerDebt', id: customerId },
+        { type: 'CustomerDebt', id: 'LIST' },
+      ],
+      keepUnusedDataFor: 0,
     }),
 
     checkCustomerCredit: builder.mutation<CreditCheckResponse, { customerId: string; body: CreditCheckRequest }>({
@@ -103,7 +115,10 @@ export const salesOrderApi = baseApi.injectEndpoints({
       query: (orderId) => `/finance/orders/${orderId}/payment-summary`,
       transformResponse: (res: any) => res?.data ?? res,
       // Dùng chung tag 'OrderPayment' với các endpoint UC-23 để tự làm mới sau khi ghi nhận.
-      providesTags: (_res, _err, orderId) => [{ type: 'OrderPayment', id: orderId }],
+      providesTags: (_res, _err, orderId) => [
+        { type: 'OrderPayment', id: orderId },
+        { type: 'OrderPayment', id: 'LIST' },
+      ],
     }),
 
     // ========== QUẢN LÝ ĐIỀU PHỐI & HOÀN TẤT ĐƠN HÀNG (UC-21.2) ==========
@@ -120,6 +135,8 @@ export const salesOrderApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { orderId }) => [
         { type: 'SalesOrder', id: orderId },
         { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        'OnlineOrder',
       ],
     }),
 
@@ -132,6 +149,11 @@ export const salesOrderApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, orderId) => [
         { type: 'SalesOrder', id: orderId },
         { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        'OnlineOrder',
+        { type: 'WarrantyRecord', id: 'LIST' },
+        { type: 'WarrantyRecord', id: 'MY_LIST' },
+        'CustomerDebt',
       ],
     }),
 
@@ -149,8 +171,15 @@ export const salesOrderApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { orderId }) => [
         { type: 'SalesOrder', id: orderId },
         { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        'OnlineOrder',
         { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesInvoice', id: 'LIST' },
         { type: 'OrderPayment', id: orderId },
+        { type: 'StockReservation', id: orderId },
+        { type: 'StockReservation', id: 'ORDER_LIST' },
+        'Inventory',
+        { type: 'SalesCatalog', id: 'LIST' },
       ],
     }),
 
@@ -167,7 +196,13 @@ export const salesOrderApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { orderId }) => [
         { type: 'SalesOrder', id: orderId },
         { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        'OnlineOrder',
         { type: 'OrderPayment', id: orderId },
+        { type: 'StockReservation', id: orderId },
+        { type: 'StockReservation', id: 'ORDER_LIST' },
+        'Inventory',
+        { type: 'SalesCatalog', id: 'LIST' },
       ],
     }),
 
@@ -180,7 +215,11 @@ export const salesOrderApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, orderId) => [
         { type: 'SalesOrder', id: orderId },
         { type: 'SalesOrder', id: 'LIST' },
+        { type: 'SalesOrder', id: 'ME_LIST' },
+        'OnlineOrder',
         { type: 'OrderPayment', id: orderId },
+        { type: 'PaymentAllocation', id: 'QUEUE' },
+        'CustomerDebt',
       ],
     }),
 
@@ -188,7 +227,10 @@ export const salesOrderApi = baseApi.injectEndpoints({
     getOrderInvoices: builder.query<SalesInvoiceResponse[], string>({
       query: (orderId) => `/sales/orders/${orderId}/invoices`,
       transformResponse: (res: any) => res?.data ?? res,
-      providesTags: (_res, _err, orderId) => [{ type: 'SalesInvoice', id: `ORDER-${orderId}` }],
+      providesTags: (_res, _err, orderId) => [
+        { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesInvoice', id: 'LIST' },
+      ],
     }),
 
     createDraftInvoice: builder.mutation<
@@ -203,6 +245,7 @@ export const salesOrderApi = baseApi.injectEndpoints({
       transformResponse: (res: any) => res?.data ?? res,
       invalidatesTags: (_res, _err, { orderId }) => [
         { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesInvoice', id: 'LIST' },
         { type: 'SalesOrder', id: orderId },
         { type: 'SalesOrder', id: 'LIST' },
         { type: 'OrderPayment', id: orderId },
@@ -221,6 +264,7 @@ export const salesOrderApi = baseApi.injectEndpoints({
       transformResponse: (res: any) => res?.data ?? res,
       invalidatesTags: (_res, _err, { orderId }) => [
         { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesInvoice', id: 'LIST' },
         { type: 'SalesOrder', id: orderId },
         { type: 'SalesOrder', id: 'LIST' },
         { type: 'OrderPayment', id: orderId },
@@ -238,8 +282,13 @@ export const salesOrderApi = baseApi.injectEndpoints({
       transformResponse: (res: any) => res?.data ?? res,
       invalidatesTags: (_res, _err, { orderId }) => [
         { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesInvoice', id: 'LIST' },
         { type: 'SalesOrder', id: orderId },
         { type: 'SalesOrder', id: 'LIST' },
+        { type: 'OrderPayment', id: orderId },
+        'Delivery',
+        { type: 'PaymentAllocation', id: 'QUEUE' },
+        'CustomerDebt',
       ],
     }),
 
@@ -250,6 +299,7 @@ export const salesOrderApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_res, _err, { orderId }) => [
         { type: 'SalesInvoice', id: `ORDER-${orderId}` },
+        { type: 'SalesInvoice', id: 'LIST' },
         { type: 'SalesOrder', id: orderId },
         { type: 'SalesOrder', id: 'LIST' },
         { type: 'OrderPayment', id: orderId },

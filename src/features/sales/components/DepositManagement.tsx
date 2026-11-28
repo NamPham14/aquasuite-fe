@@ -206,7 +206,6 @@ export function DepositManagement() {
           orderId={selected}
           onClose={() => {
             setSelected(null)
-            void orders.refetch()
           }}
         />
       )}

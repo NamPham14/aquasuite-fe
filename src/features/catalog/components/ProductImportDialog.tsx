@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import type { AppDispatch } from '../../../app/store.ts'
+import { baseApi } from '../../../shared/api/baseApi.ts'
 import {
   productApi,
   useDownloadProductImportReportMutation,
@@ -100,6 +101,19 @@ export function ProductImportDialog({ onSuccess, onClose }: ProductImportDialogP
     </div>
   )
 
+  function handleImportSuccess() {
+    dispatch(
+      baseApi.util.invalidateTags([
+        'Product',
+        'Variant',
+        'Inventory',
+        { type: 'SalesCatalog', id: 'LIST' },
+        'Bundle',
+      ]),
+    )
+    onSuccess?.()
+  }
+
   return (
     <CatalogImportDialog
       title="Nhập sản phẩm từ Excel"
@@ -112,7 +126,7 @@ export function ProductImportDialog({ onSuccess, onClose }: ProductImportDialogP
       onSubmitFile={handleSubmitFile}
       onFetchProgress={handleFetchProgress}
       onDownloadReport={handleDownloadReport}
-      onSuccess={onSuccess}
+      onSuccess={handleImportSuccess}
       onClose={onClose}
       className="max-h-[min(88vh,760px)] overflow-y-auto rounded-card border-aqs-border shadow-aqs-float"
       toastClassName={OPERATIONAL_TOAST_CLASS}

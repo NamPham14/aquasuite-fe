@@ -90,7 +90,10 @@ function OrderModificationRequestList() {
   const { user } = useAuth()
   const roles = user?.roles ?? []
   const canCreate = roles.includes('SALES_STAFF') || roles.includes('SHOP_OWNER')
-  const requestsQuery = useGetOrderModificationRequestsQuery({ page: 1, size: 100 })
+  const requestsQuery = useGetOrderModificationRequestsQuery(
+    { page: 1, size: 100 },
+    { refetchOnFocus: true, refetchOnReconnect: true },
+  )
   const ordersQuery = useGetSalesOrdersQuery({ page: 1, size: 100 })
   const orders = useMemo(() => new Map((ordersQuery.data?.items ?? []).map((order) => [order.orderId, order])), [ordersQuery.data])
   const visible = useMemo(() => (requestsQuery.data?.items ?? []).filter((request) => {
