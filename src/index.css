@@ -8,6 +8,14 @@
   }
 }
 
+.font-editorial {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+}
+
+.font-store-sans {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
 @keyframes aquasuite-float {
   0%,
   100% {
@@ -95,31 +103,13 @@
 .aqua-shine-btn {
   position: relative;
   overflow: hidden;
-}
-
-.aqua-shine-btn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 45%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.32),
-    transparent
-  );
-  transform: translateX(-140%) skewX(-18deg);
-  pointer-events: none;
-}
-
-.aqua-shine-btn:hover::after {
-  animation: aquasuite-shimmer 0.85s ease forwards;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
 }
 
 .aqua-hero-grid {
   background-image:
-    linear-gradient(to right, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(56, 189, 248, 0.08) 1px, transparent 1px);
+    linear-gradient(to right, rgba(8, 127, 140, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(8, 127, 140, 0.045) 1px, transparent 1px);
   background-size: 36px 36px;
 }
 
@@ -129,10 +119,6 @@
   .animate-aqua-aurora,
   .animate-aqua-card-in,
   .animate-aqua-modal-in {
-    animation: none !important;
-  }
-
-  .aqua-shine-btn:hover::after {
     animation: none !important;
   }
 }

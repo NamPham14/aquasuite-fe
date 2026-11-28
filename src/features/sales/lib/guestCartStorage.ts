@@ -1,4 +1,4 @@
-import { CATALOG_PRODUCTS, type CatalogItemOption } from '../data/catalogProducts.data.ts'
+import type { CatalogItemOption } from '../types/salesCatalog.types.ts'
 import type { CartItemResponse, CartResponse } from '../types/cart.types.ts'
 
 export const GUEST_CART_STORAGE_KEY = 'aquasuite_guest_cart_v1'
@@ -80,7 +80,7 @@ export function clearGuestCart(): void {
 export function upsertGuestCartItem(
   variantId: string,
   addQuantity: number,
-  catalog: CatalogItemOption[] = CATALOG_PRODUCTS,
+  catalog: CatalogItemOption[] = [],
 ): { entries: GuestCartEntry[]; error?: string } {
   const safeQty = Math.max(1, Math.floor(addQuantity))
   const current = readGuestCart()
@@ -115,7 +115,7 @@ export function upsertGuestCartItem(
 export function updateGuestCartQuantity(
   variantId: string,
   quantity: number,
-  catalog: CatalogItemOption[] = CATALOG_PRODUCTS,
+  catalog: CatalogItemOption[] = [],
 ): { entries: GuestCartEntry[]; error?: string } {
   const safeQty = Math.max(1, Math.floor(quantity))
   const current = readGuestCart()
@@ -143,7 +143,7 @@ export function removeGuestCartItem(variantId: string): GuestCartEntry[] {
 
 export function buildGuestCartResponse(
   entries: GuestCartEntry[],
-  catalog: CatalogItemOption[] = CATALOG_PRODUCTS,
+  catalog: CatalogItemOption[] = [],
 ): CartResponse {
   const items: CartItemResponse[] = []
   let totalQuantity = 0

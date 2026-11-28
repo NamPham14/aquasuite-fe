@@ -76,21 +76,12 @@ export function CustomerProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      {/* Header Tài khoản nền tối kính mờ đồng bộ với Showroom */}
-      <section className="relative rounded-3xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-sky-950 to-indigo-950 p-6 sm:p-7 text-white shadow-xl shadow-slate-950/15 overflow-hidden">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 aqua-hero-grid opacity-45"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-cyan-400/20 blur-3xl"
-        />
-
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-500 text-slate-950 shadow-lg shadow-cyan-500/30 overflow-hidden">
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Header Tài khoản Kiến trúc Obsidian */}
+      <section className="border border-[#171614] bg-[#171614] px-6 py-7 sm:px-9 sm:py-8 text-[#FAF9F6]">
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <div className="flex items-center gap-5 min-w-0">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-white/20 bg-[#24221F] text-[#C5B091] overflow-hidden">
               {profile?.avatarUrl ? (
                 <img
                   src={profile.avatarUrl}
@@ -101,33 +92,33 @@ export function CustomerProfilePage() {
                 <UserRound className="h-7 w-7" aria-hidden="true" />
               )}
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-cyan-300">
-                Trung tâm Tài khoản Khách hàng
+            <div className="min-w-0 space-y-1">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-[#C5B091]">
+                Hồ sơ khách hàng &middot; Thám Vân
               </p>
-              <h1 className="text-xl sm:text-2xl font-black text-white truncate">
+              <h1 className="font-editorial text-2xl sm:text-3xl font-normal text-white truncate">
                 {profile?.fullName || user?.username || 'Khách hàng AquaSuite'}
               </h1>
-              <p className="mt-0.5 text-xs text-slate-300 truncate">
+              <p className="text-xs text-[#A8A39A] truncate">
                 {profile?.email || user?.email}
-                {profile?.phone ? ` • ${profile.phone}` : ''}
+                {profile?.phone ? ` · ${profile.phone}` : ''}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               to="/profile/warranties"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/20 transition"
+              className="inline-flex items-center gap-2 border border-white/25 bg-transparent px-4 py-2.5 text-[11px] uppercase tracking-[0.14em] font-medium text-[#FAF9F6] hover:bg-white hover:text-[#171614] transition-colors"
             >
-              <ShieldCheck className="h-3.5 w-3.5 text-cyan-300" aria-hidden="true" />
+              <ShieldCheck className="h-3.5 w-3.5 text-[#C5B091]" aria-hidden="true" />
               <span>Bảo hành của tôi</span>
             </Link>
             <Link
               to="/profile/warranty-tickets"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/20 transition"
+              className="inline-flex items-center gap-2 border border-white/25 bg-transparent px-4 py-2.5 text-[11px] uppercase tracking-[0.14em] font-medium text-[#FAF9F6] hover:bg-white hover:text-[#171614] transition-colors"
             >
-              <ClipboardList className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
+              <ClipboardList className="h-3.5 w-3.5 text-[#C5B091]" aria-hidden="true" />
               <span>Yêu cầu bảo hành của tôi</span>
             </Link>
           </div>
@@ -135,15 +126,15 @@ export function CustomerProfilePage() {
       </section>
 
       {!isCustomer ? (
-        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+        <section className="border border-[#E6D3B3] bg-[#FAF5EB] p-6 text-sm text-[#854D0E]">
           Trang này dành cho tài khoản khách hàng. Vui lòng sử dụng hệ thống quản lý cửa hàng cho nghiệp vụ nội bộ.
         </section>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Sidebar Danh mục Hồ sơ */}
           <aside
             aria-label="Danh mục quản lý tài khoản"
-            className="lg:col-span-4 rounded-3xl border border-sky-200/80 bg-white/95 p-3 shadow-sm space-y-1"
+            className="lg:col-span-4 border border-[#E6E2DA] bg-white divide-y divide-[#E6E2DA]"
           >
             {PROFILE_TABS.map((tab) => {
               const Icon = tab.icon
@@ -153,28 +144,26 @@ export function CustomerProfilePage() {
                   key={tab.key}
                   type="button"
                   onClick={() => selectTab(tab.key)}
-                  className={`w-full flex items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition cursor-pointer ${
+                  className={`w-full flex items-center gap-3.5 px-5 py-4 text-left transition-colors cursor-pointer border-l-2 ${
                     active
-                      ? 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/20'
-                      : 'text-slate-700 hover:bg-sky-50/70'
+                      ? 'border-l-[#171614] bg-[#FAF9F6] text-[#171614]'
+                      : 'border-l-transparent bg-white text-[#57534E] hover:bg-[#FAF9F6] hover:text-[#171614]'
                   }`}
                 >
                   <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center border ${
                       active
-                        ? 'bg-white/20 text-white'
-                        : 'bg-sky-50 text-sky-700 border border-sky-100'
+                        ? 'border-[#171614] bg-[#171614] text-[#C5B091]'
+                        : 'border-[#E6E2DA] bg-[#FAF9F6] text-[#78736A]'
                     }`}
                   >
-                    <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+                    <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
-                    <span className="block text-xs font-extrabold">{tab.label}</span>
-                    <span
-                      className={`block text-[11px] truncate ${
-                        active ? 'text-cyan-100' : 'text-slate-500'
-                      }`}
-                    >
+                    <span className={`block text-xs ${active ? 'font-semibold text-[#171614]' : 'font-medium'}`}>
+                      {tab.label}
+                    </span>
+                    <span className="block text-[11px] text-[#78736A] truncate mt-0.5">
                       {tab.desc}
                     </span>
                   </div>
@@ -188,18 +177,18 @@ export function CustomerProfilePage() {
             {activeTab === 'info' && (
               <>
                 {isLoadingProfile ? (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-xs text-slate-500">
+                  <div className="border border-[#E6E2DA] bg-white p-12 text-center text-xs text-[#78736A]">
                     Đang tải hồ sơ cá nhân...
                   </div>
                 ) : isProfileError || !profile ? (
-                  <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-center space-y-3">
-                    <p className="text-xs font-semibold text-rose-800">
+                  <div className="border border-[#E5B8B8] bg-[#FEF2F2] p-8 text-center space-y-3">
+                    <p className="text-xs font-medium text-[#991B1B]">
                       Không thể tải thông tin hồ sơ từ máy chủ.
                     </p>
                     <button
                       type="button"
                       onClick={() => void refetchProfile()}
-                      className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700 cursor-pointer"
+                      className="border border-[#991B1B] bg-[#991B1B] px-5 py-2 text-[11px] uppercase tracking-[0.14em] font-semibold text-white cursor-pointer"
                     >
                       Thử lại
                     </button>

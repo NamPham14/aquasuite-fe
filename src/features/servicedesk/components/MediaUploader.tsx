@@ -127,10 +127,10 @@ export function MediaUploader({
       {/* Upload Drop area */}
       <div
         onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
-        className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-5 text-center transition-colors ${
+        className={`flex flex-col items-center justify-center border border-dashed border-[#D6D1C7] bg-[#FAF9F6] p-5 text-center transition-colors ${
           disabled || isUploading
             ? 'cursor-not-allowed opacity-60'
-            : 'cursor-pointer hover:border-sky-400 hover:bg-sky-50/30'
+            : 'cursor-pointer hover:border-[#171614] hover:bg-[#F2EFE9]'
         }`}
       >
         <input
@@ -143,58 +143,57 @@ export function MediaUploader({
           disabled={disabled || isUploading}
         />
         {isUploading ? (
-          <div className="flex flex-col items-center gap-1.5 text-xs text-sky-700">
-            <Loader2 className="h-6 w-6 animate-spin text-sky-600" />
+          <div className="flex flex-col items-center gap-1.5 text-xs text-[#171614]">
+            <Loader2 className="h-6 w-6 animate-spin text-[#8C6D46]" />
             <span>Đang tải lên media ({uploadingCount} file đang xử lý)...</span>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-1.5 text-xs text-slate-600">
-            <UploadCloud className="h-7 w-7 text-slate-400" />
-            <span className="font-medium text-slate-700">
+          <div className="flex flex-col items-center gap-1.5 text-xs text-[#57534E]">
+            <UploadCloud className="h-6 w-6 text-[#8C6D46]" />
+            <span className="font-medium text-[#171614]">
               Nhấp để chọn ảnh / video hoặc kéo thả vào đây
             </span>
-            <span className="text-[11px] text-slate-400">
-              Ảnh: JPEG, PNG, WEBP (tối đa 5MB) • Video: MP4, MOV (tối đa 20MB)
+            <span className="text-[11px] text-[#78736A]">
+              Ảnh: JPEG, PNG, WEBP (tối đa 5MB) &middot; Video: MP4, MOV (tối đa 20MB)
             </span>
           </div>
         )}
       </div>
 
       {errorMsg && (
-        <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700">
-          <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+        <div className="flex items-center gap-2 border border-[#E5B8B8] bg-[#FEF2F2] p-3 text-xs text-[#991B1B]">
+          <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Media Previews */}
       {value.length > 0 && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           {value.map((m, idx) => (
             <div
               key={m.publicId || idx}
-              className="group relative flex flex-col items-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1.5 text-xs shadow-2xs"
+              className="group relative flex flex-col items-center overflow-hidden border border-[#E6E2DA] bg-white p-1.5 text-xs"
             >
               {m.type === 'IMAGE' ? (
-                <div className="relative h-20 w-full overflow-hidden rounded bg-slate-100">
+                <div className="relative h-20 w-full overflow-hidden bg-[#EFECE6]">
                   <img
                     src={m.url}
                     alt="Ảnh sự cố"
                     className="h-full w-full object-cover"
                     onError={(e) => {
-                      // Fallback icon on mock / broken image URL
                       e.currentTarget.style.display = 'none'
                     }}
                   />
-                  <ImageIcon className="absolute inset-0 m-auto h-6 w-6 text-slate-400" />
+                  <ImageIcon className="absolute inset-0 m-auto h-6 w-6 text-[#8C867C]" />
                 </div>
               ) : (
-                <div className="flex h-20 w-full flex-col items-center justify-center rounded bg-slate-100 text-slate-600">
-                  <Video className="h-6 w-6 text-sky-600" />
-                  <span className="mt-1 text-[10px] font-medium text-slate-500">Video sự cố</span>
+                <div className="flex h-20 w-full flex-col items-center justify-center bg-[#EFECE6] text-[#171614]">
+                  <Video className="h-6 w-6 text-[#8C6D46]" />
+                  <span className="mt-1 text-[10px] font-medium text-[#57534E]">Video sự cố</span>
                 </div>
               )}
-              <div className="mt-1 flex w-full items-center justify-between px-1 text-[11px] text-slate-500">
+              <div className="mt-1 flex w-full items-center justify-between px-1 text-[11px] text-[#78736A]">
                 <span className="truncate">{m.type === 'IMAGE' ? 'Ảnh' : 'Video'}</span>
                 {!disabled && (
                   <button
@@ -203,7 +202,7 @@ export function MediaUploader({
                       e.stopPropagation()
                       handleRemove(idx)
                     }}
-                    className="rounded p-0.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                    className="p-0.5 text-[#78736A] hover:text-[#991B1B] cursor-pointer"
                     title="Xóa file"
                   >
                     <X className="h-3.5 w-3.5" />

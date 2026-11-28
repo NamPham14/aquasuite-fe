@@ -20,10 +20,11 @@ import {
   type GuestCartEntry,
 } from '../lib/guestCartStorage.ts'
 import { addCartItemSchema, updateCartItemQuantitySchema } from '../schemas/cart.schema.ts'
+import { useGetSalesCatalogItemsQuery } from '../api/salesCatalogApi.ts'
 
 /**
  * Hook quản lý toàn bộ thao tác giỏ hàng trực tuyến của khách hàng (UC-17).
- * Hỗ trợ đầy đủ cả người dùng đã đăng nhập (đồng bộ DB) và khách vãng lai (Guest Cart tự động gộp khi đăng nhập).
+ * Hỗ trợ đầy đủ cả người dùng đã đăng nhập (đồng bộ DB) và khách vãng lai (Guest Cart đồng bộ catalog live từ API & tự gộp khi đăng nhập).
  */
 export function useCustomerCart(enabled = true) {
   const {
@@ -34,6 +35,12 @@ export function useCustomerCart(enabled = true) {
     error,
     refetch,
   } = useGetCartQuery(undefined, { skip: !enabled })
+
+  const {
+    data: guestCatalogItems = [],
+    isLoading: isLoadingGuestCatalog,
+    isFetching: isFetchingGuestCatalog,
+  } = useGetSalesCatalogItemsQuery(undefined, { skip: enabled })
 
   const [addCartItemMutation] = useAddCartItemMutation()
   const [mergeCartItemsMutation] = useMergeCartItemsMutation()
@@ -119,7 +126,7 @@ export function useCustomerCart(enabled = true) {
       }
 
       if (!enabled) {
-        const res = upsertGuestCartItem(parsed.data.variantId, parsed.data.quantity)
+        const res = upsertGuestCartItem(parsed.data.variantId, parsed.data.quantity, guestCatalogItems)
         if (res.error) {
           toast.error(res.error)
           return false
@@ -141,7 +148,7 @@ export function useCustomerCart(enabled = true) {
         markVariantPending(parsed.data.variantId, false)
       }
     },
-    [addCartItemMutation, enabled, markVariantPending],
+    [addCartItemMutation, enabled, guestCatalogItems, markVariantPending],
   )
 
   const handleUpdateQuantity = useCallback(
@@ -153,7 +160,7 @@ export function useCustomerCart(enabled = true) {
       }
 
       if (!enabled) {
-        const res = updateGuestCartQuantity(cartItemId, parsed.data.quantity)
+        const res = updateGuestCartQuantity(cartItemId, parsed.data.quantity, guestCatalogItems)
         if (res.error) {
           toast.error(res.error)
           return false
@@ -176,7 +183,7 @@ export function useCustomerCart(enabled = true) {
         markItemPending(cartItemId, false)
       }
     },
-    [enabled, markItemPending, updateCartItemQuantityMutation],
+    [enabled, guestCatalogItems, markItemPending, updateCartItemQuantityMutation],
   )
 
   const handleRemoveItem = useCallback(
@@ -222,8 +229,8 @@ export function useCustomerCart(enabled = true) {
   }, [clearCartMutation, enabled])
 
   const guestCart = useMemo(
-    () => (!enabled ? buildGuestCartResponse(guestEntries) : undefined),
-    [enabled, guestEntries],
+    () => (!enabled ? buildGuestCartResponse(guestEntries, guestCatalogItems) : undefined),
+    [enabled, guestCatalogItems, guestEntries],
   )
 
   const activeCart = enabled ? serverCart : guestCart
@@ -237,8 +244,8 @@ export function useCustomerCart(enabled = true) {
     totalQuantity: activeCart?.totalQuantity ?? 0,
     subtotal: activeCart?.subtotal ?? 0,
     hasInvalidItems: activeCart?.hasInvalidItems ?? false,
-    isLoading: enabled ? isLoading : false,
-    isFetching: enabled ? isFetching : false,
+    isLoading: enabled ? isLoading : guestEntries.length > 0 && isLoadingGuestCatalog,
+    isFetching: enabled ? isFetching : guestEntries.length > 0 && isFetchingGuestCatalog,
     isError: enabled ? isError : false,
     error: enabled && error ? normalizeApiError(error) : null,
     isAdding,

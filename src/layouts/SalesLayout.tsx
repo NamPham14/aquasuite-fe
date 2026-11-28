@@ -1,15 +1,8 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import {
-  Droplets,
-  Home,
-  Layers,
   LogIn,
   LogOut,
-  Package,
-  PhoneCall,
-  QrCode,
-  ShieldCheck,
-  ShoppingCart,
+  ShoppingBag,
   User as UserIcon,
 } from 'lucide-react'
 import { useAuth } from '../features/iam/hooks/useAuth.ts'
@@ -17,8 +10,8 @@ import { isCustomerRole } from '../features/iam/types/auth.types.ts'
 import { useCustomerCart } from '../features/sales/hooks/useCustomerCart.ts'
 
 /**
- * Bố cục giao diện trang bán hàng dành cho khách hàng (SalesLayout).
- * Thanh điều hướng kính mờ nền tối nổi bật, tập trung các mục duyệt Showroom, Giỏ hàng và Hồ sơ khách hàng.
+ * Bố cục Showroom kiến trúc dành cho Khách hàng (SalesLayout).
+ * Toàn màn hình (full-bleed) cho Trang chủ /storefront, giữ khung max-w-7xl chuẩn mực cho Giỏ hàng, Chi tiết SP & Hồ sơ.
  */
 export function SalesLayout() {
   const { user, isAuthenticated, logout } = useAuth()
@@ -32,95 +25,77 @@ export function SalesLayout() {
   const isComboHash = onStorefront && location.hash === '#combos'
   const isHomeActive = onStorefront && !isCatalogHash && !isComboHash
 
-  const navPillClass = (active: boolean) =>
-    `inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all duration-200 ${
+  const navLinkClass = (active: boolean) =>
+    `relative py-2 text-[13px] tracking-[0.04em] whitespace-nowrap transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#171614] ${
       active
-        ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 font-extrabold shadow-md shadow-cyan-400/30'
-        : 'font-semibold text-slate-200 hover:text-white hover:bg-white/10'
+        ? 'text-[#171614] font-semibold after:absolute after:inset-x-0 after:bottom-0 after:h-[1.5px] after:bg-[#171614]'
+        : 'text-[#6B6760] hover:text-[#171614] font-normal'
     }`
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 via-sky-50/35 to-slate-100/80 text-slate-900 relative overflow-x-hidden">
-      {/* Ánh sáng nền nhẹ tạo chiều sâu hiện đại */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-x-0 top-0 h-80 bg-[radial-gradient(ellipse_at_top,rgba(14,165,233,0.10),transparent_70%)] z-0"
-      />
+    <div className="min-h-screen flex flex-col bg-[#FAF9F6] text-[#171614] font-store-sans antialiased selection:bg-[#171614] selection:text-[#FAF9F6]">
+      {/* Dải thông tin showroom tinh giản */}
+      <div className="bg-[#171614] text-[#D8D4CC] text-[11px] tracking-[0.1em] uppercase">
+        <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12 h-8 flex items-center justify-between gap-4">
+          <span className="truncate">
+            Thám Vân Home Showroom &mdash; Thiết bị vệ sinh chính hãng TOTO · INAX · KOHLER · GROHE
+          </span>
+          <span className="hidden md:inline shrink-0 text-[#A8A298]">
+            Tồn kho thực tế &middot; Bảo hành điện tử Serial
+          </span>
+        </div>
+      </div>
 
-      <header className="sticky top-0 z-30 bg-gradient-to-r from-slate-950/95 via-sky-950/95 to-slate-900/95 backdrop-blur-xl border-b border-cyan-400/25 shadow-xl shadow-slate-950/20 text-white">
-        <div
-          aria-hidden="true"
-          className="h-0.5 w-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 animate-aqua-aurora"
-        />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-5 min-w-0">
-            <Link to="/storefront" className="flex items-center gap-2.5 group shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-600 flex items-center justify-center text-slate-950 shadow-lg shadow-cyan-500/35 group-hover:scale-105 transition-all duration-300">
-                <Droplets className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-base font-black tracking-tight text-white">
-                  Aqua<span className="text-cyan-300">Suite</span>
-                </span>
-                <span className="block text-[10px] font-bold uppercase tracking-widest text-cyan-300/90">
-                  Showroom
-                </span>
-              </div>
+      {/* Thanh điều hướng kiểu Gallery */}
+      <header className="sticky top-0 z-30 bg-[#FAF9F6]/92 backdrop-blur-md border-b border-[#E6E2DA]">
+        <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12 h-[68px] flex items-center justify-between gap-6">
+          <Link
+            to="/storefront"
+            className="flex flex-col leading-none shrink-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#171614]"
+          >
+            <span className="font-editorial text-xl sm:text-[22px] tracking-[0.08em] text-[#171614] font-medium uppercase">
+              AquaSuite
+            </span>
+            <span className="mt-1 text-[9px] uppercase tracking-[0.26em] text-[#78736A]">
+              By Thám Vân Home
+            </span>
+          </Link>
+
+          <nav
+            className="hidden md:flex items-center gap-9"
+            aria-label="Điều hướng cửa hàng"
+          >
+            <Link to="/storefront" className={navLinkClass(isHomeActive)}>
+              Trang chủ
             </Link>
+            <Link to="/storefront#catalog" className={navLinkClass(isCatalogHash)}>
+              Sản phẩm
+            </Link>
+            <Link to="/storefront#combos" className={navLinkClass(isComboHash)}>
+              Combo ưu đãi
+            </Link>
+          </nav>
 
-            <nav
-              className="hidden md:flex items-center gap-1 rounded-2xl bg-white/10 border border-white/15 p-1 backdrop-blur-md"
-              aria-label="Điều hướng cửa hàng"
-            >
-              <Link to="/storefront" className={navPillClass(isHomeActive)}>
-                <Home className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Trang chủ</span>
-              </Link>
-              <Link to="/storefront#catalog" className={navPillClass(isCatalogHash)}>
-                <Package className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Sản phẩm</span>
-              </Link>
-              <Link to="/storefront#combos" className={navPillClass(isComboHash)}>
-                <Layers className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Combo ưu đãi</span>
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-4 sm:gap-5 shrink-0">
             <Link
               to="/cart"
               aria-label="Giỏ hàng"
-              className={`group relative inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all duration-200 ${
-                totalItems > 0
-                  ? 'border-cyan-300/50 bg-cyan-400/15 text-white hover:bg-cyan-400/25 shadow-md shadow-cyan-500/20'
-                  : 'border-white/20 bg-white/10 hover:border-cyan-300/50 hover:bg-white/15 text-slate-100'
-              }`}
+              className="inline-flex items-center gap-2 text-[13px] font-medium text-[#171614] hover:text-[#6B6760] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#171614]"
             >
-              <ShoppingCart className="w-4 h-4 text-cyan-300 group-hover:scale-110 transition-transform" />
+              <ShoppingBag className="w-4 h-4 stroke-[1.6]" aria-hidden="true" />
               <span className="hidden sm:inline">Giỏ hàng</span>
-              <span
-                className={`inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-[11px] font-extrabold tabular-nums transition-transform group-hover:scale-105 ${
-                  totalItems > 0
-                    ? 'bg-gradient-to-r from-cyan-400 to-sky-400 text-slate-950 shadow-sm shadow-cyan-400/40'
-                    : 'bg-white/20 text-white'
-                }`}
-              >
-                {totalItems}
-              </span>
+              <span className="tabular-nums text-xs text-[#6B6760]">({totalItems})</span>
             </Link>
 
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-2 pl-2 border-l border-white/15">
+              <div className="flex items-center gap-3 pl-4 border-l border-[#E6E2DA]">
                 <Link
                   to={isStaff ? '/app/dashboard' : '/profile'}
                   title={isStaff ? 'Về trang quản trị' : 'Tài khoản, Bảo hành & Yêu cầu hỗ trợ'}
-                  className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 hover:border-cyan-300/40 px-2.5 py-1 text-xs text-white transition focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className="inline-flex items-center gap-2 text-[13px] font-medium text-[#171614] hover:text-[#6B6760] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#171614]"
                 >
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-sky-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
-                    <UserIcon className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="hidden md:inline font-semibold max-w-36 truncate">
+                  <UserIcon className="w-4 h-4 stroke-[1.6]" aria-hidden="true" />
+                  <span className="hidden md:inline max-w-36 truncate">
                     {user.username || user.email}
                   </span>
                 </Link>
@@ -128,71 +103,102 @@ export function SalesLayout() {
                   type="button"
                   onClick={() => void logout()}
                   title="Đăng xuất"
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-rose-300 hover:bg-rose-500/15 transition cursor-pointer"
+                  aria-label="Đăng xuất"
+                  className="inline-flex items-center gap-1 text-xs text-[#78736A] hover:text-[#991B1B] transition-colors cursor-pointer"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Đăng xuất</span>
+                  <LogOut className="w-3.5 h-3.5 stroke-[1.6]" aria-hidden="true" />
+                  <span className="hidden sm:inline">Thoát</span>
                 </button>
               </div>
             ) : (
               <Link
                 to="/login"
-                className="aqua-shine-btn inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 text-xs font-extrabold transition shadow-md shadow-cyan-400/30"
+                className="inline-flex items-center gap-1.5 border border-[#171614] bg-[#171614] text-[#FAF9F6] hover:bg-transparent hover:text-[#171614] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors"
               >
-                <LogIn className="w-3.5 h-3.5" />
+                <LogIn className="w-3.5 h-3.5 stroke-[1.6]" aria-hidden="true" />
                 <span>Đăng nhập</span>
               </Link>
             )}
           </div>
         </div>
 
-        {/* Thanh điều hướng phụ trên màn hình nhỏ */}
+        {/* Điều hướng di động */}
         <nav
-          className="flex md:hidden items-center gap-1.5 overflow-x-auto px-4 pb-2.5 pt-1 border-t border-white/10"
+          className="flex md:hidden items-center gap-6 overflow-x-auto px-5 pb-2.5 border-t border-[#ECE8E0]"
           aria-label="Điều hướng di động"
         >
-          <Link to="/storefront" className={navPillClass(isHomeActive)}>
+          <Link to="/storefront" className={navLinkClass(isHomeActive)}>
             Trang chủ
           </Link>
-          <Link to="/storefront#catalog" className={navPillClass(isCatalogHash)}>
+          <Link to="/storefront#catalog" className={navLinkClass(isCatalogHash)}>
             Sản phẩm
           </Link>
-          <Link to="/storefront#combos" className={navPillClass(isComboHash)}>
+          <Link to="/storefront#combos" className={navLinkClass(isComboHash)}>
             Combo ưu đãi
           </Link>
         </nav>
       </header>
 
-      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main
+        className={
+          onStorefront
+            ? 'flex-1 w-full'
+            : 'flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8'
+        }
+      >
         <Outlet />
       </main>
 
-      <footer className="relative z-10 mt-10 border-t border-slate-200/80 bg-white/75 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-600 flex items-center justify-center text-white">
-              <Droplets className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-slate-800">AquaSuite Showroom</span>
-              <span className="mx-2 text-slate-300">•</span>
-              <span>Thám Vân Home — Thiết bị vệ sinh &amp; Giải pháp phòng tắm đồng bộ</span>
-            </div>
+      <footer className="bg-[#171614] text-[#C8C3BA] border-t border-[#2A2824]">
+        <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-16 grid grid-cols-1 md:grid-cols-12 gap-10">
+          <div className="md:col-span-5 space-y-3">
+            <p className="font-editorial text-2xl tracking-[0.06em] text-white uppercase">
+              AquaSuite
+            </p>
+            <p className="text-xs leading-relaxed text-[#9C978E] max-w-sm">
+              Showroom Thám Vân Home — Giải pháp thiết bị vệ sinh và hệ thống cấp thoát nước đồng bộ cho biệt thự, căn hộ và công trình nghỉ dưỡng.
+            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-[11px] font-medium text-slate-600">
-            <span className="inline-flex items-center gap-1">
-              <QrCode className="w-3.5 h-3.5 text-sky-600" />
-              VietQR PayOS 24/7
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              Bảo hành điện tử Serial
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <PhoneCall className="w-3.5 h-3.5 text-amber-600" />
-              Tư vấn kỹ thuật công trình
-            </span>
+          <div className="md:col-span-3 space-y-2.5 text-xs">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[#8A857C] font-semibold">
+              Danh mục Showroom
+            </p>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/storefront#catalog" className="hover:text-white transition-colors">
+                  Thiết bị vệ sinh chọn lọc
+                </Link>
+              </li>
+              <li>
+                <Link to="/storefront#combos" className="hover:text-white transition-colors">
+                  Giải pháp Combo trọn bộ
+                </Link>
+              </li>
+              <li>
+                <Link to={isAuthenticated ? '/profile/warranties' : '/login'} className="hover:text-white transition-colors">
+                  Tra cứu bảo hành Serial
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="md:col-span-4 space-y-2.5 text-xs">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[#8A857C] font-semibold">
+              Tiêu chuẩn dịch vụ
+            </p>
+            <ul className="space-y-2 text-[#A8A39A]">
+              <li>Phân phối chính hãng TOTO, INAX, KOHLER, GROHE</li>
+              <li>Thanh toán VietQR PayOS 24/7 &amp; giao hàng theo tiến độ</li>
+              <li>Kích hoạt bảo hành điện tử ngay khi hoàn tất đơn hàng</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="border-t border-[#282622]">
+          <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-12 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#7D7870]">
+            <span>&copy; 2026 AquaSuite Showroom &mdash; Thám Vân Home</span>
+            <span>Không gian kiến trúc phòng tắm đương đại</span>
           </div>
         </div>
       </footer>

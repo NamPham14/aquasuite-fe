@@ -92,29 +92,32 @@ export function ProfileInfoSection({ profile }: ProfileInfoSectionProps) {
   return (
     <form
       onSubmit={(e) => void handleSubmit(e)}
-      className="rounded-3xl border border-sky-200/80 bg-white/95 p-5 sm:p-7 shadow-sm space-y-6"
+      className="border border-[#E6E2DA] bg-white p-6 sm:p-8 space-y-6"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
+      <div className="flex flex-wrap items-end justify-between gap-3 pb-4 border-b border-[#E6E2DA]">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#78736A]">
+            Thông tin định danh
+          </p>
+          <h2 className="font-editorial text-xl font-normal text-[#171614] mt-0.5">
             Thông tin tài khoản &amp; Số điện thoại
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Cập nhật họ tên và số điện thoại liên hệ nhận hàng, kích hoạt bảo hành điện tử.
+          <p className="text-xs text-[#6B6760] mt-1">
+            Cập nhật họ tên, số điện thoại liên hệ nhận hàng và kích hoạt bảo hành điện tử.
           </p>
         </div>
 
         {profile.customerCode && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200 px-3 py-1 text-[11px] font-bold text-sky-800">
-            <CheckCircle2 className="h-3.5 w-3.5 text-sky-600" aria-hidden="true" />
-            Mã KH: {profile.customerCode}
+          <span className="inline-flex items-center gap-1.5 border border-[#C6DDD0] bg-[#EEF5F1] px-3 py-1 text-[11px] font-medium text-[#245C42]">
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Mã KH: {profile.customerCode}</span>
           </span>
         )}
       </div>
 
       {/* Khu vực Avatar */}
-      <div className="flex flex-wrap items-center gap-4 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70">
-        <div className="relative h-16 w-16 shrink-0 rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white flex items-center justify-center overflow-hidden shadow-md shadow-sky-500/20">
+      <div className="flex flex-wrap items-center gap-5 p-5 bg-[#FAF9F6] border border-[#E6E2DA]">
+        <div className="relative h-16 w-16 shrink-0 border border-[#D6D1C7] bg-[#171614] text-[#C5B091] flex items-center justify-center overflow-hidden">
           {avatarUrl ? (
             <img
               src={avatarUrl}
@@ -122,18 +125,18 @@ export function ProfileInfoSection({ profile }: ProfileInfoSectionProps) {
               className="h-full w-full object-cover"
             />
           ) : (
-            <UserRound className="h-8 w-8" aria-hidden="true" />
+            <UserRound className="h-7 w-7" aria-hidden="true" />
           )}
         </div>
 
-        <div className="flex-1 min-w-0 space-y-1">
-          <p className="text-xs font-bold text-slate-900">Ảnh đại diện tài khoản</p>
-          <p className="text-[11px] text-slate-500">
-            Hỗ trợ định dạng JPG, PNG, WEBP hoặc dán liên kết ảnh trực tiếp.
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <p className="text-xs font-semibold text-[#171614]">Ảnh đại diện tài khoản</p>
+          <p className="text-[11px] text-[#78736A]">
+            Hỗ trợ định dạng JPG, PNG, WEBP đồng bộ trực tiếp với hồ sơ.
           </p>
           <div className="pt-1 flex flex-wrap items-center gap-2">
-            <label className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs font-bold text-sky-700 hover:bg-sky-50 transition cursor-pointer">
-              <Camera className="h-3.5 w-3.5" aria-hidden="true" />
+            <label className="inline-flex items-center gap-1.5 border border-[#D6D1C7] bg-white px-3.5 py-1.5 text-[11px] uppercase tracking-[0.12em] font-semibold text-[#171614] hover:border-[#171614] transition-colors cursor-pointer">
+              <Camera className="h-3.5 w-3.5 text-[#8C6D46]" aria-hidden="true" />
               <span>{isUploadingAvatar ? 'Đang tải ảnh...' : 'Tải ảnh lên'}</span>
               <input
                 type="file"
@@ -148,13 +151,16 @@ export function ProfileInfoSection({ profile }: ProfileInfoSectionProps) {
       </div>
 
       {/* Form thông tin */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
         <div>
-          <label htmlFor="profile-fullName" className="block font-bold text-slate-700 mb-1.5">
-            Họ và tên <span className="text-rose-500">*</span>
+          <label
+            htmlFor="profile-fullName"
+            className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5"
+          >
+            Họ và tên <span className="text-[#991B1B]">*</span>
           </label>
           <div className="relative">
-            <UserRound className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <UserRound className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C867C]" />
             <input
               id="profile-fullName"
               type="text"
@@ -162,65 +168,74 @@ export function ProfileInfoSection({ profile }: ProfileInfoSectionProps) {
               onChange={(e) => setFullNameDraft(e.target.value)}
               maxLength={150}
               placeholder="Nhập họ và tên đầy đủ"
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+              className="w-full h-10 border border-[#D6D1C7] bg-[#FAF9F6] pl-9 pr-3 text-xs sm:text-sm font-medium text-[#171614] focus:border-[#171614] focus:bg-white focus:outline-none"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="profile-phone" className="block font-bold text-slate-700 mb-1.5">
+          <label
+            htmlFor="profile-phone"
+            className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5"
+          >
             Số điện thoại liên hệ
           </label>
           <div className="relative">
-            <Phone className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Phone className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C867C]" />
             <input
               id="profile-phone"
               type="tel"
               value={phone}
               onChange={(e) => setPhoneDraft(e.target.value)}
               placeholder="Ví dụ: 0987654321"
-              className="w-full h-10 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+              className="w-full h-10 border border-[#D6D1C7] bg-[#FAF9F6] pl-9 pr-3 text-xs sm:text-sm font-medium text-[#171614] focus:border-[#171614] focus:bg-white focus:outline-none tabular-nums"
             />
           </div>
-          <p className="mt-1 text-[11px] text-slate-400">
-            Gồm 10 chữ số, bắt đầu bằng số 0. Đồng bộ trực tiếp với hồ sơ CRM.
+          <p className="mt-1.5 text-[11px] text-[#78736A]">
+            Gồm 10 chữ số, bắt đầu bằng số 0. Đồng bộ với hồ sơ khách hàng.
           </p>
         </div>
 
         <div>
-          <label htmlFor="profile-email" className="block font-bold text-slate-700 mb-1.5">
+          <label
+            htmlFor="profile-email"
+            className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5"
+          >
             Email đăng nhập
           </label>
           <div className="relative">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C867C]" />
             <input
               id="profile-email"
               type="email"
               readOnly
               value={profile.email}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs sm:text-sm text-slate-500 cursor-not-allowed"
+              className="w-full h-10 border border-[#E6E2DA] bg-[#F2EFE9] pl-9 pr-3 text-xs sm:text-sm text-[#6B6760] cursor-not-allowed"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="profile-username" className="block font-bold text-slate-700 mb-1.5">
+          <label
+            htmlFor="profile-username"
+            className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5"
+          >
             Tên đăng nhập &amp; Hạng khách
           </label>
           <div className="relative">
-            <Shield className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Shield className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C867C]" />
             <input
               id="profile-username"
               type="text"
               readOnly
-              value={`${profile.username}${profile.customerTier ? ` • ${profile.customerTier}` : ''}`}
-              className="w-full h-10 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs sm:text-sm text-slate-500 cursor-not-allowed"
+              value={`${profile.username}${profile.customerTier ? ` · ${profile.customerTier}` : ''}`}
+              className="w-full h-10 border border-[#E6E2DA] bg-[#F2EFE9] pl-9 pr-3 text-xs sm:text-sm text-[#6B6760] cursor-not-allowed"
             />
           </div>
         </div>
       </div>
 
-      <div className="pt-2 flex flex-wrap items-center justify-end gap-2.5 border-t border-slate-100">
+      <div className="pt-4 flex flex-wrap items-center justify-end gap-3 border-t border-[#E6E2DA]">
         {hasChanges && (
           <button
             type="button"
@@ -229,7 +244,7 @@ export function ProfileInfoSection({ profile }: ProfileInfoSectionProps) {
               setPhoneDraft(null)
               setAvatarUrlDraft(null)
             }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+            className="h-10 border border-[#D6D1C7] bg-white px-4 text-[11px] uppercase tracking-[0.14em] font-medium text-[#57534E] hover:border-[#171614] hover:text-[#171614] transition-colors cursor-pointer"
           >
             Hủy thay đổi
           </button>
@@ -237,13 +252,12 @@ export function ProfileInfoSection({ profile }: ProfileInfoSectionProps) {
         <button
           type="submit"
           disabled={isSaving || !hasChanges}
-          className="aqua-shine-btn inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-5 py-2.5 text-xs font-bold text-white hover:from-sky-500 hover:to-cyan-500 disabled:opacity-45 transition shadow-md shadow-sky-500/20 cursor-pointer disabled:cursor-not-allowed"
+          className="h-10 inline-flex items-center gap-2 border border-[#171614] bg-[#171614] px-6 text-[11px] uppercase tracking-[0.16em] font-semibold text-[#FAF9F6] hover:bg-[#2A2825] disabled:border-[#E6E2DA] disabled:bg-[#ECE8E0] disabled:text-[#8C867C] transition-colors cursor-pointer disabled:cursor-not-allowed"
         >
-          <Save className="h-4 w-4" aria-hidden="true" />
+          <Save className="h-3.5 w-3.5 text-[#C5B091]" aria-hidden="true" />
           <span>{isSaving ? 'Đang lưu...' : 'Lưu thông tin'}</span>
         </button>
       </div>
     </form>
   )
 }
-

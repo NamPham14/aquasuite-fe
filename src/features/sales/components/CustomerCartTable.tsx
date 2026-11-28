@@ -6,10 +6,8 @@ import {
   AlertCircle,
   Plus,
   Minus,
-  Package,
   RefreshCw,
   ArrowUpRight,
-  Droplets,
 } from 'lucide-react'
 import { formatVnd } from '../../../shared/lib/money.ts'
 import type { CartItemResponse } from '../types/cart.types.ts'
@@ -51,13 +49,13 @@ function QuantityControl({
   }
 
   return (
-    <div className="inline-flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden shadow-2xs">
+    <div className="inline-flex items-center border border-[#D6D1C7] bg-[#FAF9F6]">
       <button
         type="button"
         aria-label={`Giảm số lượng ${item.productName}`}
         disabled={isPending || item.quantity <= 1 || isInactive}
         onClick={() => void onUpdateQuantity(item.cartItemId, Math.max(1, item.quantity - 1))}
-        className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+        className="w-8 h-8 flex items-center justify-center text-[#57534E] hover:text-[#171614] disabled:opacity-35 transition-colors cursor-pointer"
       >
         <Minus className="w-3.5 h-3.5" />
       </button>
@@ -80,7 +78,7 @@ function QuantityControl({
             e.currentTarget.blur()
           }
         }}
-        className="w-12 h-8 text-center text-xs font-bold text-slate-800 border-x border-slate-200 focus:outline-none focus:bg-sky-50/40 disabled:bg-slate-50 tabular-nums"
+        className="w-11 h-8 text-center text-xs font-semibold text-[#171614] bg-white border-x border-[#E6E2DA] focus:outline-none disabled:bg-[#F2EFE9] tabular-nums"
       />
       <button
         type="button"
@@ -91,7 +89,7 @@ function QuantityControl({
           (maxAvailable > 0 && item.quantity >= maxAvailable)
         }
         onClick={() => void onUpdateQuantity(item.cartItemId, item.quantity + 1)}
-        className="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-sky-50 hover:text-sky-700 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+        className="w-8 h-8 flex items-center justify-center text-[#57534E] hover:text-[#171614] disabled:opacity-35 transition-colors cursor-pointer"
       >
         <Plus className="w-3.5 h-3.5" />
       </button>
@@ -106,7 +104,7 @@ function CartItemThumbnail({ item }: { item: CartItemResponse }) {
   return (
     <Link
       to={detailPath}
-      className="h-14 w-14 shrink-0 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center hover:border-sky-300 transition"
+      className="h-16 w-16 shrink-0 border border-[#E6E2DA] bg-[#EFECE6] overflow-hidden flex items-center justify-center hover:border-[#171614] transition-colors"
     >
       {item.imageUrl && !imgError ? (
         <img
@@ -117,8 +115,10 @@ function CartItemThumbnail({ item }: { item: CartItemResponse }) {
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="h-full w-full bg-gradient-to-br from-slate-900 via-sky-950 to-cyan-950 flex items-center justify-center text-cyan-300">
-          <Droplets className="h-5 w-5" aria-hidden="true" />
+        <div className="h-full w-full bg-[#EFECE6] flex flex-col items-center justify-center px-1 text-center">
+          <span className="font-editorial text-xs text-[#57534E] truncate max-w-full">
+            {item.variantName || 'AS'}
+          </span>
         </div>
       )}
     </Link>
@@ -138,29 +138,29 @@ export function CustomerCartTable({
 
   if (items.length === 0) {
     return (
-      <div className="border border-dashed border-sky-200 rounded-2xl p-12 text-center bg-white/95 shadow-sm">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-100 to-cyan-100 text-sky-600 flex items-center justify-center mx-auto mb-4">
-          <ShoppingCart className="w-7 h-7" />
+      <div className="border border-[#E6E2DA] p-14 text-center bg-white space-y-4">
+        <div className="w-14 h-14 border border-[#E6E2DA] bg-[#FAF9F6] text-[#78736A] flex items-center justify-center mx-auto">
+          <ShoppingCart className="w-6 h-6" />
         </div>
-        <h3 className="text-base font-extrabold text-slate-900">
+        <h3 className="font-editorial text-2xl font-normal text-[#171614]">
           Giỏ hàng của bạn đang trống
         </h3>
-        <p className="text-xs text-slate-500 mt-1.5 max-w-md mx-auto leading-relaxed">
-          Hãy chọn thiết bị vệ sinh và phụ kiện phòng tắm từ danh mục để thêm vào giỏ hàng trước khi tiến hành đặt hàng.
+        <p className="text-xs text-[#6B6760] max-w-md mx-auto leading-relaxed">
+          Hãy chọn thiết bị vệ sinh và phụ kiện phòng tắm từ Showroom để thêm vào giỏ hàng trước khi đặt hàng.
         </p>
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+        <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/storefront#catalog"
-            className="aqua-shine-btn inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 text-white hover:from-sky-500 hover:to-cyan-500 transition shadow-md shadow-sky-500/20"
+            className="inline-flex items-center gap-2 px-6 py-2.5 text-[11px] uppercase tracking-[0.16em] font-semibold border border-[#171614] bg-[#171614] text-[#FAF9F6] hover:bg-transparent hover:text-[#171614] transition-colors"
           >
             <span>Khám phá Showroom</span>
           </Link>
           <button
             type="button"
             onClick={onOpenProductPicker}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:text-sky-700 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 text-[11px] uppercase tracking-[0.14em] font-semibold border border-[#D6D1C7] bg-white text-[#171614] hover:border-[#171614] transition-colors cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Chọn nhanh theo SKU</span>
           </button>
         </div>
@@ -169,20 +169,17 @@ export function CustomerCartTable({
   }
 
   return (
-    <div className="border border-sky-200/80 rounded-2xl bg-white/95 overflow-hidden shadow-md shadow-sky-950/5">
-      <div className="px-5 py-3.5 bg-gradient-to-r from-slate-50 via-sky-50/40 to-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Package className="w-4 h-4 text-sky-600" />
-          <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-            Danh sách sản phẩm trong giỏ ({items.length})
-          </span>
-        </div>
+    <div className="border border-[#E6E2DA] bg-white overflow-hidden">
+      <div className="px-6 py-4 bg-[#FAF9F6] border-b border-[#E6E2DA] flex flex-wrap items-center justify-between gap-3">
+        <span className="text-[11px] font-semibold text-[#171614] uppercase tracking-[0.16em]">
+          Danh sách sản phẩm trong giỏ ({items.length})
+        </span>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={onOpenProductPicker}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-bold transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] font-semibold text-[#171614] border-b border-[#D6D1C7] pb-0.5 hover:border-[#171614] transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Thêm sản phẩm</span>
@@ -193,14 +190,14 @@ export function CustomerCartTable({
               type="button"
               disabled={isClearing}
               onClick={() => setConfirmClear(true)}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 disabled:opacity-50 transition cursor-pointer"
+              className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] font-medium text-[#991B1B] hover:opacity-75 disabled:opacity-45 transition-opacity cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Xóa toàn bộ</span>
             </button>
           ) : (
-            <div className="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-xl">
-              <span className="text-[11px] font-medium text-rose-700">Xác nhận xóa hết?</span>
+            <div className="inline-flex items-center gap-2 border border-[#E5B8B8] bg-[#FEF2F2] px-3 py-1">
+              <span className="text-[11px] font-medium text-[#991B1B]">Xác nhận xóa hết?</span>
               <button
                 type="button"
                 disabled={isClearing}
@@ -208,14 +205,14 @@ export function CustomerCartTable({
                   await onClearCart()
                   setConfirmClear(false)
                 }}
-                className="px-2 py-0.5 bg-rose-600 text-white text-[11px] font-semibold rounded-lg hover:bg-rose-700 cursor-pointer"
+                className="px-2.5 py-0.5 bg-[#991B1B] text-white text-[10px] uppercase tracking-[0.12em] font-semibold cursor-pointer"
               >
                 Đồng ý
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmClear(false)}
-                className="px-2 py-0.5 text-slate-600 text-[11px] font-medium hover:text-slate-800 cursor-pointer"
+                className="px-1.5 py-0.5 text-[#57534E] text-[11px] font-medium hover:text-[#171614] cursor-pointer"
               >
                 Hủy
               </button>
@@ -225,18 +222,18 @@ export function CustomerCartTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs text-slate-700">
-          <thead className="bg-slate-50/90 text-slate-600 text-[11px] uppercase border-b border-slate-200 font-bold">
+        <table className="w-full text-left text-xs text-[#171614]">
+          <thead className="bg-white text-[#78736A] text-[10px] uppercase tracking-[0.16em] border-b border-[#E6E2DA] font-medium">
             <tr>
-              <th className="px-5 py-3">Sản phẩm / Biến thể SKU</th>
-              <th className="px-4 py-3 text-right">Đơn giá</th>
-              <th className="px-4 py-3 text-center">Số lượng</th>
-              <th className="px-4 py-3 text-center">Tồn khả dụng</th>
-              <th className="px-4 py-3 text-right">Thành tiền</th>
-              <th className="px-4 py-3 text-center w-14">Xóa</th>
+              <th className="px-6 py-3.5">Sản phẩm / SKU</th>
+              <th className="px-4 py-3.5 text-right">Đơn giá</th>
+              <th className="px-4 py-3.5 text-center">Số lượng</th>
+              <th className="px-4 py-3.5 text-center">Tồn kho</th>
+              <th className="px-4 py-3.5 text-right">Thành tiền</th>
+              <th className="px-4 py-3.5 text-center w-14">Xóa</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-[#E6E2DA]">
             {items.map((item) => {
               const isPending = Boolean(pendingItemIds[item.cartItemId])
               const isInactive = item.variantStatus.toUpperCase() !== 'ACTIVE'
@@ -248,57 +245,58 @@ export function CustomerCartTable({
                   key={item.cartItemId}
                   className={`transition-colors ${
                     isInactive || isOutOfStock
-                      ? 'bg-amber-50/30 hover:bg-amber-50/50'
-                      : 'hover:bg-sky-50/35'
+                      ? 'bg-[#FAF5EB]/55'
+                      : 'hover:bg-[#FAF9F6]'
                   }`}
                 >
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-start gap-3">
+                  <td className="px-6 py-4">
+                    <div className="flex items-start gap-4">
                       <CartItemThumbnail item={item} />
                       <div className="min-w-0">
                         <Link
                           to={detailPath}
-                          className="font-bold text-slate-900 hover:text-sky-700 text-sm leading-snug transition-colors block"
+                          className="font-editorial text-base font-normal text-[#171614] hover:underline underline-offset-4 decoration-[#8C6D46] leading-snug block"
                         >
                           {item.productName}
                         </Link>
-                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-slate-100 text-slate-700">
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-[#78736A]">
+                          <span className="font-mono text-[#57534E]">
                             SKU: {item.sku}
                           </span>
                           {item.variantName && (
-                            <span className="text-xs text-slate-500">
-                              Phân loại: <strong className="text-slate-700">{item.variantName}</strong>
-                            </span>
+                            <>
+                              <span aria-hidden="true">&middot;</span>
+                              <span>{item.variantName}</span>
+                            </>
                           )}
                           {item.unit && (
-                            <span className="text-[11px] text-slate-400">
+                            <span className="text-[#8C867C]">
                               ({item.unit})
                             </span>
                           )}
                         </div>
 
                         {isInactive && (
-                          <div className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded">
+                          <div className="mt-2 inline-flex items-center gap-1.5 border border-[#E5B8B8] bg-[#FEF2F2] px-2.5 py-1 text-[11px] font-medium text-[#991B1B]">
                             <AlertCircle className="w-3.5 h-3.5" />
                             <span>Sản phẩm đã ngừng kinh doanh, vui lòng xóa khỏi giỏ</span>
                           </div>
                         )}
 
                         {!isInactive && isOutOfStock && (
-                          <div className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+                          <div className="mt-2 inline-flex items-center gap-1.5 border border-[#E6D3B3] bg-[#FAF5EB] px-2.5 py-1 text-[11px] font-medium text-[#854D0E]">
                             <AlertCircle className="w-3.5 h-3.5" />
                             <span>
-                              Số lượng vượt tồn kho khả dụng (còn {item.availableQty} {item.unit || 'sản phẩm'})
+                              Vượt tồn kho khả dụng (còn {item.availableQty} {item.unit || 'sản phẩm'})
                             </span>
                           </div>
                         )}
 
                         {item.priceChanged && (
-                          <div className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-sky-700 bg-sky-50 px-2 py-0.5 rounded">
+                          <div className="mt-2 inline-flex items-center gap-1.5 border border-[#D6D1C7] bg-[#FAF9F6] px-2.5 py-1 text-[11px] font-medium text-[#8C6D46]">
                             <ArrowUpRight className="w-3.5 h-3.5" />
                             <span>
-                              Đơn giá đã cập nhật từ {formatVnd(item.unitPrice)} sang {formatVnd(item.currentSellingPrice)}
+                              Giá cập nhật từ {formatVnd(item.unitPrice)} sang {formatVnd(item.currentSellingPrice)}
                             </span>
                           </div>
                         )}
@@ -306,18 +304,18 @@ export function CustomerCartTable({
                     </div>
                   </td>
 
-                  <td className="px-4 py-3.5 text-right whitespace-nowrap tabular-nums">
-                    <div className="font-bold text-slate-800">
+                  <td className="px-4 py-4 text-right whitespace-nowrap tabular-nums">
+                    <div className="font-medium text-[#171614]">
                       {formatVnd(item.currentSellingPrice)}
                     </div>
                     {item.priceChanged && (
-                      <div className="text-[11px] text-slate-400 line-through">
+                      <div className="text-[11px] text-[#8C867C] line-through">
                         {formatVnd(item.unitPrice)}
                       </div>
                     )}
                   </td>
 
-                  <td className="px-4 py-3.5 text-center">
+                  <td className="px-4 py-4 text-center">
                     <div className="inline-flex flex-col items-center gap-1">
                       <QuantityControl
                         item={item}
@@ -325,37 +323,37 @@ export function CustomerCartTable({
                         onUpdateQuantity={onUpdateQuantity}
                       />
                       {isPending && (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-sky-600">
+                        <span className="inline-flex items-center gap-1 text-[10px] text-[#8C6D46]">
                           <RefreshCw className="w-2.5 h-2.5 animate-spin" />
-                          Đang lưu...
+                          Đang lưu
                         </span>
                       )}
                     </div>
                   </td>
 
-                  <td className="px-4 py-3.5 text-center whitespace-nowrap tabular-nums">
+                  <td className="px-4 py-4 text-center whitespace-nowrap tabular-nums">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                      className={`inline-flex items-center px-2.5 py-0.5 border text-[11px] font-medium ${
                         item.availableQty > 0
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-rose-50 text-rose-700 border border-rose-200'
+                          ? 'bg-[#EEF5F1] text-[#245C42] border-[#C6DDD0]'
+                          : 'bg-[#FEF2F2] text-[#991B1B] border-[#E5B8B8]'
                       }`}
                     >
                       {item.availableQty} {item.unit || 'SP'}
                     </span>
                   </td>
 
-                  <td className="px-4 py-3.5 text-right whitespace-nowrap font-extrabold text-sky-700 text-sm tabular-nums">
+                  <td className="px-4 py-4 text-right whitespace-nowrap font-semibold text-[#171614] text-sm tabular-nums">
                     {formatVnd(item.lineTotal)}
                   </td>
 
-                  <td className="px-4 py-3.5 text-center">
+                  <td className="px-4 py-4 text-center">
                     <button
                       type="button"
                       aria-label={`Xóa ${item.productName}`}
                       disabled={isPending}
                       onClick={() => void onRemoveItem(item.cartItemId)}
-                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-40 transition cursor-pointer"
+                      className="p-2 text-[#8C867C] hover:text-[#991B1B] disabled:opacity-40 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

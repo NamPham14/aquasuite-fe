@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
-import { X, Search, Plus, Package, Check } from 'lucide-react'
+import { X, Search, Plus, Check, RefreshCw } from 'lucide-react'
 import { formatVnd } from '../../../shared/lib/money.ts'
 import { useGetSalesCatalogItemsQuery } from '../api/salesCatalogApi.ts'
-import { CATALOG_PRODUCTS, type CatalogItemOption } from '../data/catalogProducts.data.ts'
+import type { CatalogItemOption } from '../types/salesCatalog.types.ts'
 
 interface CartProductPickerDrawerProps {
   isOpen: boolean
@@ -23,13 +23,17 @@ export function CartProductPickerDrawer({
   const [selectedBrand, setSelectedBrand] = useState('ALL')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
 
-  const { data: apiCatalogItems, isLoading } = useGetSalesCatalogItemsQuery(undefined, {
+  const {
+    data: apiCatalogItems = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useGetSalesCatalogItemsQuery(undefined, {
     skip: !isOpen,
   })
 
   const catalogItems: CatalogItemOption[] = useMemo(() => {
-    const source = apiCatalogItems && apiCatalogItems.length > 0 ? apiCatalogItems : CATALOG_PRODUCTS
-    return source.filter((item) => !item.isCombo)
+    return apiCatalogItems.filter((item) => !item.isCombo)
   }, [apiCatalogItems])
 
   const brands = useMemo(() => {
@@ -66,60 +70,55 @@ export function CartProductPickerDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-[1px]"
+      className="fixed inset-0 z-50 flex justify-end bg-[#171614]/45 backdrop-blur-[1px]"
       role="dialog"
       aria-modal="true"
       aria-label="Chọn sản phẩm thêm vào giỏ hàng"
     >
-      <div className="w-full max-w-2xl bg-white h-full flex flex-col shadow-2xl border-l border-slate-200">
+      <div className="w-full max-w-2xl bg-[#FAF9F6] h-full flex flex-col border-l border-[#E6E2DA] shadow-2xl">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center">
-              <Package className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Chọn thiết bị thêm vào giỏ hàng
-              </h3>
-              <p className="text-[11px] text-slate-500">
-                Tìm theo tên sản phẩm, mã SKU hoặc lọc theo thương hiệu
-              </p>
-            </div>
+        <div className="px-6 py-5 border-b border-[#E6E2DA] flex items-center justify-between bg-white">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[#8C6D46]">
+              Danh mục Showroom
+            </p>
+            <h3 className="font-editorial text-xl font-normal text-[#171614] mt-0.5">
+              Chọn thiết bị thêm vào giỏ hàng
+            </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Đóng danh mục"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer"
+            className="p-2 border border-transparent text-[#6B6760] hover:text-[#171614] hover:border-[#E6E2DA] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Filter Bar */}
-        <div className="p-4 border-b border-slate-200 space-y-3 bg-white">
+        <div className="p-5 border-b border-[#E6E2DA] space-y-3.5 bg-white">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#8C867C] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Tìm tên sản phẩm, mã SKU (VD: TOTO, INAX, sen cây...)"
-              className="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+              className="w-full pl-10 pr-4 h-10 text-xs bg-[#FAF9F6] border border-[#D6D1C7] text-[#171614] placeholder:text-[#8C867C] focus:outline-none focus:border-[#171614]"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
             {brands.map((brand) => (
               <button
                 key={brand}
                 type="button"
                 onClick={() => setSelectedBrand(brand)}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition cursor-pointer ${
+                className={`px-3 py-1 text-[11px] uppercase tracking-[0.12em] font-medium whitespace-nowrap border transition-colors cursor-pointer ${
                   selectedBrand === brand
-                    ? 'bg-sky-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'border-[#171614] bg-[#171614] text-[#FAF9F6]'
+                    : 'border-[#E6E2DA] bg-[#FAF9F6] text-[#57534E] hover:border-[#171614]'
                 }`}
               >
                 {brand === 'ALL' ? 'Tất cả thương hiệu' : brand}
@@ -129,13 +128,27 @@ export function CartProductPickerDrawer({
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto p-4 divide-y divide-slate-100">
+        <div className="flex-1 overflow-y-auto px-6 py-2 divide-y divide-[#E6E2DA]">
           {isLoading ? (
-            <div className="py-16 text-center text-xs text-slate-500">
-              Đang tải danh mục thiết bị...
+            <div className="py-16 text-center text-xs text-[#78736A]">
+              Đang tải danh mục thiết bị từ hệ thống...
+            </div>
+          ) : isError ? (
+            <div className="py-16 text-center space-y-3">
+              <p className="text-xs text-[#991B1B]">
+                Không thể tải danh sách sản phẩm từ máy chủ.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refetch()}
+                className="inline-flex items-center gap-1.5 border border-[#171614] bg-[#171614] px-4 py-2 text-[11px] uppercase tracking-[0.14em] font-semibold text-[#FAF9F6] cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Thử lại</span>
+              </button>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="py-16 text-center text-xs text-slate-500">
+            <div className="py-16 text-center text-xs text-[#78736A]">
               Không tìm thấy sản phẩm phù hợp với từ khóa.
             </div>
           ) : (
@@ -147,37 +160,38 @@ export function CartProductPickerDrawer({
               return (
                 <div
                   key={item.variantId}
-                  className="py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50/70 px-2 rounded-lg transition"
+                  className="py-4 flex items-center justify-between gap-4 hover:bg-white/80 px-2 transition-colors"
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px] font-semibold">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.12em]">
+                      <span className="font-mono font-medium text-[#78736A]">
                         {item.sku}
                       </span>
-                      <span className="text-[11px] font-medium text-sky-700 bg-sky-50 px-2 py-0.5 rounded">
+                      <span className="text-[#B5AFA5]" aria-hidden="true">&middot;</span>
+                      <span className="font-semibold text-[#8C6D46]">
                         {item.brand}
                       </span>
                       {inCartQty > 0 && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 bg-[#EEF5F1] border border-[#C6DDD0] px-2 py-0.5 text-[10px] font-medium text-[#245C42] normal-case tracking-normal">
                           <Check className="w-3 h-3" />
-                          Đã có {inCartQty} trong giỏ
+                          Trong giỏ: {inCartQty}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm font-semibold text-slate-900 mt-1 truncate">
+                    <p className="text-sm font-medium text-[#171614] truncate">
                       {item.name}
                     </p>
-                    <div className="flex items-center gap-3 mt-1 text-xs">
-                      <span className="font-bold text-sky-700">
+                    <div className="flex items-center gap-3 text-xs tabular-nums">
+                      <span className="font-semibold text-[#171614]">
                         {formatVnd(item.sellingPrice)}
                       </span>
-                      <span className="text-slate-400">•</span>
+                      <span className="text-[#C5BEB2]" aria-hidden="true">&middot;</span>
                       <span
                         className={
-                          outOfStock ? 'text-rose-600 font-medium' : 'text-slate-500'
+                          outOfStock ? 'text-[#991B1B] font-medium' : 'text-[#6B6760]'
                         }
                       >
-                        Tồn khả dụng: {item.availableStock} {item.unit}
+                        Tồn kho: {item.availableStock} {item.unit}
                       </span>
                     </div>
                   </div>
@@ -193,13 +207,13 @@ export function CartProductPickerDrawer({
                         setQty(item.variantId, Number.parseInt(e.target.value, 10) || 1)
                       }
                       aria-label={`Số lượng thêm ${item.name}`}
-                      className="w-14 h-8 text-center text-xs font-semibold border border-slate-200 rounded-md focus:outline-none focus:border-sky-500"
+                      className="w-14 h-9 text-center text-xs font-semibold bg-white border border-[#D6D1C7] text-[#171614] focus:outline-none focus:border-[#171614] tabular-nums"
                     />
                     <button
                       type="button"
                       disabled={outOfStock || isAdding}
                       onClick={() => void onAddVariant(item.variantId, qty)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-sky-600 hover:bg-sky-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-semibold transition cursor-pointer"
+                      className="h-9 inline-flex items-center gap-1.5 px-3.5 border border-[#171614] bg-[#171614] hover:bg-[#2A2825] disabled:border-[#E6E2DA] disabled:bg-[#ECE8E0] disabled:text-[#8C867C] text-[#FAF9F6] text-[11px] uppercase tracking-[0.14em] font-semibold transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Thêm</span>
@@ -212,14 +226,14 @@ export function CartProductPickerDrawer({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-          <span className="text-xs text-slate-500">
-            Hiển thị {filteredItems.length} biến thể sản phẩm
+        <div className="px-6 py-4 border-t border-[#E6E2DA] bg-white flex items-center justify-between">
+          <span className="text-xs text-[#78736A] tabular-nums">
+            Hiển thị <strong className="text-[#171614]">{filteredItems.length}</strong> biến thể sản phẩm
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-md border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer"
+            className="px-5 py-2 border border-[#D6D1C7] bg-white hover:border-[#171614] text-[11px] uppercase tracking-[0.14em] font-semibold text-[#171614] cursor-pointer transition-colors"
           >
             Đóng
           </button>
@@ -228,4 +242,3 @@ export function CartProductPickerDrawer({
     </div>
   )
 }
-

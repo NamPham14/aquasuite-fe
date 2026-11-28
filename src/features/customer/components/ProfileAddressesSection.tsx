@@ -143,23 +143,26 @@ export function ProfileAddressesSection() {
   const isBusy = isCreating || isUpdating
 
   return (
-    <div className="rounded-3xl border border-sky-200/80 bg-white/95 p-5 sm:p-7 shadow-sm space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
+    <div className="border border-[#E6E2DA] bg-white p-6 sm:p-8 space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3 pb-4 border-b border-[#E6E2DA]">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#78736A]">
+            Địa điểm nhận hàng
+          </p>
+          <h2 className="font-editorial text-xl font-normal text-[#171614] mt-0.5">
             Sổ địa chỉ giao hàng ({addresses.length})
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Thêm, chỉnh sửa và chọn địa chỉ nhận hàng mặc định khi đặt hàng trực tuyến.
+          <p className="text-xs text-[#6B6760] mt-1">
+            Quản lý địa chỉ nhà riêng hoặc công trình để đặt hàng nhanh hơn.
           </p>
         </div>
 
         <button
           type="button"
           onClick={openCreateForm}
-          className="aqua-shine-btn inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2 text-xs font-bold text-white hover:from-sky-500 hover:to-cyan-500 shadow-md shadow-sky-500/20 transition cursor-pointer"
+          className="h-10 inline-flex items-center gap-1.5 border border-[#171614] bg-[#171614] px-4 text-[11px] uppercase tracking-[0.14em] font-semibold text-[#FAF9F6] hover:bg-[#2A2825] transition-colors cursor-pointer"
         >
-          <Plus className="h-4 w-4" aria-hidden="true" />
+          <Plus className="h-3.5 w-3.5 text-[#C5B091]" aria-hidden="true" />
           <span>Thêm địa chỉ mới</span>
         </button>
       </div>
@@ -168,114 +171,116 @@ export function ProfileAddressesSection() {
       {isFormOpen && (
         <form
           onSubmit={(e) => void handleSave(e)}
-          className="rounded-2xl border border-sky-200 bg-sky-50/40 p-5 space-y-4"
+          className="border border-[#171614] bg-[#FAF9F6] p-5 sm:p-6 space-y-5"
         >
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-sky-900">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E6E2DA]">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#171614]">
               {editingId ? 'Chỉnh sửa địa chỉ giao hàng' : 'Thêm địa chỉ giao hàng mới'}
             </h3>
             <button
               type="button"
               onClick={() => setIsFormOpen(false)}
               aria-label="Đóng biểu mẫu địa chỉ"
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-white cursor-pointer"
+              className="p-1 text-[#78736A] hover:text-[#171614] cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                Tên người nhận <span className="text-rose-500">*</span>
+              <label className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5">
+                Tên người nhận <span className="text-[#991B1B]">*</span>
               </label>
               <input
                 type="text"
                 value={form.recipientName}
                 onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
                 placeholder="Ví dụ: Nguyễn Văn A"
-                className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium focus:border-sky-500 focus:outline-none"
+                className="w-full h-10 border border-[#D6D1C7] bg-white px-3 text-xs text-[#171614] focus:border-[#171614] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                Số điện thoại nhận hàng <span className="text-rose-500">*</span>
+              <label className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5">
+                Số điện thoại nhận hàng <span className="text-[#991B1B]">*</span>
               </label>
               <input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                 placeholder="Ví dụ: 0987654321"
-                className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium focus:border-sky-500 focus:outline-none"
+                className="w-full h-10 border border-[#D6D1C7] bg-white px-3 text-xs text-[#171614] focus:border-[#171614] focus:outline-none tabular-nums"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                Tỉnh / Thành phố <span className="text-rose-500">*</span>
+              <label className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5">
+                Tỉnh / Thành phố <span className="text-[#991B1B]">*</span>
               </label>
               <input
                 type="text"
                 value={form.province}
                 onChange={(e) => setForm((f) => ({ ...f, province: e.target.value }))}
                 placeholder="TP. Hồ Chí Minh / Hà Nội"
-                className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium focus:border-sky-500 focus:outline-none"
+                className="w-full h-10 border border-[#D6D1C7] bg-white px-3 text-xs text-[#171614] focus:border-[#171614] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                Quận / Huyện <span className="text-rose-500">*</span>
+              <label className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5">
+                Quận / Huyện <span className="text-[#991B1B]">*</span>
               </label>
               <input
                 type="text"
                 value={form.district}
                 onChange={(e) => setForm((f) => ({ ...f, district: e.target.value }))}
                 placeholder="Quận 1 / Cầu Giấy"
-                className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium focus:border-sky-500 focus:outline-none"
+                className="w-full h-10 border border-[#D6D1C7] bg-white px-3 text-xs text-[#171614] focus:border-[#171614] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                Phường / Xã <span className="text-rose-500">*</span>
+              <label className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5">
+                Phường / Xã <span className="text-[#991B1B]">*</span>
               </label>
               <input
                 type="text"
                 value={form.ward}
                 onChange={(e) => setForm((f) => ({ ...f, ward: e.target.value }))}
                 placeholder="Phường Bến Nghé"
-                className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium focus:border-sky-500 focus:outline-none"
+                className="w-full h-10 border border-[#D6D1C7] bg-white px-3 text-xs text-[#171614] focus:border-[#171614] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                Số nhà, tên đường <span className="text-rose-500">*</span>
+              <label className="block text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mb-1.5">
+                Số nhà, tên đường <span className="text-[#991B1B]">*</span>
               </label>
               <input
                 type="text"
                 value={form.streetAddress}
                 onChange={(e) => setForm((f) => ({ ...f, streetAddress: e.target.value }))}
                 placeholder="123 Đường Lê Lợi"
-                className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium focus:border-sky-500 focus:outline-none"
+                className="w-full h-10 border border-[#D6D1C7] bg-white px-3 text-xs text-[#171614] focus:border-[#171614] focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="font-bold text-slate-700 mr-1">Nhãn:</span>
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-1 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] uppercase tracking-[0.12em] font-semibold text-[#57534E] mr-1">
+                Nhãn:
+              </span>
               {ADDRESS_LABELS.map((lbl) => (
                 <button
                   key={lbl}
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, label: lbl }))}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition cursor-pointer ${
+                  className={`px-3 py-1 text-[11px] font-medium border transition-colors cursor-pointer ${
                     form.label === lbl
-                      ? 'bg-sky-600 text-white'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:border-sky-300'
+                      ? 'border-[#171614] bg-[#171614] text-[#FAF9F6]'
+                      : 'border-[#D6D1C7] bg-white text-[#57534E] hover:border-[#171614]'
                   }`}
                 >
                   {lbl}
@@ -283,29 +288,29 @@ export function ProfileAddressesSection() {
               ))}
             </div>
 
-            <label className="inline-flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
+            <label className="inline-flex items-center gap-2 cursor-pointer font-medium text-[#171614]">
               <input
                 type="checkbox"
                 checked={Boolean(form.isDefault)}
                 onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))}
-                className="rounded accent-sky-600"
+                className="accent-[#171614]"
               />
               <span>Đặt làm địa chỉ mặc định</span>
             </label>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-sky-200/60">
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-[#E6E2DA]">
             <button
               type="button"
               onClick={() => setIsFormOpen(false)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+              className="border border-[#D6D1C7] bg-white px-4 py-2 text-[11px] uppercase tracking-[0.14em] font-medium text-[#57534E] hover:border-[#171614] cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={isBusy}
-              className="rounded-xl bg-sky-600 px-5 py-2 text-xs font-bold text-white hover:bg-sky-700 disabled:opacity-50 cursor-pointer"
+              className="border border-[#171614] bg-[#171614] px-5 py-2 text-[11px] uppercase tracking-[0.14em] font-semibold text-[#FAF9F6] hover:bg-[#2A2825] disabled:opacity-50 cursor-pointer"
             >
               {isBusy ? 'Đang lưu...' : editingId ? 'Cập nhật địa chỉ' : 'Lưu địa chỉ mới'}
             </button>
@@ -315,61 +320,61 @@ export function ProfileAddressesSection() {
 
       {/* Danh sách địa chỉ */}
       {isLoading ? (
-        <div className="py-10 text-center text-xs text-slate-500">Đang tải sổ địa chỉ...</div>
+        <div className="py-10 text-center text-xs text-[#78736A]">Đang tải sổ địa chỉ...</div>
       ) : addresses.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center space-y-2">
-          <MapPin className="h-8 w-8 text-slate-300 mx-auto" />
-          <p className="text-sm font-bold text-slate-800">Chưa có địa chỉ giao hàng nào</p>
-          <p className="text-xs text-slate-500">
-            Thêm địa chỉ nhận hàng giúp thanh toán nhanh chỉ với 1 lần chọn.
+        <div className="border border-dashed border-[#D6D1C7] bg-[#FAF9F6] p-10 text-center space-y-2.5">
+          <MapPin className="h-7 w-7 text-[#8C6D46] mx-auto" />
+          <p className="font-editorial text-lg text-[#171614]">Chưa có địa chỉ giao hàng nào</p>
+          <p className="text-xs text-[#6B6760]">
+            Thêm địa chỉ nhận hàng để thanh toán nhanh chóng chỉ với một lần chọn.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-3.5">
           {addresses.map((addr) => (
             <div
               key={addr.addressId}
-              className={`rounded-2xl border p-4 transition ${
+              className={`border p-5 transition-colors ${
                 addr.isDefault
-                  ? 'border-sky-300 bg-sky-50/40'
-                  : 'border-slate-200 bg-white hover:border-sky-200'
+                  ? 'border-[#171614] bg-[#FAF9F6]'
+                  : 'border-[#E6E2DA] bg-white hover:border-[#B5AFA5]'
               }`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="space-y-1 min-w-0 flex-1">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-1.5 min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-extrabold text-slate-900">
+                    <span className="text-sm font-semibold text-[#171614]">
                       {addr.recipientName}
                     </span>
-                    <span className="text-xs font-semibold text-slate-500">
-                      • {addr.phone}
+                    <span className="text-xs text-[#78736A] tabular-nums">
+                      &middot; {addr.phone}
                     </span>
                     {addr.label && (
-                      <span className="rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-slate-700">
+                      <span className="border border-[#E6E2DA] bg-white px-2.5 py-0.5 text-[10px] font-medium text-[#57534E]">
                         {addr.label}
                       </span>
                     )}
                     {addr.isDefault && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-sky-600 px-2.5 py-0.5 text-[10px] font-bold text-white">
-                        <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-                        Mặc định
+                      <span className="inline-flex items-center gap-1 border border-[#171614] bg-[#171614] px-2.5 py-0.5 text-[10px] uppercase tracking-[0.12em] font-medium text-[#FAF9F6]">
+                        <CheckCircle2 className="h-3 w-3 text-[#C5B091]" aria-hidden="true" />
+                        <span>Mặc định</span>
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-xs text-[#57534E] leading-relaxed">
                     {addr.addressText}
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   {!addr.isDefault && (
                     <button
                       type="button"
                       disabled={isSettingDefault}
                       onClick={() => void handleSetDefault(addr.addressId)}
-                      className="inline-flex items-center gap-1 rounded-xl border border-sky-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-sky-700 hover:bg-sky-50 transition cursor-pointer"
+                      className="inline-flex items-center gap-1 border border-[#D6D1C7] bg-white px-3 py-1.5 text-[11px] font-medium text-[#171614] hover:border-[#171614] transition-colors cursor-pointer"
                     >
-                      <Star className="h-3 w-3" aria-hidden="true" />
+                      <Star className="h-3 w-3 text-[#8C6D46]" aria-hidden="true" />
                       <span>Đặt mặc định</span>
                     </button>
                   )}
@@ -378,7 +383,7 @@ export function ProfileAddressesSection() {
                     type="button"
                     onClick={() => openEditForm(addr)}
                     aria-label={`Sửa địa chỉ ${addr.recipientName}`}
-                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-sky-300 hover:text-sky-700 transition cursor-pointer"
+                    className="inline-flex items-center gap-1 border border-[#D6D1C7] bg-white px-3 py-1.5 text-[11px] font-medium text-[#171614] hover:border-[#171614] transition-colors cursor-pointer"
                   >
                     <Edit3 className="h-3 w-3" aria-hidden="true" />
                     <span>Sửa</span>
@@ -389,25 +394,25 @@ export function ProfileAddressesSection() {
                       type="button"
                       onClick={() => setConfirmDeleteId(addr.addressId)}
                       aria-label={`Xóa địa chỉ ${addr.recipientName}`}
-                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-50 transition cursor-pointer"
+                      className="inline-flex items-center gap-1 border border-[#E6E2DA] bg-white px-3 py-1.5 text-[11px] font-medium text-[#991B1B] hover:border-[#991B1B] transition-colors cursor-pointer"
                     >
                       <Trash2 className="h-3 w-3" aria-hidden="true" />
                       <span>Xóa</span>
                     </button>
                   ) : (
-                    <div className="inline-flex items-center gap-1 rounded-xl bg-rose-50 border border-rose-200 px-2 py-1">
+                    <div className="inline-flex items-center gap-1.5 bg-[#FEF2F2] border border-[#E5B8B8] px-2.5 py-1">
                       <button
                         type="button"
                         disabled={isDeleting}
                         onClick={() => void handleDelete(addr.addressId)}
-                        className="rounded-lg bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-rose-700 cursor-pointer"
+                        className="bg-[#991B1B] px-2.5 py-0.5 text-[10px] uppercase tracking-[0.1em] font-semibold text-white cursor-pointer"
                       >
                         Xác nhận xóa
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteId(null)}
-                        className="px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 cursor-pointer"
+                        className="px-1.5 py-0.5 text-[10px] font-medium text-[#57534E] cursor-pointer"
                       >
                         Hủy
                       </button>
@@ -422,4 +427,3 @@ export function ProfileAddressesSection() {
     </div>
   )
 }
-
