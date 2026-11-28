@@ -56,7 +56,7 @@ export interface CreditCheckRequest { orderId?: string; orderChannel: string; ne
 export interface CreditCheckResult { customerId: string; approved: boolean; overrideAllowed: boolean; debtStatus: DebtStatus; reasonCode: string; creditLimit: number; outstandingBalance: number; overdueBalance: number; availableCredit: number }
 export interface ReasonRequest { reason: string }
 export interface DebtReminderRequest { reminderType: ReminderType }
-export interface DebtReminderResult { outstandingBalance: number; emailResult: string; smsResult: string; message: string }
+export interface DebtReminderResult { outstandingBalance: number; emailResult: string; message: string }
 export interface DebtCallRequest { callResult: DebtCallResult; promisedPaymentDate?: string; note?: string }
 export interface StatementEmailResult { emailResult: string; message: string }
 export interface CreditApprovalGrantRequest { ownerEmail: string; password: string; customerId: string; creditLimit: number; creditTermDays: number }
