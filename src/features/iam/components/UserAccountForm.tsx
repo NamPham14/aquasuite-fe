@@ -13,6 +13,12 @@ const ROLE_META: Record<string, { label: string; desc: string }> = {
   SHIPPER: { label: 'Shipper', desc: 'Giao hàng và xác nhận bàn giao' },
   ACCOUNTANT: { label: 'Kế toán', desc: 'Hóa đơn, thanh toán và công nợ' },
   CUSTOMER: { label: 'Khách hàng', desc: 'Tài khoản mua hàng của khách' },
+  ROLE_CUSTOMER: { label: 'Khách hàng', desc: 'Tài khoản mua hàng của khách' },
+}
+
+function isCustomerRole(role: AssignableRole) {
+  const code = role.code.trim().toUpperCase()
+  return code === 'CUSTOMER' || code === 'ROLE_CUSTOMER'
 }
 
 const USER_FIELD_META: Record<string, { id: string; label: string }> = {
@@ -112,6 +118,10 @@ export function UserAccountForm({
 
   const fieldError = (name: string) => errors[name] || apiFieldErrors[name]
   const roleError = fieldError('roleIds')
+  const existingCustomerRoleIds = new Set(account?.roles.filter(isCustomerRole).map((role) => role.id) ?? [])
+  const availableRoles = roles.filter(
+    (role) => !isCustomerRole(role) || existingCustomerRoleIds.has(role.id),
+  )
 
   const validationIssues = useMemo<ValidationIssue[]>(() => {
     const combined = { ...errors, ...apiFieldErrors }
@@ -135,6 +145,12 @@ export function UserAccountForm({
       {apiError && (
         <Notice tone="danger" role="alert" title="Không thể lưu tài khoản">
           {apiError}
+        </Notice>
+      )}
+
+      {existingCustomerRoleIds.size === 0 && (
+        <Notice tone="info" title="Tạo tài khoản khách hàng">
+          Khách hàng cần đăng ký và xác minh email để hệ thống tạo hồ sơ mua hàng. Không thể gán vai trò Khách hàng tại màn quản lý tài khoản.
         </Notice>
       )}
 
@@ -223,7 +239,7 @@ export function UserAccountForm({
           </Notice>
         ) : (
           <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-            {roles.map((role) => {
+            {availableRoles.map((role) => {
               const meta = ROLE_META[role.code]
               const displayLabel = meta?.label ?? role.code
               const displayDesc = role.description || meta?.desc

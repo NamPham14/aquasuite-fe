@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { afterEach, test } from 'node:test'
 import { configureStore } from '@reduxjs/toolkit'
 import { baseApi } from '../src/shared/api/baseApi.ts'
@@ -86,6 +87,16 @@ test('UC-05 UserAccountForm: checkbox SHOP_OWNER bị khoá khi isSelf=true (acc
   // Vai trò khác không bị khóa
   const disabledSales = computeIsSelf(ownerAccount, undefined) && isShopOwnerCheckbox('SALES_STAFF')
   assert.equal(disabledSales, false, 'Checkbox SALES_STAFF không bị khoá khi isSelf === true')
+})
+
+test('UC-05 UserAccountForm: không hiển thị CUSTOMER cho tài khoản mới hoặc tài khoản chưa có role này', () => {
+  const source = readFileSync(new URL('../src/features/iam/components/UserAccountForm.tsx', import.meta.url), 'utf8')
+
+  assert.match(source, /function isCustomerRole\(role: AssignableRole\)/)
+  assert.match(source, /roles\.filter\(\s*\(role\) => !isCustomerRole\(role\) \|\| existingCustomerRoleIds\.has\(role\.id\)/)
+  assert.match(source, /existingCustomerRoleIds\.size === 0/)
+  assert.match(source, /Khách hàng cần đăng ký và xác minh email/)
+  assert.match(source, /roleIds: account\?\.roles\.map\(\(role\) => role\.id\) \?\? \[\]/)
 })
 
 test('UC-05 updateUserAccount API gọi đúng endpoint PUT /iam/users/:id', async () => {
