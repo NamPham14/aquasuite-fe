@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs'
 import { configureStore } from '@reduxjs/toolkit'
 import { baseApi } from '../src/shared/api/baseApi.ts'
 import { authReducer, setCredentials } from '../src/features/iam/model/authSlice.ts'
+import type { CustomerOrderModificationRequestReceipt } from '../src/features/sales/types/orderModificationRequest.types.ts'
 register('./loader.mjs', import.meta.url)
 
 const React = await import('react')
@@ -16,7 +17,10 @@ const { renderToStaticMarkup } = await import('react-dom/server')
 const { Provider } = await import('react-redux')
 const { MemoryRouter } = await import('react-router-dom')
 const { orderModificationRequestApi } = await import('../src/features/sales/api/orderModificationRequestApi.ts')
+const { customerTrackingApi } = await import('../src/features/customer/api/customerTrackingApi.ts')
+const { onlineCheckoutApi } = await import('../src/features/sales/api/onlineCheckoutApi.ts')
 const { OrderModificationRequestsPage } = await import('../src/pages/management/OrderModificationRequestsPage.tsx')
+const { ProfileOrdersSection } = await import('../src/features/customer/components/ProfileOrdersSection.tsx')
 
 const originalFetch = globalThis.fetch
 afterEach(() => { globalThis.fetch = originalFetch })
@@ -38,6 +42,42 @@ function render(store: ReturnType<typeof storeForRoles>, path = '/app/order-modi
       )
     )
   )
+}
+
+async function renderMyOrders(activeRequests: CustomerOrderModificationRequestReceipt[]) {
+  const store = storeForRoles(['CUSTOMER'])
+  const orderId = 'order-active-test'
+  await Promise.all([
+    store.dispatch(customerTrackingApi.util.upsertQueryData('getMyAllOrders', undefined, [{
+      orderId,
+      orderCode: 'SO-TEST-1',
+      orderType: 'RETAIL',
+      orderChannel: 'COUNTER',
+      orderStatus: 'PROCESSING',
+      paymentStatus: 'UNPAID',
+      orderDate: '2026-11-29T00:00:00Z',
+      subtotal: 100000,
+      discountAmount: 0,
+      totalAmount: 100000,
+      itemCount: 1,
+      createdAt: '2026-11-29T00:00:00Z',
+    }])),
+    store.dispatch(onlineCheckoutApi.util.upsertQueryData('getMyOnlineOrders', undefined, [])),
+    store.dispatch(customerTrackingApi.util.upsertQueryData(
+      'getMyActiveOrderModificationRequests',
+      undefined,
+      activeRequests,
+    )),
+  ])
+  const html = renderToStaticMarkup(
+    React.createElement(Provider, { store } as React.ComponentProps<typeof Provider>,
+      React.createElement(MemoryRouter, null,
+        React.createElement(ProfileOrdersSection),
+      ),
+    ),
+  )
+  store.dispatch(baseApi.util.resetApiState())
+  return html
 }
 
 // ─── RTK Query endpoint contract tests ───────────────────────────────────────
@@ -78,6 +118,30 @@ test('createMyOrderModificationRequest uses the owned-order route without caller
   assert.ok(!('orderId' in capturedRequest.body))
   assert.ok(!('customerId' in capturedRequest.body))
   assert.ok(!('requestedBy' in capturedRequest.body))
+  store.dispatch(baseApi.util.resetApiState())
+})
+
+test('getMyActiveOrderModificationRequests loads customer-owned active requests', async () => {
+  let capturedUrl = ''
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    capturedUrl = input instanceof Request ? input.url : String(input)
+    return new Response(JSON.stringify({
+      data: [{
+        id: 'request-1',
+        orderId: 'order-1',
+        requestType: 'ADDRESS_CHANGE',
+        requestStatus: 'PENDING_REVIEW',
+        customerReason: 'Need new address',
+        createdAt: '2026-11-29T00:00:00Z',
+      }],
+    }), { headers: { 'Content-Type': 'application/json' } })
+  }
+  const store = storeForRoles(['CUSTOMER'])
+  const requests = await store.dispatch(
+    customerTrackingApi.endpoints.getMyActiveOrderModificationRequests.initiate(),
+  ).unwrap()
+  assert.ok(capturedUrl.endsWith('/sales/orders/me/modification-requests/active'))
+  assert.equal(requests[0]?.requestStatus, 'PENDING_REVIEW')
   store.dispatch(baseApi.util.resetApiState())
 })
 
@@ -292,4 +356,24 @@ test('My Orders offers staff-reviewed requests before confirmation with payment-
   assert.ok(requestDialog.includes("order.orderStatus !== 'PENDING_CONFIRMATION'"))
   assert.ok(requestDialog.includes("order.paymentMethod !== 'CASH' || order.paymentStatus !== 'UNPAID'"))
   assert.ok(requestDialog.includes('Chờ xác nhận'))
+  assert.ok(ordersSection.includes('useGetMyActiveOrderModificationRequestsQuery'))
+  assert.ok(ordersSection.includes('activeRequestByOrderId.get(order.orderId)'))
+  assert.ok(ordersSection.includes('Yêu cầu đang chờ duyệt'))
+  assert.ok(ordersSection.includes('Không thể kiểm tra trạng thái yêu cầu'))
+})
+
+test('My Orders replaces request action with active status and restores it when no active request remains', async () => {
+  const activeRequestHtml = await renderMyOrders([{
+    id: 'request-active',
+    orderId: 'order-active-test',
+    requestType: 'ADDRESS_CHANGE',
+    requestStatus: 'PENDING_REVIEW',
+    customerReason: 'Need new address',
+    createdAt: '2026-11-29T00:00:00Z',
+  }])
+  assert.ok(activeRequestHtml.includes('Yêu cầu đang chờ duyệt: đổi địa chỉ'))
+  assert.ok(!activeRequestHtml.includes('Yêu cầu đổi / hủy'))
+
+  const terminalRequestHtml = await renderMyOrders([])
+  assert.ok(terminalRequestHtml.includes('Yêu cầu đổi / hủy'))
 })

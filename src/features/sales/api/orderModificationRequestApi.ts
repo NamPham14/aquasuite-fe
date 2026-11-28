@@ -135,6 +135,9 @@ export const orderModificationRequestApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (response) => dataOf<CustomerOrderModificationRequestReceipt>(response),
+      invalidatesTags: (_result, error) => error
+        ? []
+        : [{ type: 'SalesOrder', id: 'MY_ACTIVE_MODIFICATION_REQUESTS' }],
     }),
   }),
 })

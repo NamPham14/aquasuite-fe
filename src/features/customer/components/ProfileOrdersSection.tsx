@@ -19,9 +19,16 @@ import type { SalesOrderSummaryResponse } from '../../sales/types/salesOrder.typ
 import { CustomerEditorialModal } from '../../servicedesk/components/CustomerEditorialModal.tsx'
 import { CustomerOrderModificationRequestDialog } from './CustomerOrderModificationRequestDialog.tsx'
 import {
+  useGetMyActiveOrderModificationRequestsQuery,
   useGetMyAllOrdersQuery,
   useGetMyOrderDetailQuery,
 } from '../api/customerTrackingApi.ts'
+
+const REQUEST_TYPE_LABEL: Record<string, string> = {
+  ADDRESS_CHANGE: 'đổi địa chỉ',
+  ITEM_CHANGE: 'đổi sản phẩm',
+  FULL_CANCELLATION: 'hủy đơn',
+}
 
 const ORDER_STATUS_META: Record<string, { label: string; cls: string }> = {
   DRAFT: {
@@ -100,6 +107,14 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
     refetch: refetchOnline,
   } = useGetMyOnlineOrdersQuery()
 
+  const {
+    data: activeModificationRequests = [],
+    isLoading: isLoadingActiveRequests,
+    isError: isActiveRequestsError,
+    isFetching: isFetchingActiveRequests,
+    refetch: refetchActiveRequests,
+  } = useGetMyActiveOrderModificationRequestsQuery()
+
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('ALL')
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
 
@@ -121,6 +136,11 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
     }
     return map
   }, [onlineOrders])
+
+  const activeRequestByOrderId = useMemo(
+    () => new Map(activeModificationRequests.map((request) => [request.orderId, request])),
+    [activeModificationRequests],
+  )
 
   const mergedOrders: SalesOrderSummaryResponse[] = useMemo(() => {
     if (allOrders.length > 0) return allOrders
@@ -168,11 +188,12 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
   }, [mergedOrders, channelFilter])
 
   const isLoading = isLoadingAll && isLoadingOnline
-  const isFetching = isFetchingAll || isFetchingOnline
+  const isFetching = isFetchingAll || isFetchingOnline || isFetchingActiveRequests
 
   const handleRefresh = () => {
     void refetchAll()
     void refetchOnline()
+    void refetchActiveRequests()
   }
 
   return (
@@ -271,6 +292,7 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
               order.orderStatus !== 'CANCELLED'
             const trackableDelivery =
               order.orderStatus === 'PROCESSING' || order.orderStatus === 'COMPLETED'
+            const activeModificationRequest = activeRequestByOrderId.get(order.orderId)
 
             return (
               <article
@@ -410,7 +432,36 @@ export function ProfileOrdersSection({ onTrackDelivery }: ProfileOrdersSectionPr
                       </button>
                     )}
 
-                    {(order.orderStatus === 'PROCESSING' || order.orderStatus === 'PENDING_CONFIRMATION') && (
+                    {(order.orderStatus === 'PROCESSING' || order.orderStatus === 'PENDING_CONFIRMATION')
+                      && activeModificationRequest && (
+                        <span
+                          role="status"
+                          className="inline-flex items-center gap-1.5 border border-[#E6D3B3] bg-[#FAF5EB] px-3.5 py-2 text-[11px] font-semibold text-[#854D0E]"
+                        >
+                          {activeModificationRequest.requestStatus === 'PENDING_CANCEL'
+                            ? 'Đang xử lý yêu cầu'
+                            : 'Yêu cầu đang chờ duyệt'}
+                          {': '}
+                          {REQUEST_TYPE_LABEL[activeModificationRequest.requestType] ?? 'đổi / hủy đơn'}
+                        </span>
+                      )}
+
+                    {(order.orderStatus === 'PROCESSING' || order.orderStatus === 'PENDING_CONFIRMATION')
+                      && !activeModificationRequest && isLoadingActiveRequests && (
+                        <span className="border border-[#D6D1C7] bg-[#FAF9F6] px-3.5 py-2 text-[11px] text-[#78736A]" role="status">
+                          Đang kiểm tra yêu cầu...
+                        </span>
+                      )}
+
+                    {(order.orderStatus === 'PROCESSING' || order.orderStatus === 'PENDING_CONFIRMATION')
+                      && !activeModificationRequest && isActiveRequestsError && !isLoadingActiveRequests && (
+                        <span className="border border-[#E5B8B8] bg-[#FEF2F2] px-3.5 py-2 text-[11px] text-[#991B1B]" role="alert">
+                          Không thể kiểm tra trạng thái yêu cầu
+                        </span>
+                      )}
+
+                    {(order.orderStatus === 'PROCESSING' || order.orderStatus === 'PENDING_CONFIRMATION')
+                      && !activeModificationRequest && !isLoadingActiveRequests && !isActiveRequestsError && (
                       <button
                         type="button"
                         onClick={() => {

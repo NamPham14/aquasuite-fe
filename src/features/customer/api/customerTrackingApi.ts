@@ -9,6 +9,7 @@ import type {
   SalesOrderSummaryResponse,
 } from '../../sales/types/salesOrder.types.ts'
 import type { CustomerDeliveryTracking } from '../types/tracking.types.ts'
+import type { CustomerOrderModificationRequestReceipt } from '../../sales/types/orderModificationRequest.types.ts'
 
 function requireApiData<T>(res: ApiResponse<T>, label: string): T {
   if (res.data === undefined || res.data === null) {
@@ -53,6 +54,11 @@ export const customerTrackingApi = baseApi.injectEndpoints({
         requireApiData(res, 'đơn hàng'),
       providesTags: (_result, _error, orderId) => [{ type: 'SalesOrder', id: orderId }],
     }),
+    getMyActiveOrderModificationRequests: builder.query<CustomerOrderModificationRequestReceipt[], void>({
+      query: () => '/sales/orders/me/modification-requests/active',
+      transformResponse: (res: ApiResponse<CustomerOrderModificationRequestReceipt[]>) => res.data ?? [],
+      providesTags: [{ type: 'SalesOrder', id: 'MY_ACTIVE_MODIFICATION_REQUESTS' }],
+    }),
     getMyQuotations: builder.query<QuotationListItemResponse[], void>({
       query: () => '/sales/quotations/me',
       transformResponse: (res: ApiResponse<QuotationListItemResponse[]>) => res.data ?? [],
@@ -72,6 +78,7 @@ export const {
   useGetMyCustomerDeliveryPhotoQuery,
   useGetMyAllOrdersQuery,
   useGetMyOrderDetailQuery,
+  useGetMyActiveOrderModificationRequestsQuery,
   useGetMyQuotationsQuery,
   useGetMyQuotationDetailQuery,
 } = customerTrackingApi
