@@ -31,9 +31,10 @@ export const goodsReceiptApi = baseApi.injectEndpoints({
         { type: 'GoodsReceipt', id: 'LIST' },
         { type: 'GoodsReceipt', id: `RECEIVABLE-${body.purchaseOrderId}` },
         { type: 'GoodsReceipt', id: `PO-${body.purchaseOrderId}` },
-        // Đồng bộ lại tiến độ nhận trên màn chi tiết đơn mua hàng.
+        // Đồng bộ lại tiến độ nhận trên màn chi tiết đơn mua hàng và màn tồn kho.
         { type: 'PurchaseOrder', id: body.purchaseOrderId },
         { type: 'PurchaseOrder', id: 'LIST' },
+        { type: 'Inventory', id: 'LIST' },
       ],
     }),
 
